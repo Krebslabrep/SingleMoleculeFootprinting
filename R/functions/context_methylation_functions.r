@@ -1,12 +1,3 @@
-
-
-#basic dependancies
-
-sl=function(x){seq(length(x))}
-string.split=function(string,sep,pos){unlist(lapply(string,function(x){lapply(strsplit(x,sep),'[',pos)}))}
-
-
-
 getCMethMatrix<-function(proj,range,samp){
 	Cs=qMeth(proj, query=range,mode="allC",reportLevel="alignment")
 	# use data.table to get a 1,0 matrix of methylation profiles
@@ -28,13 +19,11 @@ getCMethMatrix<-function(proj,range,samp){
 	CpGm[CpGm == -1]=NA # put NAs
 	rownames(CpGm)=ronames
 	return(CpGm)
-} 
+}
 
-
-
-	mergeGC_CGmat=function(GC_CG_mat){
-			CGmat=GC_CG_mat$matCG	
-			GCmat=GC_CG_mat$matGC		
+mergeGC_CGmat=function(GC_CG_mat){
+			CGmat=GC_CG_mat$matCG
+			GCmat=GC_CG_mat$matGC
 			uReads=unique(c(rownames(CGmat),rownames(GCmat)))
 			uCs=sort(unique(c(colnames(CGmat),colnames(GCmat))))
 			matCGo=matrix(nrow=length(uReads),ncol=length(uCs))
@@ -46,82 +35,106 @@ getCMethMatrix<-function(proj,range,samp){
 
 		}
 
+findContextCytosines <- function(meth_gr, genome, context){
 
+  chr = as.character(unique(seqnames(meth_gr)))
+  GenomicCytosines = matchPattern(context, genome[[chr]])
+  GenomicCytosines_gr = GRanges(seqnames = chr, ranges = GenomicCytosines)
+  meth_gr[meth_gr %over% GenomicCytosines_gr]
 
+}
 
-	call_context_methylation_v2=function(meth_gr,cO,genome=Mmusculus){
-			dm3_CGs <- vmatchPattern("CG",genome)
-			dm3_CGs <- dm3_CGs[strand(dm3_CGs)=="+",]
-			strand(dm3_CGs) <- "*"
+CollapeStrands <- function(meth_gr, context){
 
-			dm3_GCs <- vmatchPattern("GC",genome)
-			dm3_GCs <- dm3_GCs[strand(dm3_GCs)=="+",]
-			strand(dm3_GCs) <- "*"
+  # Fix Granges for overhangs: CG --> if first range is "-" add "+" with zeros on top, if it ends in "+" add "-" with zeros at the bottom
+  if (length(meth_gr) > 0){ # check if the obj is empty
 
-			sel_CGs <- meth_gr %over% dm3_CGs
-			sel_GCs <- meth_gr %over% dm3_GCs
+    TopStrandToFix = ifelse(context == "CG", "-", "+")
+    if (as.character(strand(meth_gr[1]))==TopStrandToFix){
+      print("Strand collapsing: Fixing top (left) overhang")
+      overhang_fix = GRanges(seqnames = unique(as.character(seqnames(meth_gr))), ranges = IRanges(start(meth_gr[1])-1, width = 1), strand = ifelse(context == "CG", "+", "-"))
+      fix_metadata = data.frame(matrix(0, ncol = length(colnames(elementMetadata(meth_gr))), nrow = 1))
+      colnames(fix_metadata) = colnames(elementMetadata(meth_gr))
+      elementMetadata(overhang_fix) = fix_metadata
+      meth_gr = append(overhang_fix, meth_gr)
+    }
 
-			meth_CGs_gr <- meth_gr[sel_CGs]
-			meth_GCs_gr <- meth_gr[sel_GCs]
-		##################
-		# collapse strands
-		##################
-			meth_CGsCol_gr <- meth_CGs_gr[seq(1,length(meth_CGs_gr),by=2)]
-			end(meth_CGsCol_gr) <- end(meth_CGsCol_gr)+1
-			values(meth_CGsCol_gr) <- as.matrix(values(meth_CGs_gr[seq(1,length(meth_CGs_gr),by=2)]))+as.matrix(values(meth_CGs_gr[seq(2,length(meth_CGs_gr),by=2)]))
+    BottomStrandToFix = ifelse(context == "CG", "+", "-")
+    if (as.character(strand(meth_gr[length(meth_gr)]))==BottomStrandToFix){
+      print("Strand collapsing: Fixing bottom (right) overhang")
+      overhang_fix = GRanges(seqnames = unique(as.character(seqnames(meth_gr))), ranges = IRanges(start(meth_gr[length(meth_gr)])+1, width = 1), strand = ifelse(context == "CG", "-", "+"))
+      fix_metadata = data.frame(matrix(0, ncol = length(colnames(elementMetadata(meth_gr))), nrow = 1))
+      colnames(fix_metadata) = colnames(elementMetadata(meth_gr))
+      elementMetadata(overhang_fix) = fix_metadata
+      meth_gr = append(meth_gr, overhang_fix)
+    }
 
-			meth_GCsCol_gr <- meth_GCs_gr[seq(2,length(meth_GCs_gr),by=2)]
-			start(meth_GCsCol_gr) <- start(meth_GCsCol_gr)-1
-			values(meth_GCsCol_gr) <- as.matrix(values(meth_GCs_gr[seq(1,length(meth_GCs_gr),by=2)]))+as.matrix(values(meth_GCs_gr[seq(2,length(meth_GCs_gr),by=2)]))
+    meth_gr_collapsed <- meth_gr[seq(ifelse(context == "CG", 1, 2),length(meth_gr),by=2)]
+    if (context == "CG"){
+      end(meth_gr_collapsed) <- end(meth_gr_collapsed)+1
+    } else if (context == "GC"){
+      start(meth_gr_collapsed) <- start(meth_gr_collapsed)-1
+    }
 
-		#####################
-		#filter for coverage
-		####################
-			Tcounts=grep('_T\\>',colnames(elementMetadata(meth_CGsCol_gr)))
-			Mcounts=grep('_M\\>',colnames(elementMetadata(meth_CGsCol_gr)))
-	
-			######
-			#CGs
-			######
+    values(meth_gr_collapsed) <- as.matrix(values(meth_gr[seq(1,length(meth_gr),by=2)]))+as.matrix(values(meth_gr[seq(2,length(meth_gr),by=2)]))
 
-			CG.met.mat=as.matrix(elementMetadata(meth_CGsCol_gr)[,Mcounts])/as.matrix(elementMetadata(meth_CGsCol_gr)[,Tcounts])
-			#filter for coverage
-			CovFilter=as.matrix(elementMetadata(meth_CGsCol_gr)[,Tcounts])>cO
-			for (i in sl(CG.met.mat[1,])){CG.met.mat[!CovFilter[,i],i]=NA}
-				#bind the GRanges with the scores
-			CG.met=resize(meth_CGsCol_gr,1,fix='start')
-			elementMetadata(CG.met)=CG.met.mat
+  } else {
 
+    meth_gr_collapsed = GRanges()
 
-			######
-			#GCs
-			######
+  }
 
-			GC.met.mat=as.matrix(elementMetadata(meth_GCsCol_gr)[,Mcounts])/as.matrix(elementMetadata(meth_GCsCol_gr)[,Tcounts])
-			#filter for coverage
-			CovFilter=as.matrix(elementMetadata(meth_GCsCol_gr)[,Tcounts])>cO
-			for (i in sl(GC.met.mat[1,])){GC.met.mat[!CovFilter[,i],i]=NA}
-				#bind the GRanges with the scores
+  return(meth_gr_collapsed)
 
-			GC.met=resize(meth_GCsCol_gr,1,fix='end')
-			elementMetadata(GC.met)=GC.met.mat
+}
 
-			###########################
-			#disclose context
-			###########################
-			#resize to single C
-	#		getSeq(Mmusculus,resize(CG.met,3,fix='center')[1:10])
-		#	GCcontext=getSeq(Mmusculus,resize(GC.met,3,fix='center'))
-			oGCG=as.matrix(findOverlaps(GC.met,CG.met,type='equal'))
-			GC.met$type='GCH'
-			CG.met$type='CGH'
-			GC.met$type[oGCG[,1]]='GCG'
-			CG.met$type[oGCG[,2]]='GCG'
+CoverageFilter <- function(meth_gr, thr, context){
 
-			umet=list(CG.met,GC.met)
-			names(umet)=c('CG','GC')
-			return(umet)
-	
-		}
+  Tcounts = grep('_T\\>',colnames(elementMetadata(meth_gr)))
+  Mcounts = grep('_M\\>',colnames(elementMetadata(meth_gr)))
+
+  MethylationMatrix = as.matrix(elementMetadata(meth_gr)[,Mcounts])/as.matrix(elementMetadata(meth_gr)[,Tcounts])
+  #filter for coverage
+  CovFilter=as.matrix(elementMetadata(meth_gr)[,Tcounts])>thr
+  for (i in seq_len(ncol(MethylationMatrix))){
+    MethylationMatrix[!CovFilter[,i],i] = NA
+    }
+  #bind the GRanges with the scores
+  elementMetadata(meth_gr) = NULL
+  meth_gr_filtered = resize(meth_gr, 1, fix=ifelse(context == "CG", 'start', "end"))
+  elementMetadata(meth_gr_filtered)$MethylationFraction = MethylationMatrix
+
+  return(meth_gr_filtered)
+
+}
+
+CallContextMethylation=function(meth_gr,cO,genome=Mmusculus){
+
+  # Subset Cytosines by genomic context
+  meth_gr_CGs = findContextCytosines(meth_gr, genome, "CG")
+  meth_gr_GCs = findContextCytosines(meth_gr, genome, "GC")
+
+  # collapse strands
+  meth_gr_CGs_collapsed = CollapeStrands(meth_gr_CGs, "CG")
+  meth_gr_GCs_collapsed = CollapeStrands(meth_gr_GCs, "GC")
+
+  #filter for coverage
+  meth_gr_CGs_collapsed_filtered = CoverageFilter(meth_gr_CGs_collapsed, thr = cO, context = "CG")
+  meth_gr_GCs_collapsed_filtered = CoverageFilter(meth_gr_GCs_collapsed, thr = cO, context = "GC")
+
+	###########################
+	#disclose context
+	###########################
+	GCGs=as.matrix(findOverlaps(meth_gr_GCs_collapsed_filtered,meth_gr_CGs_collapsed_filtered,type='equal'))
+	meth_gr_CGs_collapsed_filtered$type='CGH'
+	meth_gr_GCs_collapsed_filtered$type='GCH'
+	meth_gr_CGs_collapsed_filtered$type[GCGs[,2]]='GCG'
+	meth_gr_GCs_collapsed_filtered$type[GCGs[,1]]='GCG'
+
+	meth_gr_combined = list(CG = meth_gr_CGs_collapsed_filtered, GC = meth_gr_GCs_collapsed_filtered)
+
+	return(meth_gr_combined)
+
+	}
 
 
