@@ -122,19 +122,17 @@ CallContextMethylation=function(meth_gr,cO,genome=Mmusculus){
   meth_gr_CGs_collapsed_filtered = CoverageFilter(meth_gr_CGs_collapsed, thr = cO, context = "CG")
   meth_gr_GCs_collapsed_filtered = CoverageFilter(meth_gr_GCs_collapsed, thr = cO, context = "GC")
 
-	###########################
-	#disclose context
-	###########################
-	GCGs=as.matrix(findOverlaps(meth_gr_GCs_collapsed_filtered,meth_gr_CGs_collapsed_filtered,type='equal'))
-	meth_gr_CGs_collapsed_filtered$type='CGH'
-	meth_gr_GCs_collapsed_filtered$type='GCH'
-	meth_gr_CGs_collapsed_filtered$type[GCGs[,2]]='GCG'
-	meth_gr_GCs_collapsed_filtered$type[GCGs[,1]]='GCG'
+  #disclose context
+  GCGs=as.matrix(findOverlaps(meth_gr_GCs_collapsed_filtered,meth_gr_CGs_collapsed_filtered,type='equal'))
+  meth_gr_CGs_collapsed_filtered$type='CGH'
+  meth_gr_GCs_collapsed_filtered$type='GCH'
+  meth_gr_CGs_collapsed_filtered$type[GCGs[,2]]='GCG'
+  meth_gr_GCs_collapsed_filtered$type[GCGs[,1]]='GCG'
 
-	meth_gr_combined = list(CG = meth_gr_CGs_collapsed_filtered, GC = meth_gr_GCs_collapsed_filtered)
+  meth_gr_combined = list(CG = meth_gr_CGs_collapsed_filtered, GC = meth_gr_GCs_collapsed_filtered)
 
-	return(meth_gr_combined)
+  return(meth_gr_combined)
 
-	}
+  }
 
 

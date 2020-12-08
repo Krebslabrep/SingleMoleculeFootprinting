@@ -1,0 +1,120 @@
+---
+title: "SingleMoleculeFootprinting - Calling context methylation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SingleMoleculeFootprinting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=F}
+# library(SingleMoleculeFootprinting)
+source("../R/functions/context_methylation_functions.r")
+library(BSgenome.Mmusculus.UCSC.mm10)
+library(QuasR)
+```
+
+Define arguments
+```{r}
+Qinput='../../QuasR_input.txt' #QuasR alignement file containing a sample
+out_path=paste("../../")
+cO=19 #minimal coverage
+```
+
+Create QuasR project: because we provide pre-aligned data, QuasR will not attempt to re-align.
+```{r}
+SMFproj=qAlign(sampleFile=Qinput,
+                genome="BSgenome.Mmusculus.UCSC.mm10",
+                projectName = "CTCF_amplicon",
+                paired="fr",
+                bisulfite="undir")
+SMFaln=as.data.frame(alignments(SMFproj)[[1]])
+SMFproj@aligner = "Rbowtie"
+```
+
+1. Single site example
+```{r}
+Region_of_interest = GRanges(seqnames = "chr1", ranges = IRanges(start = 31210117, end = 31210616), strand = "+")
+
+# Quantify methylation in region of interest
+meth_gr <- qMeth(SMFproj, mode="allC", Region_of_interest)
+# Estract methylation info from contexts of interest only, the function also collapses strands and filters for coverage
+contextMet=CallContextMethylation(meth_gr, cO, Mmusculus)
+contextMet
+```
+
+Example avg plotting, add TFBSs
+```{r}
+# system.file("extdata", "example_amplicon_TFBSs.rds", package = "SingleMoleculeFootprinting", mustWork = T) # DOESN'T WORK
+TFBSs = readRDS("../inst/extdata/example_amplicon_TFBSs.rds")
+```
+
+
+
+2. Genome-wide example: 
+given the example data only cover one genomic region, we are going to restrict the following chunck to the interested chromosome only
+This process can be quite lengthy and computationally demanding, it is advisable to run it on the cluster.
+```{r, eval=F}
+# Partition a genome by chromosome ("natural partitioning")
+musmus_length=seqlengths(Mmusculus)[1:21] # change [1] to [1:21] to expand the analysis to the whole genome
+tiles <- tileGenome(musmus_length, tilewidth=max(musmus_length),cut.last.tile.in.chrom=TRUE)
+
+# Call the methylation genome wide for all Cs, loop/chromosome
+# Cluster object for parallel processing of multiple samples
+cluObj=makeCluster(length(SMFaln$SampleName))
+lapply(1:length(tiles),function(i){
+
+  print(i)
+  
+	meth_gr <- qMeth(SMFproj, mode="allC", tiles[i], clObj=cluObj)
+	contextMet=CallContextMethylation(meth_gr, cO, Mmusculus)
+	saveRDS(contextMet, paste0(out_path,'/Context_met_call_',SMFproj@projectName,'_',as.character(seqnames( tiles[i])),'_Co',as.character(cO),'.rds',sep=''))
+
+	})
+
+# Filter away Cytosines with low coverage in all samples and combine chromosome-specific objects
+AllCf=mclapply(1:length(tiles),function(i){
+
+	contextMet=readRDS(paste(out_path,'/Context_met_call_',SMFproj@projectName,'_',as.character(seqnames( tiles[i])),'_Co',as.character(cO),'.rds',sep=''))
+	CG=contextMet[[1]]
+	GC=contextMet[[2]]
+	AllC=c(CG,GC)
+	met=elementMetadata(AllC)
+	met2=met[,1:(ncol(met)-1)]
+	cov.inx=!rowSums(is.na(met2))==ncol(met2)
+	AllCf=AllC[cov.inx]
+	AllCf
+
+}, mc.cores=length(tiles))
+
+AllC=unlist(GRangesList(AllCf))
+AllC=sort(AllC)
+
+# save final object
+saveRDS(AllC, paste0(out_path,'/Context_methylation_call_',SMFproj@projectName,'.rds'))
+
+# remove chromosome-wise temporary files
+lapply(1:length(tiles), function(i){
+  file.remove(paste0(out_path,'/Context_met_call_',SMFproj@projectName,'_',as.character(seqnames( tiles[i])),'_Co',as.character(cO),'.rds',sep=''))
+})
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
