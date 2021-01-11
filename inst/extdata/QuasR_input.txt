@@ -1,0 +1,2 @@
+FileName	SampleName
+/g/krebs/barzaghi/Rscripts/R_package/SingleMoleculeFootprinting/inst/extdata/example_CTCF_amplicon.bam	CTCF_DE_example

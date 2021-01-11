@@ -1,13 +1,24 @@
 Package: SingleMoleculeFootprinting
-Title: What the Package Does (One Line, Title Case)
+Title: Analysis tools for Single Molecule Footprinting (SMF) data
 Version: 0.0.0.9000
-Authors@R: 
-    person(given = "First",
-           family = "Last",
+Authors@R: c(
+    person(given = "Guido",
+           family = "Barzaghi",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+           email = "guido.barzaghi@embl.de",
+           comment = c(ORCID = "https://orcid.org/0000-0001-6066-3920")),
+    person(given = "Arnaud",
+           family = "Krebs",
+		   role = c("aut"),
+		   email = "arnaud.krebs@embl.de",
+		   comment = c(ORCID = "https://orcid.org/0000-0001-7999-6127"))
+    )
+Imports: 
+	QuasR
+Description: This package provides convenience functions tailored 
+    for SMF data. At present, we provide functions to call methylation 
+    values for the relevant contexts and to sort single molecules    
+    according to their state.
 License: What license it uses
 Encoding: UTF-8
 LazyData: true
@@ -15,3 +26,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+RoxygenNote: 7.1.0

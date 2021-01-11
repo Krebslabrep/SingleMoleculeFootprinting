@@ -1,5 +1,5 @@
 ---
-title: "SingleMoleculeFootprinting - Calling context methylation"
+title: "SingleMoleculeFootprinting"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SingleMoleculeFootprinting}
@@ -12,39 +12,52 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+# knit in the right folder:
+# rmarkdown::render("/g/krebs/barzaghi/Rscripts/R_package/SingleMoleculeFootprinting/vignettes/SingleMoleculeFootprinting.Rmd", output_dir = "/g/krebs/barzaghi/Rscripts/R_package/SingleMoleculeFootprinting/vignettes", output_format = "html_document")
 ```
 
+### Introduction
+*SingleMoleculeFootprinting* is a simple package with convenience function to analyze Single Molecule Footprinting (SMF) data. As of now, we provide analysis tools starting from aligned data. To that end we recommend the user to perform their genomic alignement using the [qAlign](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign) function from QuasR as exemplified in **Our Paper**.
+
+### Installation
+```{r, eval=F}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("SingleMoleculeFootprinting")
+```
+
+### Loading
 ```{r setup, message=F}
-# library(SingleMoleculeFootprinting)
-source("../R/functions/context_methylation_functions.r")
-library(BSgenome.Mmusculus.UCSC.mm10)
-library(QuasR)
+library(SingleMoleculeFootprinting)
 ```
 
-Define arguments
+### Define arguments
+*SingleMoleculeFootprinting* inherits *QuasR*'s philosophy of working with pointer files. Briefly, a pointer file consists of a tab-delimited file with two or three fields, depending on whether the input files are raw paired-end, raw single-end or aligned. For more details, please check the [qAlign documentation](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign).
 ```{r}
-Qinput='../../QuasR_input.txt' #QuasR alignement file containing a sample
+Qinput = system.file("extdata", "QuasR_input.txt", package = "SingleMoleculeFootprinting", mustWork = T)
 out_path=paste("../../")
 cO=19 #minimal coverage
 ```
 
 Create QuasR project: because we provide pre-aligned data, QuasR will not attempt to re-align.
 ```{r}
-SMFproj=qAlign(sampleFile=Qinput,
+SMFproj=QuasR::qAlign(sampleFile=Qinput,
                 genome="BSgenome.Mmusculus.UCSC.mm10",
                 projectName = "CTCF_amplicon",
                 paired="fr",
                 bisulfite="undir")
-SMFaln=as.data.frame(alignments(SMFproj)[[1]])
+SMFaln=SMFproj@alignments
 SMFproj@aligner = "Rbowtie"
 ```
 
-1. Single site example
+### Single site example
 ```{r}
 Region_of_interest = GRanges(seqnames = "chr1", ranges = IRanges(start = 31210117, end = 31210616), strand = "+")
 
 # Quantify methylation in region of interest
-meth_gr <- qMeth(SMFproj, mode="allC", Region_of_interest)
+meth_gr <- QuasR::qMeth(SMFproj, mode="allC", Region_of_interest)
 # Estract methylation info from contexts of interest only, the function also collapses strands and filters for coverage
 contextMet=CallContextMethylation(meth_gr, cO, Mmusculus)
 contextMet
@@ -52,14 +65,47 @@ contextMet
 
 Example avg plotting, add TFBSs
 ```{r}
-# system.file("extdata", "example_amplicon_TFBSs.rds", package = "SingleMoleculeFootprinting", mustWork = T) # DOESN'T WORK
+# system.file("extdata", "example_amplicon_TFBSs.rds", package = "SingleMoleculeFootprinting", mustWork = T) # DOESN'T WORK, bc the package doesn't exist yet
 TFBSs = readRDS("../inst/extdata/example_amplicon_TFBSs.rds")
+
+# LALALALA PLOTTING FUNCTION MISSING
 ```
 
+#### Sort single site over 1 TF
+```{r}
+# Add sample name to range (same as for qAlign prj)
+regDF = cbind(as.data.frame(Region_of_interest)[,1:3], sample = SMFaln$SampleName)
+# Add names to TFBSs obj
+names(TFBSs) = paste0("TFBS_", 1:length(TFBSs))
+sortedReads = SortSingleMolecules(regDF = regDF, sampleSheet = Qinput, target_range = TFBSs)
+```
 
+#### Sort single site over TF pair
+```{r}
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+out_path=paste("../../")
+cO=19 #minimal coverage
+SMFproj=QuasR::qAlign(sampleFile=Qinput,
+                genome="BSgenome.Mmusculus.UCSC.mm10",
+                projectName = "NRF1_pair_amplicon",
+                paired="fr",
+                bisulfite="undir")
+SMFaln=SMFproj@alignments
+SMFproj@aligner = "Rbowtie"
 
-2. Genome-wide example: 
-given the example data only cover one genomic region, we are going to restrict the following chunck to the interested chromosome only
+TFBSs = readRDS("../inst/extdata/example_amplicon_TFBSs_pairs.rds")
+Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "+")
+regDF = cbind(as.data.frame(Region_of_interest)[,1:3], sample = SMFaln$SampleName)
+# Add names to TFBSs obj
+sortedReads = SortSingleMolecules(regDF = regDF, sampleSheet = Qinput, target_range = TFBSs)
+length(sortedReads[[1]][[1]])
+```
+
+--------
+********
+
+### Genome-wide example
+Given the example data only cover one genomic region, we are going to restrict the following chunck to the interested chromosome only
 This process can be quite lengthy and computationally demanding, it is advisable to run it on the cluster.
 ```{r, eval=F}
 # Partition a genome by chromosome ("natural partitioning")
@@ -73,7 +119,7 @@ lapply(1:length(tiles),function(i){
 
   print(i)
   
-	meth_gr <- qMeth(SMFproj, mode="allC", tiles[i], clObj=cluObj)
+	meth_gr <- QuasR::qMeth(SMFproj, mode="allC", tiles[i], clObj=cluObj)
 	contextMet=CallContextMethylation(meth_gr, cO, Mmusculus)
 	saveRDS(contextMet, paste0(out_path,'/Context_met_call_',SMFproj@projectName,'_',as.character(seqnames( tiles[i])),'_Co',as.character(cO),'.rds',sep=''))
 
@@ -106,6 +152,11 @@ lapply(1:length(tiles), function(i){
 })
 ```
 
+
+* Bulleted list
+* Item 2
+    * Nested bullets need a 4-space indent.
+    * Item 2b
 
 
 

@@ -1,5 +1,5 @@
 getCMethMatrix<-function(proj,range,samp){
-	Cs=qMeth(proj, query=range,mode="allC",reportLevel="alignment")
+	Cs=QuasR::qMeth(proj, query=range,mode="allC",reportLevel="alignment")
 	# use data.table to get a 1,0 matrix of methylation profiles
 	all.cids=unique(Cs[[samp]]$Cid) # get all possible C locations
 	# make the data.table object
@@ -108,7 +108,13 @@ CoverageFilter <- function(meth_gr, thr, context){
 
 }
 
-CallContextMethylation=function(meth_gr,cO,genome=Mmusculus){
+#' Call Context Methylation
+#' @export
+#'
+#' @param meth_gr Methylation GRange object as returned by QuasR function qMeth
+#' @param c0 coverage threshold
+#' @param genome Primary sequence of genome of interest. E.g. for BSgenome.Mmusculus.UCSC.mm10 this would be Mmusculus
+CallContextMethylation=function(meth_gr,cO,genome){
 
   # Subset Cytosines by genomic context
   meth_gr_CGs = findContextCytosines(meth_gr, genome, "CG")

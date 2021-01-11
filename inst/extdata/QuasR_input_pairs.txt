@@ -1,0 +1,2 @@
+FileName	SampleName
+/g/krebs/barzaghi/Rscripts/R_package/SingleMoleculeFootprinting/inst/extdata/example_NRF1pair_amplicon.bam	NRF1pair_DE_example
