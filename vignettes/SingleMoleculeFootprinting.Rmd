@@ -1,6 +1,9 @@
 ---
 title: "SingleMoleculeFootprinting"
-output: rmarkdown::html_vignette
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 vignette: >
   %\VignetteIndexEntry{SingleMoleculeFootprinting}
   %\VignetteEngine{knitr::rmarkdown}
@@ -29,83 +32,84 @@ BiocManager::install("SingleMoleculeFootprinting")
 ```
 
 ### Loading
-```{r setup, message=F}
+```{r setup, message=F, eval=F}
 library(SingleMoleculeFootprinting)
 ```
 
 ### Define arguments
 *SingleMoleculeFootprinting* inherits *QuasR*'s philosophy of working with pointer files. Briefly, a pointer file consists of a tab-delimited file with two or three fields, depending on whether the input files are raw paired-end, raw single-end or aligned. For more details, please check the [qAlign documentation](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign).
-```{r}
-Qinput = system.file("extdata", "QuasR_input.txt", package = "SingleMoleculeFootprinting", mustWork = T)
-out_path=paste("../../")
-cO=19 #minimal coverage
+```{r, eval=F}
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+out_path=paste("/g/krebs/barzaghi/Rscripts/R_package/VignetteOutDir/")
+CoverageThreshold = 19
+
+Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "+")
+TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106216, 88106253), c(88106226, 88106263)), strand = "-")
+elementMetadata(TFBSs)$name = c("NRF1", "NRF1")
+names(TFBSs) = c(paste0("TFBS_", c(4305215, 4305216)))
+TFBSs = GenomicRanges::GRangesList(TFBS_cluster_13723 = TFBSs)
 ```
 
 Create QuasR project: because we provide pre-aligned data, QuasR will not attempt to re-align.
-```{r}
+```{r, eval=F}
 SMFproj=QuasR::qAlign(sampleFile=Qinput,
                 genome="BSgenome.Mmusculus.UCSC.mm10",
                 projectName = "CTCF_amplicon",
                 paired="fr",
+                aligner = "Rbowtie",
                 bisulfite="undir")
-SMFaln=SMFproj@alignments
+SMFaln=QuasR::alignments(SMFproj)[[1]]
 SMFproj@aligner = "Rbowtie"
 ```
 
-### Single site example
-```{r}
-Region_of_interest = GRanges(seqnames = "chr1", ranges = IRanges(start = 31210117, end = 31210616), strand = "+")
+### QCs
+```{r, eval=F}
+# 1. If SMF was performed on an large genome (e.g Mouse) you probably did some bait capture: here we check how efficient that was
+BaitRegions = import("/g/krebs/barzaghi/DB/misc/mm10_baits.bed.gz", format="bed")
+BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+BaitCaptureEfficiency
 
-# Quantify methylation in region of interest
-meth_gr <- QuasR::qMeth(SMFproj, mode="allC", Region_of_interest)
-# Estract methylation info from contexts of interest only, the function also collapses strands and filters for coverage
-contextMet=CallContextMethylation(meth_gr, cO, Mmusculus)
-contextMet
+# In this case the capture efficiency equals to 1 because the example data was purpossefully subsetted for an interesting region. Under normal condition, one expects this value to be lower than 1: for the mouse genome for example we observe values around 0.7.
+
+# 2. Coversion rate: this asks how much out-of-context methylation has occurred during the experiment. Beware, this is a much slower computation than the above. Expected value ~95
+ConversionRateEstimate = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 6)
+ConversionRateEstimate # 92.4
+
+# Intersample correlation of methylation fractions: 
+
 ```
 
-Example avg plotting, add TFBSs
-```{r}
-# system.file("extdata", "example_amplicon_TFBSs.rds", package = "SingleMoleculeFootprinting", mustWork = T) # DOESN'T WORK, bc the package doesn't exist yet
-TFBSs = readRDS("../inst/extdata/example_amplicon_TFBSs.rds")
 
-# LALALALA PLOTTING FUNCTION MISSING
-```
+### Methylation calling - amplicon example 
+```{r, eval=F}
+# Average methylation for permissive contexts (use all for TKO exp.)
+CCM = CallContextMethylation(QuasRprj = SMFproj, range = Region_of_interest, coverage = CoverageThreshold, genome = Mmusculus)
+CSM = getGCMatrix(QuasRprj = SMFproj, range = Region_of_interest, sample = SMFaln$SampleName[1], genome = Mmusculus)
+mergedCSM = mergeGC_CGmat(CSM) # if TKO
+mergedCCM = sort(append(CCM$CG, CCM$GC))
 
-#### Sort single site over 1 TF
-```{r}
+# Sort reads
 # Add sample name to range (same as for qAlign prj)
 regDF = cbind(as.data.frame(Region_of_interest)[,1:3], sample = SMFaln$SampleName)
-# Add names to TFBSs obj
-names(TFBSs) = paste0("TFBS_", 1:length(TFBSs))
+
 sortedReads = SortSingleMolecules(regDF = regDF, sampleSheet = Qinput, target_range = TFBSs)
+
+# clean up
+GCGs = mergedCCM[which(!is.na(mergedCCM$MethylationFraction) & mergedCCM$type == "GCG")]
+reducedGCGs = GenomicRanges::reduce(GCGs)
+elementMetadata(reducedGCGs)$MethylationFraction = as.matrix(unlist(lapply(seq(1, length(GCGs), 2), function(n){mean(c(GCGs$MethylationFraction[n], GCGs$MethylationFraction[n+1]))})))
+elementMetadata(reducedGCGs)$type = "GCG"
+cleanedCCM = sort(c(mergedCCM[which(!is.na(mergedCCM$MethylationFraction) & mergedCCM$type != "GCG")], reducedGCGs))
+
+PlotSingleTF(AvgMeth = cleanedCCM, SingleMoleculeMeth = mergedCSM, sample = SMFaln$SampleName, range = Region_of_interest, TFBSs = TFBSs, SortedReads = sortedReads, OutPath = paste0(out_path, "NRF1pair_singleSite.pdf"))
 ```
 
-#### Sort single site over TF pair
-```{r}
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
-out_path=paste("../../")
-cO=19 #minimal coverage
-SMFproj=QuasR::qAlign(sampleFile=Qinput,
-                genome="BSgenome.Mmusculus.UCSC.mm10",
-                projectName = "NRF1_pair_amplicon",
-                paired="fr",
-                bisulfite="undir")
-SMFaln=SMFproj@alignments
-SMFproj@aligner = "Rbowtie"
-
-TFBSs = readRDS("../inst/extdata/example_amplicon_TFBSs_pairs.rds")
-Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "+")
-regDF = cbind(as.data.frame(Region_of_interest)[,1:3], sample = SMFaln$SampleName)
-# Add names to TFBSs obj
-sortedReads = SortSingleMolecules(regDF = regDF, sampleSheet = Qinput, target_range = TFBSs)
-length(sortedReads[[1]][[1]])
-```
 
 --------
 ********
 
 ### Genome-wide example
-Given the example data only cover one genomic region, we are going to restrict the following chunck to the interested chromosome only
+Given the example data only cover one genomic region, we are going to restrict the following chunk to the interested chromosome only
 This process can be quite lengthy and computationally demanding, it is advisable to run it on the cluster.
 ```{r, eval=F}
 # Partition a genome by chromosome ("natural partitioning")
