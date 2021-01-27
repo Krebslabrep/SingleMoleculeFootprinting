@@ -13,15 +13,17 @@ Authors@R: c(
 		   email = "arnaud.krebs@embl.de",
 		   comment = c(ORCID = "https://orcid.org/0000-0001-7999-6127"))
     )
-biocViews:
-	BSgenome,
+Depends:
+  R (>= 3.5.0)
+Imports: 
+  BiocGenerics,
 	Biostrings,
 	GenomicRanges,
-	QuasR
-Imports: 
+	QuasR,
 	data.table,
 	dplyr,
-	grDevices
+	grDevices,
+	plyr
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
@@ -30,7 +32,9 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Suggests: 
+    BSgenome,
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0

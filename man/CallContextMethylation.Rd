@@ -4,15 +4,31 @@
 \alias{CallContextMethylation}
 \title{Call Context Methylation}
 \usage{
-CallContextMethylation(meth_gr, cO, genome)
+CallContextMethylation(
+  sampleSheet,
+  sample,
+  genome,
+  range,
+  coverage = 20,
+  ConvRate.thr = 0.2
+)
 }
 \arguments{
-\item{meth_gr}{Methylation GRange object as returned by QuasR function qMeth}
+\item{sampleSheet}{QuasR pointer file}
 
-\item{genome}{Primary sequence of genome of interest. E.g. for BSgenome.Mmusculus.UCSC.mm10 this would be Mmusculus}
+\item{sample}{for now this works for sure on one sample at the time only}
 
-\item{c0}{coverage threshold}
+\item{genome}{BSgenome}
+
+\item{range}{GenimocRange representing the genomic region of interest}
+
+\item{coverage}{coverage threshold. Defaults to 20.}
+
+\item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.2}
+}
+\value{
+List with two Granges objects: GC and CG average methylation
 }
 \description{
-Call Context Methylation
+Can deal with multiple samples
 }
