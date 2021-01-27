@@ -7,8 +7,8 @@
 DetectExperimentType(Samples)
 }
 \arguments{
-\item{Samples}{}
+\item{Samples}{SampleNames field from QuasR sampleSheet}
 }
 \description{
-based on SampleNames in sampleSheet
+Detect type of experiment
 }

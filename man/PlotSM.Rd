@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_single_molecule_examples.r
 \name{PlotSM}
 \alias{PlotSM}
-\title{Wrapper for PlotSingleMoleculeStack}
+\title{Wrapper for PlotSingleMoleculeStack function}
 \usage{
 PlotSM(MethSM, range, SortedReads = NULL)
 }
@@ -14,5 +14,5 @@ PlotSM(MethSM, range, SortedReads = NULL)
 \item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
 }
 \description{
-adds the covenience of arranging reads before plotting
+adds the convenience of arranging reads before plotting
 }

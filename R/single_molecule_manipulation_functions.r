@@ -5,6 +5,7 @@
 #' @param bin vector of two integers representing the coordinate of a bin relative to the center of the TFBS
 #'
 #' @import GenomicRanges
+#' @import IRanges
 #'
 #' @return Reads covering bin with their summarized methylation status
 #'

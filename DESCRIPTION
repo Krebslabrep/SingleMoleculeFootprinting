@@ -19,11 +19,13 @@ Imports:
   BiocGenerics,
 	Biostrings,
 	GenomicRanges,
-	QuasR,
+	IRanges,
 	data.table,
 	dplyr,
 	grDevices,
-	plyr
+	plyr,
+	RColorBrewer,
+	QuasR
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
@@ -32,7 +34,9 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Suggests: 
+    BSgenome.Mmusculus.UCSC.mm10,
     BSgenome,
+    devtools,
     knitr,
     rmarkdown,
     testthat

@@ -59,6 +59,7 @@ GetSingleMolMethMat<-function(QuasRprj,range,sample){
 #'
 #' @import GenomicRanges
 #' @import Biostrings
+#' @import IRanges
 #'
 #' @return Filtered MethSM
 #'
@@ -79,9 +80,7 @@ FilterByConversionRate = function(MethSM, chr, genome, thr=0.2){
 
 #' Detect type of experiment
 #'
-#' based on SampleNames in sampleSheet
-#'
-#' @param Samples
+#' @param Samples SampleNames field from QuasR sampleSheet
 #'
 DetectExperimentType = function(Samples){
 
@@ -131,6 +130,7 @@ FilterContextCytosines <- function(MethGR, genome, context){
 #'
 #' @import GenomicRanges
 #' @import BiocGenerics
+#' @import IRanges
 #'
 #' @return MethGR with fixed overhang
 #'
@@ -153,7 +153,7 @@ FixOverhang = function(MethGR, context, which){
     MethGR = append(MethGR, overhang_fix)
   }
 
-  return(methGR)
+  return(MethGR)
 
 }
 
@@ -208,6 +208,7 @@ CollapseStrands = function(MethGR, context){
 #' @import GenomicRanges
 #' @import Biostrings
 #' @import plyr
+#' @import IRanges
 #'
 #' @return Strand collapsed MethSM
 CollapseStrandsSM = function(MethSM, context, genome, chr){

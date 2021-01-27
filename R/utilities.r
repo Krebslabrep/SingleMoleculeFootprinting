@@ -10,6 +10,10 @@ VectorizeReads=function(target,mergedMat){ #vectorize reads from matrices in ord
   list(GCstartP,GCreadID,GCmet)
 }
 
+#' Design states for single TF case
+#'
+#' @return list of states
+#'
 OneTFstates = function(){
 
   allPos=expand.grid(c(0,1),c(0,1),c(0,1))
@@ -27,6 +31,10 @@ OneTFstates = function(){
 
 }
 
+#' Design states for TF pair case
+#'
+#' @return list of states
+#'
 TFpairStates = function(){
 
   #define states for each factor separately
