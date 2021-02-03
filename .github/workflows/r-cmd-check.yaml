@@ -49,8 +49,8 @@ jobs:
         run: |
           install.packages(c('BiocManager', 'remotes', 'rcmdcheck'))
           BiocManager::install(version = 'devel', ask = FALSE, update = FALSE)
-          library(remotes)
-          update(dev_package_deps(dependencies = TRUE))
+          toInstall <- remotes::dev_package_deps(dependencies = TRUE)[,"package"]
+          BiocManager::install(toInstall)
         shell: Rscript {0}
 
       - name: Run R CMD check
