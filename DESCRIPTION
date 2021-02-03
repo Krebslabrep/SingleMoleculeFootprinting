@@ -33,7 +33,7 @@ Description: This package provides convenience functions tailored
     values for the relevant contexts and to sort single molecules    
     according to their state.
 biocViews: DNAMethylation, Coverage, NucleosomePositioning, DataRepresentation, 
-Epigenetics, MethylSeq, QualityControl
+  Epigenetics, MethylSeq, QualityControl
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
