@@ -1,4 +1,4 @@
 *.html
 *.R
-SingleMoleculeFootprinting_cache
-SingleMoleculeFootprinting_files
+SingleMoleculeFootprinting_cache*
+SingleMoleculeFootprinting_files*

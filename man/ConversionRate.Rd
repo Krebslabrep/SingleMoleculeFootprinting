@@ -4,7 +4,7 @@
 \alias{ConversionRate}
 \title{Conversion rate}
 \usage{
-ConversionRate(sampleSheet, genome, chr = 19)
+ConversionRate(sampleSheet, genome, chr = 19, cores = 1)
 }
 \arguments{
 \item{sampleSheet}{QuasR sample sheet}
@@ -12,6 +12,8 @@ ConversionRate(sampleSheet, genome, chr = 19)
 \item{genome}{BS genome}
 
 \item{chr}{chromosome to calculate conversion rate on (default: 19)}
+
+\item{cores}{number of cores for parallel processing. Defaults to 1}
 }
 \description{
 calculate sequencing library conversion rate on a chromosome of choice
