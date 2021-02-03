@@ -17,12 +17,9 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   # comment = "#>", 
   tidy = F, 
-  cache = T, 
+  cache = F, 
   results = 'markup'
 )
-
-# knit in the right folder:
-# rmarkdown::render("/g/krebs/barzaghi/Rscripts/R_package/SingleMoleculeFootprinting/vignettes/SingleMoleculeFootprinting.Rmd", output_dir = "/g/krebs/barzaghi/Rscripts/R_package/SingleMoleculeFootprinting/vignettes", output_format = "html_document")
 ```
 
 ## Graphical things to fix
@@ -51,7 +48,7 @@ prj = QuasR::qAlign(sampleFile = Qinput,
               bisulfite = "undir", 
               alignmentParameter = "-e 70 -X 1000 -k 2 --best -strata",
               alignmentsDir = "./", 
-              cacheDir = "/tmp",
+              cacheDir = tempdir(),
               clObj = cl)
 ```
 
@@ -60,12 +57,12 @@ prj = QuasR::qAlign(sampleFile = Qinput,
 ### Developer installation
 For develop installation, visit our [repository](https://github.com/Krebslabrep/SingleMoleculeFootprinting) on GitHub and copy link for cloning.
 ```{r, eval=F}
-INSTALLATION_LOCATION = ""
+CLONING_LOCATION = "" # some arbitrary location (this is just where we'll clone the repo)
 REPO_LINK = ""
 
-system(paste0("cd ", INSTALLATION_LOCATION))
+system(paste0("cd ", CLONING_LOCATION))
 system(paste0("git clone ", REPO_LINK))
-devtools::install(paste0(INSTALLATION_LOCATION, "/SingleMoleculeFootprinting/"))
+devtools::install("SingleMoleculeFootprinting/")
 ```
 
 ### Bioconductor installation (NOT AVAILABLE YET)
@@ -88,26 +85,31 @@ devtools::load_all()
 *SingleMoleculeFootprinting* inherits *QuasR*'s philosophy of working with pointer files. Briefly, a pointer file consists of a tab-delimited file with two or three fields, depending on whether the input data is in the unaligned paired-end format, the unaligned single-end or aligned format. For more details, please check the `qAlign` [documentation](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign). Here we show how our pointer file looks like.
 ```{r, eval=T}
 Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
-suppressMessages(read_delim(Qinput, delim = "\t"))
+suppressMessages(readr::read_delim(Qinput, delim = "\t"))
 ```
 
 ## Library QCs
 Before investing in a deep sequencing run for a SMF experiment, it is advisable to first perform a shallow sequencing run and to perform quality controls on the sequencing libraries.\
 
+### QuasR QC report
+It is always a good idea to produce a QC report after aligning. We can suggest the user to employ the [`qQCreport`](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qQCReport) function from *QuasR*.
+```{r, eval=F}
+qQCReport(Qinput, pdfFilename=NULL, chunkSize=1e6L, useSampleNames=FALSE, clObj=NULL)
+```
+
+
 ### Bait capture efficiency
 If SMF was performed on an large genome (e.g Mouse) you probably did some bait capture: here we check how efficient that process was by essentially computing the ratio of genomic alignments inside bait regions over the total ones.
 ```{r, eval=T}
-# BaitRegions = import("/g/krebs/barzaghi/DB/misc/mm10_baits.bed.gz", format="bed")
-# BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
-BaitCaptureEfficiency = 1
+BaitRegions = import(system.file("extdata", "mm10_baits.bed.gz", package = "SingleMoleculeFootprinting", mustWork = T), format="bed")
+BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
 ```
 In this case the capture efficiency equals to `r toString(BaitCaptureEfficiency)` because the example data was purposefully subsetted for an interesting region which falls entirely within baits. Under normal condition, one expects this value to be lower than 1: for the mouse genome for example we observe values around 0.7.
 
 ### Conversion rate precision
 Here we ask how much of the observed Cytosine methylation falls in the expected contexts (*CpG* or *GpC*). Beware, this is a much slower computation than the above.
 ```{r, eval=T}
-# ConversionRateEstimate = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 6)
-ConversionRateEstimate = 92.5
+ConversionRateEstimate = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 6)
 ```
 For this sample, the observed conversion rate is `r toString(ConversionRateEstimate)`. This value happens to be slightly below the expected value of ~95
 
@@ -134,7 +136,7 @@ knitr::kable(data.frame(ExperimentType = c("Single enzyme SMF", "Double enzyme S
 * Strand collapsing
 * Filtering Cytosines for coverage
 ```{r, eval=T}
-MySample = suppressMessages(read_tsv(Qinput)[[2]])
+MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
 Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
 
 Methylation = CallContextMethylation(sampleSheet = Qinput, 
@@ -146,6 +148,14 @@ Methylation = CallContextMethylation(sampleSheet = Qinput,
 Methylation[[1]]
 Methylation[[2]][1:10, 1:10]
 ```
+
+```{r}
+n = 1000
+print(paste0("subsetting to ", n, " sampled reads to make vignette lighter. The user should skip this"))
+readsSubset = sample(1:nrow(Methylation[[2]]), n)
+Methylation[[2]] = Methylation[[2]][readsSubset,]
+```
+
 
 ### Plotting single sites
 Already at this stage it is possible to visually inspect results. To that end, we provide the functions `PlotAvgSMF` and `PlotSM` to plot respectively the average and single molecule SMF information at a given site. 
@@ -184,6 +194,7 @@ N.b. non-populated states will are not returned. \
 
 The output of each of these sorting functions can be passed directly as the `SortedReads` argument of the `PlotSM` function.
 ```{r}
+
 PlotSM(MethSM = Methylation[[2]], range = Region_of_interest, SortedReads = SortedReads_TFCluster)
 ```
 
@@ -201,13 +212,6 @@ PlotSingleSiteSMF(ContextMethylation = Methylation,
                   TFBSs = TFBSs, 
                   saveAs = "FullPath.pdf")
 ```
-
-
-## Analysis of single site (Genome-wide data)
-```{r}
-
-```
-
 
 --------
 ********
@@ -259,5 +263,4 @@ lapply(1:length(tiles), function(i){
   file.remove(paste0(out_path,'/Context_met_call_',SMFproj@projectName,'_',as.character(seqnames( tiles[i])),'_Co',as.character(cO),'.rds',sep=''))
 })
 ```
-
 

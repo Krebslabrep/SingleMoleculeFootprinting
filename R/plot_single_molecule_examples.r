@@ -32,10 +32,10 @@ HierarchicalClustering = function(MethSM){
 PlotAvgSMF = function(MethGR, range, TFBSs){
 
   plot(NA,xlim=c(start(range),end(range)),ylim=c(-0.2,1),xlab='',ylab='SMF (%)',main=range)
-  points(start(MethGR), 1-elementMetadata(MethGR)[[1]], type='l')
-  points(start(MethGR), 1-elementMetadata(MethGR)[[1]], pch=20)
+  points(start(MethGR), 1-elementMetadata(MethGR)[[1]], type='l') #, lwd=4
+  points(start(MethGR), 1-elementMetadata(MethGR)[[1]], pch=20) #, lwd=5
   abline(h=0)
-  rect(start(TFBSs),-0.2,end(TFBSs),-0.15)
+  rect(start(TFBSs),-0.2,end(TFBSs),-0.15)#, lwd=2
   text(start(resize(TFBSs,1,fix='center')),rep(-0.1,length(TFBSs)),TFBSs$name,cex=0.8)
 
 }
@@ -99,6 +99,8 @@ PlotSM = function(MethSM, range, SortedReads = NULL){
 #' @param OrderedReads Reads ordered by states
 #'
 #' @importFrom RColorBrewer brewer.pal
+#'
+#' @export
 #'
 SingleTFStateQuantificationPlot = function(states, OrderedReads){
 
@@ -205,7 +207,7 @@ PlotSingleSiteSMF = function(ContextMethylation, sample, range, SortedReads=NULL
   extende_range = resize(range, 600, fix='center')
 
   message("Subsetting data by range (extended)")
-  subset_TFBSs = subsetByOverlaps(TFBSs, extende_range, ignore.strand=T)
+  subset_TFBSs = subsetByOverlaps(TFBSs, extende_range, ignore.strand=TRUE)
   MethGR = subsetByOverlaps(ContextMethylation[[1]], extende_range)
   MethSM = ContextMethylation[[2]][, as.character(start(ContextMethylation[[1]]))]
 
