@@ -18,27 +18,31 @@ Depends:
 Imports: 
   BiocGenerics,
 	Biostrings,
+  BSgenome,
+  GenomeInfoDb,
 	GenomicRanges,
-	IRanges,
 	data.table,
 	dplyr,
 	grDevices,
 	plyr,
+	IRanges,
 	RColorBrewer,
 	QuasR
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
     according to their state.
+biocViews: DNAMethylation, Coverage, NucleosomePositioning, DataRepresentation, 
+Epigenetics, MethylSeq, QualityControl
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Suggests: 
     BSgenome.Mmusculus.UCSC.mm10,
-    BSgenome,
     devtools,
     knitr,
     rmarkdown,
+    readr,
     testthat
 VignetteBuilder: knitr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

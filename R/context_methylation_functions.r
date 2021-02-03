@@ -39,7 +39,7 @@ GetQuasRprj = function(sampleSheet, genome){
 #'
 GetSingleMolMethMat<-function(QuasRprj,range,sample){
 
-  Cs=QuasR::qMeth(QuasRprj[grep(sample, QuasRprj@alignments$SampleName)], query=range, mode="allC",reportLevel="alignment", collapseBySample = T)
+  Cs=QuasR::qMeth(QuasRprj[grep(sample, QuasRprj@alignments$SampleName)], query=range, mode="allC",reportLevel="alignment", collapseBySample = TRUE)
   # use data.table to get a 1,0 matrix of methylation profiles
   # all.cids=unique(Cs[[sample]]$Cid) # get all possible C locations
   # make the data.table object
@@ -59,18 +59,18 @@ GetSingleMolMethMat<-function(QuasRprj,range,sample){
 #'
 #' @import GenomicRanges
 #' @import Biostrings
-#' @import IRanges
+#' @importFrom IRanges IRanges
 #'
 #' @return Filtered MethSM
 #'
 FilterByConversionRate = function(MethSM, chr, genome, thr=0.2){
 
   CytosineRanges = GRanges(chr,IRanges(as.numeric(colnames(MethSM)),width = 1))
-  GenomicContext = Biostrings::getSeq(genome, IRanges::resize(CytosineRanges,3,fix='center'))
+  GenomicContext = Biostrings::getSeq(genome, resize(CytosineRanges,3,fix='center'))
   IsInContext = Biostrings::vcountPattern('GC',GenomicContext)==1 | vcountPattern('CG',GenomicContext)==1
 
   # filter based on conversion
-  ConvRate=rowMeans(MethSM[,!IsInContext],na.rm=T)
+  ConvRate=rowMeans(MethSM[,!IsInContext],na.rm=TRUE)
   message(paste0(round((sum(ConvRate>=thr)/length(ConvRate))*100, digits = 2), "% of reads found with conversion rate above ", thr))
   FilteredSM = MethSM[ConvRate<thr,]
 
@@ -112,8 +112,8 @@ FilterContextCytosines <- function(MethGR, genome, context){
 
   CytosineRanges = GRanges(seqnames(MethGR), ranges(MethGR), strand(MethGR)) # performing operation without metadata to make it lighter
 
-  GenomicContext = Biostrings::getSeq(genome, IRanges::resize(CytosineRanges, width = 5, fix = "center"), as.character = F)# I checked: it is strand-aware
-  IsInContext = unlist(lapply(Biostrings::vmatchPattern(context, subject = GenomicContext, fixed = F), function(i){length(i)>0}))
+  GenomicContext = Biostrings::getSeq(genome, IRanges::resize(CytosineRanges, width = 5, fix = "center"), as.character = FALSE)# I checked: it is strand-aware
+  IsInContext = unlist(lapply(Biostrings::vmatchPattern(context, subject = GenomicContext, fixed = FALSE), function(i){length(i)>0}))
   # elementMetadata(CytosineRanges)$GenomicContext = GenomicContext
   # elementMetadata(CytosineRanges)$IsInContext = IsInContext
   MethGR_InContext = MethGR[IsInContext]
@@ -130,7 +130,7 @@ FilterContextCytosines <- function(MethGR, genome, context){
 #'
 #' @import GenomicRanges
 #' @import BiocGenerics
-#' @import IRanges
+#' @importFrom IRanges IRanges
 #'
 #' @return MethGR with fixed overhang
 #'
@@ -207,8 +207,8 @@ CollapseStrands = function(MethGR, context){
 #'
 #' @import GenomicRanges
 #' @import Biostrings
-#' @import plyr
-#' @import IRanges
+#' @importFrom plyr rbind.fill.matrix
+#' @importFrom IRanges IRanges
 #'
 #' @return Strand collapsed MethSM
 CollapseStrandsSM = function(MethSM, context, genome, chr){
@@ -253,14 +253,16 @@ CoverageFilter <- function(MethGR, thr){
 
   #filter for coverage
   CovFilter=as.matrix(Tcounts)>thr
-  lapply(seq_along(ncol(MethylationMatrix)), function(i){MethylationMatrix[!CovFilter[,i],i] = NA})
+  for (i in seq_along(ncol(MethylationMatrix))){
+    MethylationMatrix[!CovFilter[,i],i] = NA
+  }
 
   #bind the GRanges with the scores
   elementMetadata(MethGR) = NULL
   elementMetadata(MethGR) = MethylationMatrix
 
   # do the actual filtering
-  MethGRFiltered = MethGR[!rowSums(is.na(as_tibble(elementMetadata(MethGR)))) == ncol(as_tibble(elementMetadata(MethGR)))]
+  MethGRFiltered = MethGR[!(rowSums(is.na(as.matrix(elementMetadata(MethGR)))) == length(elementMetadata(MethGR)))]
 
   return(MethGRFiltered)
 
@@ -292,7 +294,7 @@ CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20,
   Samples = QuasR::alignments(QuasRprj)[[1]]$SampleName
 
   message("Calling methylation at all Cytosines")
-  MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = T, keepZero = T)
+  MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = TRUE, keepZero = TRUE)
   MethSM = GetSingleMolMethMat(QuasRprj, range, sample) # this selects the sample internally ---> TO FIX
   MethSM = FilterByConversionRate(MethSM, chr = seqnames(range), genome = genome, thr = ConvRate.thr)
 
@@ -331,6 +333,25 @@ CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20,
   if (ExpType == "DE"){
     message("Merging matrixes")
     MergedGR = sort(append(ContextFilteredMethGR_strict[[1]], ContextFilteredMethGR_strict[[2]]))
+
+    # When some reads only cover either DGCHN or NWCGW positions cbind complains
+    if(nrow(ContextFilteredMethSM_strict[[1]]) != nrow(ContextFilteredMethSM_strict[[2]]) | !(all(sort(rownames(ContextFilteredMethSM_strict[[1]])) %in% sort(rownames(ContextFilteredMethSM_strict[[2]]))))){
+
+      # Which reads cover only one context?
+      DGCHNonly_reads = rownames((ContextFilteredMethSM_strict[[1]]))[!(rownames((ContextFilteredMethSM_strict[[1]])) %in% rownames((ContextFilteredMethSM_strict[[2]])))]
+      NWCGWonly_reads = rownames((ContextFilteredMethSM_strict[[2]]))[!(rownames((ContextFilteredMethSM_strict[[2]])) %in% rownames((ContextFilteredMethSM_strict[[1]])))]
+      # Fill two dummy matrices to make the reads equal in the ContextFilteredMethSM_strict matrices
+      DGCHNonly_mat = matrix(data = NA, nrow = length(DGCHNonly_reads), ncol = ncol(ContextFilteredMethSM_strict[[2]]), dimnames = list(DGCHNonly_reads, colnames(ContextFilteredMethSM_strict[[2]])))
+      NWCGWonly_mat = matrix(data = NA, nrow = length(NWCGWonly_reads), ncol = ncol(ContextFilteredMethSM_strict[[1]]), dimnames = list(NWCGWonly_reads, colnames(ContextFilteredMethSM_strict[[1]])))
+      # merge the ContextFilteredMethSM_strict matrices to the respective dummy
+      ContextFilteredMethSM_strict[[1]] = BiocGenerics::rbind(ContextFilteredMethSM_strict[[1]], NWCGWonly_mat)
+      ContextFilteredMethSM_strict[[2]] = BiocGenerics::rbind(ContextFilteredMethSM_strict[[2]], DGCHNonly_mat)
+
+    }
+
+    # Sort reads alphanumerically before binding, because cbind doesn't join (I've tested) matrices by rownames
+    ContextFilteredMethSM_strict[[1]] = ContextFilteredMethSM_strict[[1]][sort(rownames(ContextFilteredMethSM_strict[[1]])),]
+    ContextFilteredMethSM_strict[[2]] = ContextFilteredMethSM_strict[[2]][sort(rownames(ContextFilteredMethSM_strict[[2]])),]
     MergedSM = BiocGenerics::cbind(ContextFilteredMethSM_strict[[1]], ContextFilteredMethSM_strict[[2]])
     MergedSM = MergedSM[,as.character(sort(as.numeric(colnames(MergedSM))))]
   }

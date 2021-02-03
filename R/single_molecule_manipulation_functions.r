@@ -5,7 +5,7 @@
 #' @param bin vector of two integers representing the coordinate of a bin relative to the center of the TFBS
 #'
 #' @import GenomicRanges
-#' @import IRanges
+#' @importFrom IRanges IRanges
 #'
 #' @return Reads covering bin with their summarized methylation status
 #'
@@ -21,7 +21,7 @@ BinMethylation = function(MethSM, TFBS, bin){
 
   # Summarise methylation status of each read
   if (length(binCytosines) > 1){
-    binSummarisedMeth = round(rowMeans(MethSM[,binCytosines], na.rm = T) + 0.01) # adding tipping over value of 0.01 so that corner cases where true mean == 0.5 will round to 1
+    binSummarisedMeth = round(rowMeans(MethSM[,binCytosines], na.rm = TRUE) + 0.01) # adding tipping over value of 0.01 so that corner cases where true mean == 0.5 will round to 1
   } else if (length(binCytosines) == 1){
     binSummarisedMeth = MethSM[,binCytosines]
   } else if (length(binCytosines) == 0){

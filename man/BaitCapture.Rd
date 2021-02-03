@@ -4,7 +4,7 @@
 \alias{BaitCapture}
 \title{Bait capture efficiency}
 \usage{
-BaitCapture(sampleSheet, genome, baits)
+BaitCapture(sampleSheet, genome, baits, cores = 1)
 }
 \arguments{
 \item{sampleSheet}{QuasR sample sheet}
@@ -12,6 +12,8 @@ BaitCapture(sampleSheet, genome, baits)
 \item{genome}{BS genome}
 
 \item{baits}{Full path to bed file containing bait coordinates. If chromosome names are in e.g. "1" format, they'll be temporarily converted to "chr1"}
+
+\item{cores}{number of cores for parallel processing. Defaults to 1}
 }
 \description{
 check bait capture efficiency. Expected to be ~70% for mouse genome
