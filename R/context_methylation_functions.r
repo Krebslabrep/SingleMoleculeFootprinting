@@ -44,7 +44,7 @@ GetSingleMolMethMat<-function(QuasRprj,range,sample){
   # all.cids=unique(Cs[[sample]]$Cid) # get all possible C locations
   # make the data.table object
   dt=data.table::data.table(meth=Cs[[sample]]$meth, aid=Cs[[sample]]$aid, cid=Cs[[sample]]$Cid)
-  spread_dt = data.table::dcast(dt, aid ~ cid, value.var = "meth")
+  spread_dt = data.table::dcast(dt, aid ~ cid, value.var = "meth") ## MEMORY issue with GW data
   meth_matrix = as.matrix(spread_dt, rownames = "aid")
   return(meth_matrix)
 
@@ -111,8 +111,8 @@ DetectExperimentType = function(Samples){
 FilterContextCytosines <- function(MethGR, genome, context){
 
   CytosineRanges = GRanges(seqnames(MethGR), ranges(MethGR), strand(MethGR)) # performing operation without metadata to make it lighter
-
-  GenomicContext = Biostrings::getSeq(genome, IRanges::resize(CytosineRanges, width = 5, fix = "center"), as.character = FALSE)# I checked: it is strand-aware
+  seqinfo(CytosineRanges) <- seqinfo(MethGR) 
+  GenomicContext = Biostrings::getSeq(genome, trim(IRanges::resize(CytosineRanges, width = 5, fix = "center")), as.character = FALSE)# I checked: it is strand-aware
   IsInContext = unlist(lapply(Biostrings::vmatchPattern(context, subject = GenomicContext, fixed = FALSE), function(i){length(i)>0}))
   # elementMetadata(CytosineRanges)$GenomicContext = GenomicContext
   # elementMetadata(CytosineRanges)$IsInContext = IsInContext
