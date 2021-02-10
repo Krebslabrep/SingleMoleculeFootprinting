@@ -21,8 +21,8 @@ jobs:
         config:
         - { os: windows-latest, r: 'devel'}
         - { os: macOS-latest, r: 'devel'}
-        - { os: ubuntu-16.04, r: 'devel', cran: "https://packagemanager.rstudio.com/all/__linux__/xenial/latest"}
-        - { os: ubuntu-18.04, r: 'devel', cran: "https://packagemanager.rstudio.com/all/__linux__/bionic/latest"}
+        #- { os: ubuntu-16.04, r: 'devel', cran: "https://packagemanager.rstudio.com/all/__linux__/xenial/latest"}
+        #- { os: ubuntu-18.04, r: 'devel', cran: "https://packagemanager.rstudio.com/all/__linux__/bionic/latest"}
         - { os: ubuntu-20.04, r: 'devel', cran: "https://packagemanager.rstudio.com/all/__linux__/focal/latest"}
 
     env:
@@ -30,6 +30,12 @@ jobs:
       CRAN: ${{ matrix.config.rspm }}
 
     steps:
+
+      - name: Install system libraries
+        if: ${{ runner.os == 'Linux'  }}
+        run: |
+          sudo apt-get install libcurl4-openssl-dev
+
       - name: Configure git
         run: |
           git config --global core.autocrlf false
@@ -47,6 +53,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          options(install.packages.check.source = "no")
           install.packages(c('BiocManager', 'remotes', 'rcmdcheck'))
           BiocManager::install(version = 'devel', ask = FALSE, update = FALSE)
           toInstall <- remotes::dev_package_deps(dependencies = TRUE)[,"package"]
