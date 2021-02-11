@@ -111,9 +111,21 @@ DetectExperimentType = function(Samples){
 FilterContextCytosines <- function(MethGR, genome, context){
 
   CytosineRanges = GRanges(seqnames(MethGR), ranges(MethGR), strand(MethGR)) # performing operation without metadata to make it lighter
-  seqinfo(CytosineRanges) <- seqinfo(MethGR) 
-  GenomicContext = Biostrings::getSeq(genome, trim(IRanges::resize(CytosineRanges, width = 5, fix = "center")), as.character = FALSE)# I checked: it is strand-aware
+  seqinfo(CytosineRanges) <- seqinfo(MethGR)
+  GenomicContext = Biostrings::getSeq(genome, suppressWarnings(trim(IRanges::resize(CytosineRanges, width = 5, fix = "center"))), as.character = FALSE) # I checked: it is strand-aware
+  
+  # Fix trimming issues necessary for Genome-Wide analysis
+  trimmed <- which(!width(GenomicContext) == 5)
+  for(k in trimmed){
+    if(as.character(strand(CytosineRanges[k])) == '+'){
+      GenomicContext[k] <- paste0(c(rep('N', 5-width(GenomicContext[k])), as.character(GenomicContext[k])), collapse="")
+    } else if(as.character(strand(CytosineRanges[k])) == '-'){
+      GenomicContext[k] <- paste0(c(as.character(GenomicContext[k]), rep('N', 5-width(GenomicContext[k]))), collapse="")
+    }
+  }
+
   IsInContext = unlist(lapply(Biostrings::vmatchPattern(context, subject = GenomicContext, fixed = FALSE), function(i){length(i)>0}))
+
   # elementMetadata(CytosineRanges)$GenomicContext = GenomicContext
   # elementMetadata(CytosineRanges)$IsInContext = IsInContext
   MethGR_InContext = MethGR[IsInContext]
@@ -172,13 +184,13 @@ CollapseStrands = function(MethGR, context){
   # GC needs to start with "-", CG with "+"
   if (as.character(strand(MethGR[1]))==TopStrandToFix){
     message("Strand collapsing: Fixing top (left) overhang")
-    MethGR = FixOverhang(MethGR, context, "Top")
+    MethGR = suppressWarnings(FixOverhang(MethGR, context, "Top"))
   }
   # CG needs to start with "+", CG with "-"
   BottomStrandToFix = ifelse(context == "CG", "+", "-") # if this is GR last strand, we need to fix
   if (as.character(strand(MethGR[length(MethGR)]))==BottomStrandToFix){
     message("Strand collapsing: Fixing bottom (right) overhang")
-    MethGR = FixOverhang(MethGR, context, "Bottom")
+    MethGR = suppressWarnings(FixOverhang(MethGR, context, "Bottom"))
   }
 
   # Initiating collapsed GR
@@ -190,7 +202,7 @@ CollapseStrands = function(MethGR, context){
   #   start(MethGR_collapsed) <- start(MethGR_collapsed)-1
   # }
   # Summing the + and - coverages
-  values(MethGR_collapsed) <- as.matrix(values(MethGR[seq(1,length(MethGR),by=2)]))+as.matrix(values(MethGR[seq(2,length(MethGR),by=2)]))
+  values(MethGR_collapsed) <- as.matrix(values(MethGR[seq(1,length(MethGR),by=2)])) + as.matrix(values(MethGR[seq(2,length(MethGR),by=2)]))
 
   return(MethGR_collapsed)
 
@@ -287,7 +299,7 @@ CoverageFilter <- function(MethGR, thr){
 #'
 #' @return List with two Granges objects: GC and CG average methylation
 #'
-CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20, ConvRate.thr = 0.2){
+CallContextMethylation=function(sampleSheet, sample, genome, range, coverage = 20, ConvRate.thr = 0.2, singleMolecules = TRUE){
 
   message("Setting QuasR project")
   QuasRprj = GetQuasRprj(sampleSheet, genome)
@@ -295,24 +307,32 @@ CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20,
 
   message("Calling methylation at all Cytosines")
   MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = TRUE, keepZero = TRUE)
-  MethSM = GetSingleMolMethMat(QuasRprj, range, sample) # this selects the sample internally ---> TO FIX
-  MethSM = FilterByConversionRate(MethSM, chr = seqnames(range), genome = genome, thr = ConvRate.thr)
+  if(singleMolecules){
+    MethSM = GetSingleMolMethMat(QuasRprj, range, sample) # this selects the sample internally ---> TO FIX
+    MethSM = FilterByConversionRate(MethSM, chr = seqnames(range), genome = genome, thr = ConvRate.thr)
+  }
 
   message("Subsetting Cytosines by permissive genomic context (NGCNN, NNCGN)") # Here we use a permissive context: needed for the strand collapsing
   ContextFilteredMethGR = list(GC = FilterContextCytosines(MethGR, genome, "NGCNN"),
                                CG = FilterContextCytosines(MethGR, genome, "NNCGN"))
-  ContextFilteredMethSM = lapply(seq_along(ContextFilteredMethGR), function(i){MethSM[,colnames(MethSM) %in% as.character(start(ContextFilteredMethGR[[i]]))]})
+  if(singleMolecules){
+    ContextFilteredMethSM = lapply(seq_along(ContextFilteredMethGR), function(i){MethSM[,colnames(MethSM) %in% as.character(start(ContextFilteredMethGR[[i]]))]})
+  }
 
   message("Collapsing strands")
   StrandCollapsedMethGR = list(GC = CollapseStrands(ContextFilteredMethGR[[1]], context = "GC"),
                                CG = CollapseStrands(ContextFilteredMethGR[[2]], context = "CG"))
-  StrandCollapsedMethSM = list(GC = CollapseStrandsSM(ContextFilteredMethSM[[1]], context = "GC", genome = genome, chr = as.character(seqnames(range))),
-                               CG = CollapseStrandsSM(ContextFilteredMethSM[[2]], context = "CG", genome = genome, chr = as.character(seqnames(range))))
+  if(singleMolecules){
+    StrandCollapsedMethSM = list(GC = CollapseStrandsSM(ContextFilteredMethSM[[1]], context = "GC", genome = genome, chr = as.character(seqnames(range))),
+                                 CG = CollapseStrandsSM(ContextFilteredMethSM[[2]], context = "CG", genome = genome, chr = as.character(seqnames(range))))
+  }
 
   message("Filtering Cs for coverage")
   CoverageFilteredMethGR = list(GC = CoverageFilter(StrandCollapsedMethGR[[1]], thr = coverage),
                                 CG = CoverageFilter(StrandCollapsedMethGR[[2]], thr = coverage))
-  CoverageFilteredMethSM = lapply(seq_along(CoverageFilteredMethGR), function(i){StrandCollapsedMethSM[[i]][,colnames(StrandCollapsedMethSM[[i]]) %in% as.character(start(CoverageFilteredMethGR[[i]]))]})
+  if(singleMolecules){
+    CoverageFilteredMethSM = lapply(seq_along(CoverageFilteredMethGR), function(i){StrandCollapsedMethSM[[i]][,colnames(StrandCollapsedMethSM[[i]]) %in% as.character(start(CoverageFilteredMethGR[[i]]))]})
+  }
 
   # Determining stric context based on ExpType
   ExpType = DetectExperimentType(Samples)
@@ -328,34 +348,40 @@ CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20,
   ContextFilteredMethGR_strict = list(FilterContextCytosines(CoverageFilteredMethGR[[1]], genome, ExpType_contexts[1]),
                                       FilterContextCytosines(CoverageFilteredMethGR[[2]], genome, ExpType_contexts[2]))
   names(ContextFilteredMethGR_strict) = ExpType_contexts
-  ContextFilteredMethSM_strict = lapply(seq_along(ContextFilteredMethGR_strict), function(i){CoverageFilteredMethSM[[i]][,colnames(CoverageFilteredMethSM[[i]]) %in% as.character(start(ContextFilteredMethGR_strict[[i]]))]})
+  if(singleMolecules){
+    ContextFilteredMethSM_strict = lapply(seq_along(ContextFilteredMethGR_strict), function(i){CoverageFilteredMethSM[[i]][,colnames(CoverageFilteredMethSM[[i]]) %in% as.character(start(ContextFilteredMethGR_strict[[i]]))]})
+  }
 
   if (ExpType == "DE"){
     message("Merging matrixes")
     MergedGR = sort(append(ContextFilteredMethGR_strict[[1]], ContextFilteredMethGR_strict[[2]]))
 
-    # When some reads only cover either DGCHN or NWCGW positions cbind complains
-    if(nrow(ContextFilteredMethSM_strict[[1]]) != nrow(ContextFilteredMethSM_strict[[2]]) | !(all(sort(rownames(ContextFilteredMethSM_strict[[1]])) %in% sort(rownames(ContextFilteredMethSM_strict[[2]]))))){
+    if(singleMolecules){
+      # When some reads only cover either DGCHN or NWCGW positions cbind complains
+      if(nrow(ContextFilteredMethSM_strict[[1]]) != nrow(ContextFilteredMethSM_strict[[2]]) | !(all(sort(rownames(ContextFilteredMethSM_strict[[1]])) %in% sort(rownames(ContextFilteredMethSM_strict[[2]]))))){
 
-      # Which reads cover only one context?
-      DGCHNonly_reads = rownames((ContextFilteredMethSM_strict[[1]]))[!(rownames((ContextFilteredMethSM_strict[[1]])) %in% rownames((ContextFilteredMethSM_strict[[2]])))]
-      NWCGWonly_reads = rownames((ContextFilteredMethSM_strict[[2]]))[!(rownames((ContextFilteredMethSM_strict[[2]])) %in% rownames((ContextFilteredMethSM_strict[[1]])))]
-      # Fill two dummy matrices to make the reads equal in the ContextFilteredMethSM_strict matrices
-      DGCHNonly_mat = matrix(data = NA, nrow = length(DGCHNonly_reads), ncol = ncol(ContextFilteredMethSM_strict[[2]]), dimnames = list(DGCHNonly_reads, colnames(ContextFilteredMethSM_strict[[2]])))
-      NWCGWonly_mat = matrix(data = NA, nrow = length(NWCGWonly_reads), ncol = ncol(ContextFilteredMethSM_strict[[1]]), dimnames = list(NWCGWonly_reads, colnames(ContextFilteredMethSM_strict[[1]])))
-      # merge the ContextFilteredMethSM_strict matrices to the respective dummy
-      ContextFilteredMethSM_strict[[1]] = BiocGenerics::rbind(ContextFilteredMethSM_strict[[1]], NWCGWonly_mat)
-      ContextFilteredMethSM_strict[[2]] = BiocGenerics::rbind(ContextFilteredMethSM_strict[[2]], DGCHNonly_mat)
+        # Which reads cover only one context?
+        DGCHNonly_reads = rownames((ContextFilteredMethSM_strict[[1]]))[!(rownames((ContextFilteredMethSM_strict[[1]])) %in% rownames((ContextFilteredMethSM_strict[[2]])))]
+        NWCGWonly_reads = rownames((ContextFilteredMethSM_strict[[2]]))[!(rownames((ContextFilteredMethSM_strict[[2]])) %in% rownames((ContextFilteredMethSM_strict[[1]])))]
+        # Fill two dummy matrices to make the reads equal in the ContextFilteredMethSM_strict matrices
+        DGCHNonly_mat = matrix(data = NA, nrow = length(DGCHNonly_reads), ncol = ncol(ContextFilteredMethSM_strict[[2]]), dimnames = list(DGCHNonly_reads, colnames(ContextFilteredMethSM_strict[[2]])))
+        NWCGWonly_mat = matrix(data = NA, nrow = length(NWCGWonly_reads), ncol = ncol(ContextFilteredMethSM_strict[[1]]), dimnames = list(NWCGWonly_reads, colnames(ContextFilteredMethSM_strict[[1]])))
+        # merge the ContextFilteredMethSM_strict matrices to the respective dummy
+        ContextFilteredMethSM_strict[[1]] = BiocGenerics::rbind(ContextFilteredMethSM_strict[[1]], NWCGWonly_mat)
+        ContextFilteredMethSM_strict[[2]] = BiocGenerics::rbind(ContextFilteredMethSM_strict[[2]], DGCHNonly_mat)
 
+      }
+
+      # Sort reads alphanumerically before binding, because cbind doesn't join (I've tested) matrices by rownames
+      ContextFilteredMethSM_strict[[1]] = ContextFilteredMethSM_strict[[1]][sort(rownames(ContextFilteredMethSM_strict[[1]])),]
+      ContextFilteredMethSM_strict[[2]] = ContextFilteredMethSM_strict[[2]][sort(rownames(ContextFilteredMethSM_strict[[2]])),]
+      MergedSM = BiocGenerics::cbind(ContextFilteredMethSM_strict[[1]], ContextFilteredMethSM_strict[[2]])
+      MergedSM = MergedSM[,as.character(sort(as.numeric(colnames(MergedSM))))]
+    } else {
+      MergedSM = NULL
     }
-
-    # Sort reads alphanumerically before binding, because cbind doesn't join (I've tested) matrices by rownames
-    ContextFilteredMethSM_strict[[1]] = ContextFilteredMethSM_strict[[1]][sort(rownames(ContextFilteredMethSM_strict[[1]])),]
-    ContextFilteredMethSM_strict[[2]] = ContextFilteredMethSM_strict[[2]][sort(rownames(ContextFilteredMethSM_strict[[2]])),]
-    MergedSM = BiocGenerics::cbind(ContextFilteredMethSM_strict[[1]], ContextFilteredMethSM_strict[[2]])
-    MergedSM = MergedSM[,as.character(sort(as.numeric(colnames(MergedSM))))]
   }
 
   return(list(MergedGR, MergedSM))
 
-  }
+}
