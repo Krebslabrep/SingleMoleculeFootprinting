@@ -180,8 +180,6 @@ Under the hood, the classification is based on the definition of $n+2$ bins (wit
 
 Here, we show a usage case for the `SortReadsByTFCluster` function, as we have already identified the double binding of NRF1 at the genomic site under scrutiny. Usage and exploration of the output is identical for the other function, except for the the format of the *TFBSs* argument which should consist of a GRanges object of length 1 for `SortReadsBySingleTF` and of length $>$ 1 for `SortReadsByTFCluster.` 
 ```{r, eval=T}
-# note for myself: in the original code there was a remove.duplicates parameter at this stage. Nowhere else. If needed, this should be implemented in CallContextMethylation such that also the Avg methylation is computed after this removal. Does it makes sense to have it? Because for GW experiments, duplicates are removed during pre-processing and for amplicon exp duplicates shouldn't be removed?
-
 SortedReads_TFCluster = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
 ```
 
@@ -194,7 +192,6 @@ N.b. non-populated states will are not returned. \
 
 The output of each of these sorting functions can be passed directly as the `SortedReads` argument of the `PlotSM` function.
 ```{r}
-
 PlotSM(MethSM = Methylation[[2]], range = Region_of_interest, SortedReads = SortedReads_TFCluster)
 ```
 
@@ -210,7 +207,7 @@ PlotSingleSiteSMF(ContextMethylation = Methylation,
                   range = Region_of_interest, 
                   SortedReads = SortedReads_TFCluster, 
                   TFBSs = TFBSs, 
-                  saveAs = "FullPath.pdf")
+                  saveAs = NULL)
 ```
 
 --------
