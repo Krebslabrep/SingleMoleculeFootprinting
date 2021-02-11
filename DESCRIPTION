@@ -1,6 +1,6 @@
 Package: SingleMoleculeFootprinting
 Title: Analysis tools for Single Molecule Footprinting (SMF) data
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: c(
     person(given = "Guido",
            family = "Barzaghi",
@@ -32,8 +32,8 @@ Description: This package provides convenience functions tailored
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
     according to their state.
-biocViews: DNAMethylation, Coverage, NucleosomePositioning, DataRepresentation, 
-  Epigenetics, MethylSeq, QualityControl
+biocViews: 
+  DNAMethylation, Coverage, NucleosomePositioning, DataRepresentation, Epigenetics, MethylSeq, QualityControl
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
