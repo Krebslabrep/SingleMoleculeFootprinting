@@ -27,7 +27,8 @@ Imports:
     plyr,
     IRanges,
     RColorBrewer,
-    QuasR
+    QuasR,
+    BSgenome.Mmusculus.UCSC.mm10
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
@@ -38,7 +39,6 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Suggests: 
-    BSgenome.Mmusculus.UCSC.mm10,
     devtools,
     knitr,
     rmarkdown,
