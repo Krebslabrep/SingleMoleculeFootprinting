@@ -27,7 +27,7 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
   methylation_calls_C = qMeth(QuasRprj, query = chr, mode="allC", reportLevel="C", keepZero = TRUE, clObj = cl, asGRanges = TRUE, collapseBySample = FALSE)
   stopCluster(cl)
 
-  seqContext = getSeq(genome, resize(methylation_calls_C, 3, fix='center'))
+  seqContext = getSeq(genome, trim(resize(methylation_calls_C, 3, fix='center')))
   GCc = vcountPattern(DNAString("GCN"), seqContext, fixed=FALSE) # take all context for exclusion
   CGc = vcountPattern(DNAString("NCG"), seqContext, fixed=FALSE) # only valid for calling conversion rates
   #SMF
