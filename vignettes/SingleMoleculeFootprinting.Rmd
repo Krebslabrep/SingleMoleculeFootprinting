@@ -55,14 +55,9 @@ prj = QuasR::qAlign(sampleFile = Qinput,
 
 ## Installation {.tabset}
 ### Developer installation
-For develop installation, visit our [repository](https://github.com/Krebslabrep/SingleMoleculeFootprinting) on GitHub and copy link for cloning.
+For develop installation, visit our [GitHub repository](https://github.com/Krebslabrep/SingleMoleculeFootprinting).
 ```{r, eval=F}
-CLONING_LOCATION = "" # some arbitrary location (this is just where we'll clone the repo)
-REPO_LINK = ""
-
-system(paste0("cd ", CLONING_LOCATION))
-system(paste0("git clone ", REPO_LINK))
-devtools::install("SingleMoleculeFootprinting/")
+devtools::install_github(repo = "https://github.com/Krebslabrep/SingleMoleculeFootprinting.git", ref = "main", build_vignettes = TRUE)
 ```
 
 ### Bioconductor installation (NOT AVAILABLE YET)

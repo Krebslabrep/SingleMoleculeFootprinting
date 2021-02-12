@@ -16,18 +16,18 @@ Authors@R: c(
 Depends:
   R (>= 3.5.0)
 Imports: 
-  BiocGenerics,
-	Biostrings,
-  BSgenome,
-  GenomeInfoDb,
-	GenomicRanges,
-	data.table,
-	dplyr,
-	grDevices,
-	plyr,
-	IRanges,
-	RColorBrewer,
-	QuasR
+    BiocGenerics,
+    Biostrings,
+    BSgenome,
+    GenomeInfoDb,
+    GenomicRanges,
+    data.table,
+    dplyr,
+    grDevices,
+    plyr,
+    IRanges,
+    RColorBrewer,
+    QuasR
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    

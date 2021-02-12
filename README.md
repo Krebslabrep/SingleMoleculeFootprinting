@@ -1,8 +1,15 @@
+<div style="text-align: justify;">
+
 # SingleMoleculeFootprinting
 
 # Introduction
-*SingleMoleculeFootprinting* is an R package build around [QuasR](https://github.com/fmicompbio/QuasR) and tailored for the analysis Single molecule footprinting (SMF) sequencing data. SMF, technology developed in the [Krebs laboratory](https://www.embl.de/research/units/genome_biology/krebs/index.html), consists in marking accessible genomic cytosines in the GpC and CpG contexts using exogenous methytransferase enzymes and in subsequently performing bisulfite sequencing (BS). Consequently, cytosines protected by the binding of DNA-interacting proteins (e.g. TFs, nucleosomes, GTFs, etc..) will result unmethylated, while the accessible cytosines will result methylated.
+*SingleMoleculeFootprinting* is an R package build around [QuasR](https://github.com/fmicompbio/QuasR) and tailored for the analysis Single Molecule Footprinting (SMF) data. \
+
+SMF is a high-throughput sequencing technology developed in the [Krebs laboratory](https://www.embl.de/research/units/genome_biology/krebs/index.html). It consists of marking accessible genomic cytosines in the GpC and CpG contexts using exogenous methytransferase enzymes and of subsequently performing bisulfite sequencing (BS). Consequently, cytosines protected by the binding of DNA-interacting proteins (e.g. TFs, nucleosomes, GTFs, etc..) will result unmethylated, while the accessible cytosines will result methylated. \
+
 With the present package, we provide functions to perform basic SMF data analysis starting from aligned bam files up to the biological interpretation of results over single sites.
+
+<img src="https://github.com/Krebslabrep/SingleMoleculeFootprinting/inst/ComputationalOverview.png" alt="Computational overview figure"  ></img>
 
 # Preamble: preprocessing SMF data
 To ensure compatibility with our downstream tools, we recommend aligning sequencing reads using the QuasR function [qAlign](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign) as follows
@@ -23,20 +30,15 @@ For more details on how to structure the **sampleFile** argument we refer to the
 For more details on SMF data preprocessing we refer to the computational steps of our methods manuscript *SOMETHING GOES HERE*.
 
 # Installation
-Currently, *SingleMoleculeFootprinting* is available as a developer version through this repository. For installation, copy clone link, clone the repository to a location of your choice on your system and install as follows
+To install *SingleMoleculeFootprinting*, execute the following
 ```r
-CLONING_LOCATION = "" # some arbitrary location (this is just where we'll clone the repo)
-REPO_LINK = ""
-
-system(paste0("cd ", CLONING_LOCATION))
-system(paste0("git clone ", REPO_LINK))
-devtools::install("SingleMoleculeFootprinting/")
+devtools::install_github(repo = "https://github.com/Krebslabrep/SingleMoleculeFootprinting.git", ref = "main", build_vignettes = TRUE)
 ```
 
 # SingleMoleculeFootprinting usage
-For details on how to use the *SingleMoleculeFootprinting* package, access our vignette as follows
+For instructions on how to use the *SingleMoleculeFootprinting* package and an example of analysis, access our vignette as follows
 ```r
-utils::vignette(package = "SingleMoleculeFootprinting")
+utils::browseVignettes('SingleMoleculeFootprinting')
 ```
 
-
+</div>
