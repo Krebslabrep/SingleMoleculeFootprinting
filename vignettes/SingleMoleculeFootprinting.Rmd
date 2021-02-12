@@ -77,6 +77,15 @@ devtools::load_all()
 ```
 
 ## Define arguments
+```{r, echo=FALSE}
+FileAbsPath = paste0(.libPaths()[1], "/SingleMoleculeFootprinting/extdata/example_NRF1pair_amplicon.bam")
+
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput_tsv = suppressMessages(readr::read_delim(Qinput, delim = "\t"))
+Qinput_tsv$FileName = FileAbsPath
+readr::write_delim(x = Qinput_tsv, file = paste0(.libPaths()[1], "/SingleMoleculeFootprinting/extdata/QuasR_input_pairs.txt"), delim = "\t")
+```
+
 *SingleMoleculeFootprinting* inherits *QuasR*'s philosophy of working with pointer files. Briefly, a pointer file consists of a tab-delimited file with two or three fields, depending on whether the input data is in the unaligned paired-end format, the unaligned single-end or aligned format. For more details, please check the `qAlign` [documentation](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign). Here we show how our pointer file looks like.
 ```{r, eval=T}
 Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
@@ -205,13 +214,16 @@ PlotSingleSiteSMF(ContextMethylation = Methylation,
                   saveAs = NULL)
 ```
 
---------
-********
+```{r, eval=F, echo=FALSE}
 
-## Genome-wide analysis
-Given the example data only cover one genomic region, we are going to restrict the following chunk to the interested chromosome only
-This process can be quite lengthy and computationally demanding, it is advisable to run it on a cluster.
-```{r, eval=F}
+# --------
+# ********
+# 
+# ## Genome-wide analysis
+# Given the example data only cover one genomic region, we are going to restrict the following chunk to the interested chromosome only
+# This process can be quite lengthy and computationally demanding, it is advisable to run it on a cluster.
+
+
 # Partition a genome by chromosome ("natural partitioning")
 musmus_length=seqlengths(Mmusculus)[1:21] # change [1] to [1:21] to expand the analysis to the whole genome
 tiles <- tileGenome(musmus_length, tilewidth=max(musmus_length),cut.last.tile.in.chrom=TRUE)
