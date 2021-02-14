@@ -34,7 +34,7 @@ remotes::install_github(repo = "https://github.com/Krebslabrep/SingleMoleculeFoo
 ```
 
 # SingleMoleculeFootprinting usage
-For instructions on how to use the *SingleMoleculeFootprinting* package and an example of analysis, consult our [vignette](https://github.com/Krebslabrep/SingleMoleculeFootprinting/tree/main/vignettes/SingleMoleculeFootprinting.html)
+For instructions on how to use the *SingleMoleculeFootprinting* package and an example of analysis, consult our [vignette](https://htmlpreview.github.io/?https://github.com/Krebslabrep/SingleMoleculeFootprinting/blob/main/vignettes/SingleMoleculeFootprinting.html)
 
 
 </div>
