@@ -169,6 +169,8 @@ TFPairStateQuantificationPlot = function(states, OrderedReads){
 #'
 #' @return Bar plot quantifying states
 #'
+#' @export
+#'
 StateQuantificationPlot = function(SortedReads){
 
   if (length(SortedReads) <= 8){ # Single TF

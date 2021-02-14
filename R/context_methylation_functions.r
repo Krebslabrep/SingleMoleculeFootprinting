@@ -285,7 +285,7 @@ CoverageFilter <- function(MethGR, thr){
 #' @import GenomicRanges
 #' @import BiocGenerics
 #'
-#' @return List with two Granges objects: GC and CG average methylation
+#' @return List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
 #'
 CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20, ConvRate.thr = 0.2){
 

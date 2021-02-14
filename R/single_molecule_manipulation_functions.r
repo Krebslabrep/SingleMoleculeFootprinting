@@ -115,7 +115,7 @@ SortReadsBySingleTF = function(MethSM, TFBS){
 SortReadsByTFCluster = function(MethSM, TFBSs){
 
   BinsCoord = list(c(-35,-25), c(-7,7), c(25,35))
-  SortedReads = SortReads(MethSM, TFBSs, BinsCoord, SortByCluster = TRUE)
+  SortedReads = SortReads(MethSM, TFBS = TFBSs, BinsCoord, SortByCluster = TRUE)
   return(SortedReads)
 
 }
