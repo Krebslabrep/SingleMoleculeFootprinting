@@ -6,12 +6,17 @@ Authors@R: c(
            family = "Barzaghi",
            role = c("aut", "cre"),
            email = "guido.barzaghi@embl.de",
-           comment = c(ORCID = "https://orcid.org/0000-0001-6066-3920")),
+           comment = c(ORCID = "0000-0001-6066-3920")),
     person(given = "Arnaud",
            family = "Krebs",
-		   role = c("aut"),
-		   email = "arnaud.krebs@embl.de",
-		   comment = c(ORCID = "https://orcid.org/0000-0001-7999-6127"))
+           role = c("aut"),
+           email = "arnaud.krebs@embl.de",
+           comment = c(ORCID = "0000-0001-7999-6127")),
+    person(given = "Mike",
+           family = "Smith",
+           role = c("ctb"),
+           email = "mike.smith@embl.de",
+           comment = c(ORCID = "0000-0002-7800-3848"))
     )
 Depends:
   R (>= 3.5.0)
@@ -27,8 +32,7 @@ Imports:
     plyr,
     IRanges,
     RColorBrewer,
-    QuasR,
-    BSgenome.Mmusculus.UCSC.mm10
+    QuasR
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
@@ -39,6 +43,7 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Suggests: 
+    BSgenome.Mmusculus.UCSC.mm10,
     devtools,
     knitr,
     rmarkdown,

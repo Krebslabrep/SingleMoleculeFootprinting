@@ -27,7 +27,7 @@ CallContextMethylation(
 \item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.2}
 }
 \value{
-List with two Granges objects: GC and CG average methylation
+List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
 }
 \description{
 Can deal with multiple samples
