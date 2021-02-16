@@ -354,6 +354,11 @@ CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20,
     ContextFilteredMethSM_strict[[2]] = ContextFilteredMethSM_strict[[2]][sort(rownames(ContextFilteredMethSM_strict[[2]])),]
     MergedSM = BiocGenerics::cbind(ContextFilteredMethSM_strict[[1]], ContextFilteredMethSM_strict[[2]])
     MergedSM = MergedSM[,as.character(sort(as.numeric(colnames(MergedSM))))]
+  } else {
+
+    MergedGR = ContextFilteredMethGR_strict
+    MergedSM = ContextFilteredMethSM_strict
+
   }
 
   return(list(MergedGR, MergedSM))
