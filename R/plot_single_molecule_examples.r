@@ -116,7 +116,7 @@ SingleTFStateQuantificationPlot = function(states, OrderedReads){
     rep(Colors[names(GroupedCounts)][j],GroupedCounts[j])
   })
 
-  plot(NA,xlim=c(0,3),ylim=c(0,sum(lengths(OrderedReads))), ylab=paste0(nrow(MethSM), " reads"), xlab="")
+  plot(NA,xlim=c(0,3),ylim=c(0,sum(lengths(OrderedReads))), ylab=paste0(sum(lengths(OrderedReads)), " reads"), xlab="")
   points(rep(1, sum(GroupedCounts)-1),seq(sum(GroupedCounts)-1),col=unlist(ColorVector),pch='_',cex=2)
   text(rep(2,length(GroupedCounts)),boundaries,round(GroupedCounts/sum(GroupedCounts)*100))
 
