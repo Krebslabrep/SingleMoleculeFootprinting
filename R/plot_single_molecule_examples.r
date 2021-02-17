@@ -31,7 +31,7 @@ HierarchicalClustering = function(MethSM){
 #'
 PlotAvgSMF = function(MethGR, range, TFBSs){
 
-  plot(NA,xlim=c(start(range),end(range)),ylim=c(-0.2,1),xlab='',ylab='SMF (%)',main=range)
+  plot(NA,xlim=c(start(range),end(range)),ylim=c(-0.2,1),xlab='',ylab='SMF',main=range)
   points(start(MethGR), 1-elementMetadata(MethGR)[[1]], type='l') #, lwd=4
   points(start(MethGR), 1-elementMetadata(MethGR)[[1]], pch=20) #, lwd=5
   abline(h=0)
@@ -54,7 +54,7 @@ PlotSingleMoleculeStack = function(MethSM, range){
   vR1=VectorizeReads(range,MethSM)
   BR=c(col=c('black','grey'))
   colors=BR
-  plot(NA,pch='_',col=colors[as.factor(vR1[[3]])],xlim=c(start(range),end(range)),ylim=c(-1,length(unique(vR1[[2]]))))
+  plot(NA,pch='_',col=colors[as.factor(vR1[[3]])],xlim=c(start(range),end(range)),ylim=c(-1,length(unique(vR1[[2]]))), ylab=paste0(nrow(MethSM), " reads"), xlab="")
   points(vR1[[1]],vR1[[2]],pch='_',cex=1.2,col=colors[as.factor(vR1[[3]])],xlim=c(start(range),end(range)))
 
 }
@@ -116,7 +116,7 @@ SingleTFStateQuantificationPlot = function(states, OrderedReads){
     rep(Colors[names(GroupedCounts)][j],GroupedCounts[j])
   })
 
-  plot(NA,xlim=c(0,3),ylim=c(0,sum(lengths(OrderedReads))))
+  plot(NA,xlim=c(0,3),ylim=c(0,sum(lengths(OrderedReads))), ylab=paste0(sum(lengths(OrderedReads)), " reads"), xlab="")
   points(rep(1, sum(GroupedCounts)-1),seq(sum(GroupedCounts)-1),col=unlist(ColorVector),pch='_',cex=2)
   text(rep(2,length(GroupedCounts)),boundaries,round(GroupedCounts/sum(GroupedCounts)*100))
 
@@ -131,6 +131,8 @@ SingleTFStateQuantificationPlot = function(states, OrderedReads){
 #'
 TFPairStateQuantificationPlot = function(states, OrderedReads){
 
+  OrderedReads = OrderedReads[lengths(OrderedReads) > 0]
+
   GroupedCounts = unlist(lapply(seq_along(states), function(i){
     length(unlist(OrderedReads[states[[i]]]))
   }))
@@ -142,21 +144,21 @@ TFPairStateQuantificationPlot = function(states, OrderedReads){
   names(TF2c) = c("00", "01", "10", "11")
 
   boundaries = cumsum(lengths(OrderedReads))
-  TF1colv = lapply(seq(length(boundaries)),function(i){
+  TF1colv = lapply(seq_along(boundaries),function(i){
     bd = c(0,boundaries)
-    offset = as.integer(ifelse(bd[i+1] - bd[i] > 0, -1, 0)) # fixes errors for empty states
-    rep(TF1c[substr(names(OrderedReads),1,2)][i],length(seq(bd[i],bd[i+1]-offset,1)))
+    rep(TF1c[substr(names(OrderedReads),1,2)][i],length(seq(bd[i],bd[i+1]-1,1)))
   })
 
-  TF2colv = lapply(seq(length(boundaries)),function(i){
+  TF2colv = lapply(seq_along(boundaries),function(i){
     bd = c(0,boundaries)
-    offset = as.integer(ifelse(bd[i+1] - bd[i] > 0, -1, 0)) # fixes errors for empty states
-    rep(TF2c[substr(names(OrderedReads),3,4)][i],length(seq(bd[i],bd[i+1]-offset,1)))
+    rep(TF2c[substr(names(OrderedReads),3,4)][i],length(seq(bd[i],bd[i+1]-1,1)))
   })
 
-  plot(NA, xlim = c(0,3), ylim = c(0,sum(lengths(OrderedReads))))
-  points(rep(1, sum(lengths(OrderedReads))-1), seq(sum(lengths(OrderedReads))-1), col=(unlist(TF1colv)), pch='_', cex=2)
-  points(rep(1.5, sum(lengths(OrderedReads))-1), seq(sum(lengths(OrderedReads))-1), col=(unlist(TF2colv)), pch='_', cex=2)
+  TotReads = sum(lengths(OrderedReads))
+
+  plot(NA, xlim = c(0,3), ylim = c(0,TotReads), ylab=paste0(TotReads, " reads"), xlab="")
+  points(rep(1, TotReads-1), seq(TotReads-1), col=(unlist(TF1colv)), pch='_', cex=2)
+  points(rep(1.5, TotReads-1), seq(TotReads-1), col=(unlist(TF2colv)), pch='_', cex=2)
   text(rep(2,length(GroupedCounts)),cumsum(GroupedCounts),round(GroupedCounts/sum(GroupedCounts)*100))
 
 }
@@ -166,6 +168,8 @@ TFPairStateQuantificationPlot = function(states, OrderedReads){
 #' @param SortedReads Sorted reads object as returned by SortReads function
 #'
 #' @return Bar plot quantifying states
+#'
+#' @export
 #'
 StateQuantificationPlot = function(SortedReads){
 
@@ -215,7 +219,7 @@ PlotSingleSiteSMF = function(ContextMethylation, sample, range, SortedReads=NULL
   # start graphical device
   if (!is.null(saveAs)){
     if(!is.null(dev.list())){dev.off()}
-    pdf(saveAs, width = 8, height = 8)
+    pdf(saveAs, width = 8, height = 5)
   }
 
   # Average

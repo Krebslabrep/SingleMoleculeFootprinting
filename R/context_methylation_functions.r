@@ -285,7 +285,7 @@ CoverageFilter <- function(MethGR, thr){
 #' @import GenomicRanges
 #' @import BiocGenerics
 #'
-#' @return List with two Granges objects: GC and CG average methylation
+#' @return List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
 #'
 CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20, ConvRate.thr = 0.2){
 
@@ -354,6 +354,11 @@ CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20,
     ContextFilteredMethSM_strict[[2]] = ContextFilteredMethSM_strict[[2]][sort(rownames(ContextFilteredMethSM_strict[[2]])),]
     MergedSM = BiocGenerics::cbind(ContextFilteredMethSM_strict[[1]], ContextFilteredMethSM_strict[[2]])
     MergedSM = MergedSM[,as.character(sort(as.numeric(colnames(MergedSM))))]
+  } else {
+
+    MergedGR = ContextFilteredMethGR_strict
+    MergedSM = ContextFilteredMethSM_strict
+
   }
 
   return(list(MergedGR, MergedSM))
