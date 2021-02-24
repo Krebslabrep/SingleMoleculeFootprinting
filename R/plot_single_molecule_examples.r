@@ -79,6 +79,7 @@ PlotSM = function(MethSM, range, SortedReads = NULL){
     if (length(SortedReads) <= 8){ # Single TF
       message("Inferring sorting was performed by single TF")
       OrderedReads = SortedReads[as.character(unlist(OneTFstates()))]
+      OrderedReads = rev(OrderedReads)
     } else if (length(SortedReads) > 8 & length(SortedReads) <= 16){ # TF pair
       message("Inferring sorting was performed by TF pair")
       OrderedReads = SortedReads[as.character(unlist(TFpairStates()))]
@@ -109,14 +110,18 @@ SingleTFStateQuantificationPlot = function(states, OrderedReads){
   }))
   names(GroupedCounts) = names(states)
 
-  Colors = colorRampPalette(RColorBrewer::brewer.pal(9,"Set1"))(9)[c(2,3,4,9 )]
+  Colors = colorRampPalette(RColorBrewer::brewer.pal(9,"Set1"))(9)[c(4,3,2,9)]
   names(Colors) = names(states)
   boundaries = cumsum(GroupedCounts)
   ColorVector = lapply(seq_along(boundaries), function(j){
     rep(Colors[names(GroupedCounts)][j],GroupedCounts[j])
   })
 
-  plot(NA,xlim=c(0,3),ylim=c(0,sum(lengths(OrderedReads))), ylab=paste0(sum(lengths(OrderedReads)), " reads"), xlab="")
+  GroupedCounts = rev(GroupedCounts)
+  ColorVector = rev(ColorVector)
+  boundaries = rev(boundaries)
+
+  plot(NA,xlim=c(0,3),ylim=c(0,sum(GroupedCounts)), ylab=paste0(sum(GroupedCounts), " reads"), xlab="")
   points(rep(1, sum(GroupedCounts)-1),seq(sum(GroupedCounts)-1),col=unlist(ColorVector),pch='_',cex=2)
   text(rep(2,length(GroupedCounts)),boundaries,round(GroupedCounts/sum(GroupedCounts)*100))
 

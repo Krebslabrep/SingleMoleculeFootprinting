@@ -25,7 +25,6 @@ OneTFstates = function(){
     closed=patternStrings[1],
     unassigned=patternStrings[!seq_along(patternStrings)%in%c(1,6,8)]
   )
-  states = rev(states)
 
   return(states)
 
