@@ -12,7 +12,12 @@ HierarchicalClustering = function(MethSM){
   }else{
     MethSM_subset = MethSM
   }
-  hc=hclust(dist(MethSM_subset))
+  ReadsDist = dist(MethSM_subset)
+  while(sum(is.na(ReadsDist)) > 0){ # sometimes dist between some pair of reads is NA, possibly because of no overlapping Cs
+    MethSM_subset = MethSM[sample(dimnames(MethSM)[[1]],500),]
+    ReadsDist = dist(MethSM_subset)
+  }
+  hc=hclust(ReadsDist)
   MethSM_HC = MethSM_subset[hc$order,]
 
   return(MethSM_HC)
