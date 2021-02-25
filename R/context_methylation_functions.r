@@ -44,6 +44,7 @@ GetSingleMolMethMat<-function(QuasRprj,range,sample){
   # all.cids=unique(Cs[[sample]]$Cid) # get all possible C locations
   # make the data.table object
   dt=data.table::data.table(meth=Cs[[sample]]$meth, aid=Cs[[sample]]$aid, cid=Cs[[sample]]$Cid)
+  if (any(isEmpty(dt))){stop("No single molecule methylation info found in the given range")}
   spread_dt = data.table::dcast(dt, aid ~ cid, value.var = "meth")
   meth_matrix = as.matrix(spread_dt, rownames = "aid")
   return(meth_matrix)
@@ -307,6 +308,8 @@ CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20,
 
   message("Calling methylation at all Cytosines")
   MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = TRUE, keepZero = TRUE)
+  if (all(elementMetadata(MethGR)[,1] == 0)){stop("No bulk methylation info found for the given range")}
+
   if (singleMolecules){
     MethSM = GetSingleMolMethMat(QuasRprj, range, sample) # this selects the sample internally ---> TO FIX
     MethSM = FilterByConversionRate(MethSM, chr = seqnames(range), genome = genome, thr = ConvRate.thr)
