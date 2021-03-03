@@ -12,7 +12,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, echo = FALSE, message=F}
+```{r, echo = FALSE, message=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   # comment = "#>", 
@@ -33,7 +33,7 @@ Starting from an aligned bam file, we show how to \
 * plot SMF information at a given genomic location 
 
 For compatibility with our analysis tools, we recommend the user to perform genomic alignments using the [`qAlign`](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign) function from QuasR as exemplified in the chuck below.
-```{r, eval=F}
+```{r, eval=FALSE}
 cl = makeCluster(40)
 prj = QuasR::qAlign(sampleFile = Qinput,
               genome = "BSgenome.Mmusculus.UCSC.mm10",
@@ -51,13 +51,13 @@ prj = QuasR::qAlign(sampleFile = Qinput,
 ## Installation {.tabset}
 ### GitHub installation
 For installation from GitHub, visit our [repository](https://github.com/Krebslabrep/SingleMoleculeFootprinting).
-```{r, eval=F}
+```{r, eval=FALSE}
 remotes::install_github(repo = "https://github.com/Krebslabrep/SingleMoleculeFootprinting.git", ref = "main")
 ```
 
 ### Bioconductor installation (NOT AVAILABLE YET)
 For Bioconductor installation, visit our page on [Bioconductor]()
-```{r, eval=F}
+```{r, eval=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
@@ -65,14 +65,14 @@ BiocManager::install("SingleMoleculeFootprinting")
 ```
 
 ## Loading
-```{r setup, message=F, eval=T}
+```{r setup, message=FALSE, eval=TRUE}
 library(BSgenome.Mmusculus.UCSC.mm10)
 library(SingleMoleculeFootprinting)
 ```
 
 ## Define arguments
 *SingleMoleculeFootprinting* inherits *QuasR*'s philosophy of working with pointer files. Briefly, a pointer  is a tab-delimited file with two or three fields indicating the location of the input data files. For more details, please check the `qAlign` [documentation](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign). Here we show how our pointer file looks like.
-```{r, eval=T}
+```{r, eval=TRUE}
 Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
 suppressMessages(readr::read_delim(Qinput, delim = "\t"))
 ```
@@ -82,14 +82,14 @@ Before investing in a deep sequencing run for a SMF experiment, it is advisable 
 
 ### QuasR QC report
 It is always a good idea to produce a QC report after aligning. We can suggest the user to employ the [`qQCreport`](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qQCReport) function from *QuasR*.
-```{r, eval=F}
+```{r, eval=FALSE}
 qQCReport(Qinput, pdfFilename=NULL, chunkSize=1e6L, useSampleNames=FALSE, clObj=NULL)
 ```
 
 
 ### Bait capture efficiency
 If SMF was performed on an large genome (e.g Mouse) it is possible that bait capture was performed to focus the sequencing efforts: here we check how efficient that process was by essentially computing the ratio of genomic alignments inside bait regions over the total ones.
-```{r, eval=T}
+```{r, eval=TRUE}
 BaitRegions = import(system.file("extdata", "mm10_baits.bed.gz", package = "SingleMoleculeFootprinting", mustWork = T), format="bed")
 BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
 print(BaitCaptureEfficiency)
@@ -99,12 +99,11 @@ In this case the capture efficiency equals to `r toString(BaitCaptureEfficiency)
 ### Conversion rate precision
 Here we ask how much of the observed Cytosine methylation falls in the expected contexts (*CpG* or *GpC*). Beware, this is a much slower computation than the above.
 
-```{r, eval=FALSE, echo = TRUE}
+```{r conversion-rate-precision, eval=TRUE, echo = FALSE}
 ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 6)
-print(ConversionRatePrecision)
 ```
 
-```{r load-conversion-rate-precision, eval = TRUE, echo = FALSE}
+```{r load-conversion-rate-precision, eval=TRUE, echo = FALSE}
 ## the code above takes > 10 minutes to run, so we load a precomputed value here
 ConversionRatePrecision = readRDS(file = system.file("extdata", "vignette_ConversionRatePrecision.rds", 
                                                      package = "SingleMoleculeFootprinting"))
@@ -112,7 +111,7 @@ ConversionRatePrecision = readRDS(file = system.file("extdata", "vignette_Conver
 
 For this sample, the observed conversion rate is `r toString(ConversionRatePrecision)`%. This value happens to be slightly below the expected value of ~95%
 
-```{r, eval=F, echo=FALSE}
+```{r, eval=FALSE, echo=FALSE}
 ### Intersample correlation
 Compare methylation fractions across samples. This gives a broad overview of whether the methylation pattern of a cell type or condition reflects what previously observed
 ```
@@ -123,7 +122,7 @@ Methylation values at the single molecule level can be extracted for the region 
 Under the hood, the function performs the following operations: \
 
 * Identification of the methylation status for the Cytosines in the genomic context relevant for the experiment (Single enzyme, double enzyme, etc.). The type of the experiment is inferred based on which user-provided substring is found in the SampleName field of the QuasR pointer file: \
-```{r, echo = F}
+```{r, echo = FALSE}
 knitr::kable(data.frame(ExperimentType = c("Single enzyme SMF", "Double enzyme SMF", "No enzyme (endogenous mCpG only)"), 
                         substring = c("\\_NO_", "\\_DE_", "\\_SS_"), 
                         RelevanContext = c("DGCHN & NWCGW", "GCH + HCG", "CG"), 
@@ -133,7 +132,7 @@ knitr::kable(data.frame(ExperimentType = c("Single enzyme SMF", "Double enzyme S
 * Filtering reads based on conversion rate
 * Collapsing strands to "-"
 * Filtering Cytosines for coverage
-```{r, eval=T}
+```{r, eval=TRUE}
 MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
 Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
 
@@ -157,7 +156,7 @@ Methylation[[2]] = Methylation[[2]][readsSubset,]
 
 ### Plotting single sites
 Already at this stage it is possible to visually inspect results. To that end, we provide the function `PlotAvgSMF` to plot the average SMF signal, defined as 1 - **average methylation**, at a genomic locus of interest. Optionally, the user can pass a GRanges object of genomic coordinates for the transcription factor binding sites (**TFBSs**) of interest to include in the plot, we show an example of such an object. 
-```{r, eval=T}
+```{r, eval=TRUE}
 TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106216, 88106253), c(88106226, 88106263)), strand = "-")
 elementMetadata(TFBSs)$name = c("NRF1", "NRF1")
 names(TFBSs) = c(paste0("TFBS_", c(4305215, 4305216)))
@@ -172,7 +171,7 @@ PlotSM(MethSM = Methylation[[2]], range = Region_of_interest)
 ```
 
 Optionally, hierarchical clustering can be performed by setting the parameter `SortedReads = "HC"`. This can be useful to aggregate reads visually in order to spot PCR artifacts. N.b. reads will be downsampled to 500. 
-```{r, eval=T}
+```{r, eval=TRUE}
 PlotSM(MethSM = Methylation[[2]], range = Region_of_interest, SortedReads = "HC")
 ```
 
@@ -186,7 +185,7 @@ For `SortReadsBySingleTF`, the coordinates of the bins relative to the center of
 For each read, the binary methylation status of the cytosines contained in each bin is averaged to either a 0 or a 1 such that each read is eventually represented as sequence of $n+2$ binary digits, for a total of $2^{(n+2)}$ possible sequences. \
 
 Here, we show a usage case for the `SortReadsByTFCluster` function, as we have already identified the double binding of NRF1 at the genomic site under scrutiny. Usage and exploration of the output is identical for the other function, except for the the format of the *TFBSs* argument which should consist of a GRanges object of length 1 for `SortReadsBySingleTF` and of length $>$ 1 for `SortReadsByTFCluster`.
-```{r, eval=T}
+```{r, eval=TRUE}
 SortedReads_TFCluster = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
 ```
 
@@ -211,7 +210,7 @@ StateQuantificationPlot(SortedReads = SortedReads_TFCluster)
 ```
 
 Finally, we provide the wrapper function `PlotSingleSiteSMF` to plot at once the three kinds of information detailed above and to export results as a pdf.
-```{r, eval=F}
+```{r, eval=FALSE}
 PlotSingleSiteSMF(ContextMethylation = Methylation, 
                   sample = MySample, 
                   range = Region_of_interest, 
@@ -220,7 +219,7 @@ PlotSingleSiteSMF(ContextMethylation = Methylation,
                   saveAs = NULL)
 ```
 
-```{r, eval=F, echo=FALSE}
+```{r, eval=FALSE, echo=FALSE}
 
 # --------
 # ********
