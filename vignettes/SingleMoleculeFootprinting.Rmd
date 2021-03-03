@@ -99,7 +99,7 @@ In this case the capture efficiency equals to `r toString(BaitCaptureEfficiency)
 ### Conversion rate precision
 Here we ask how much of the observed Cytosine methylation falls in the expected contexts (*CpG* or *GpC*). Beware, this is a much slower computation than the above.
 
-```{r conversion-rate-precision, eval=TRUE, echo = FALSE}
+```{r conversion-rate-precision, eval=FALSE, echo = TRUE}
 ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 6)
 ```
 
