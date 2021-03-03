@@ -73,7 +73,7 @@ library(SingleMoleculeFootprinting)
 ## Define arguments
 *SingleMoleculeFootprinting* inherits *QuasR*'s philosophy of working with pointer files. Briefly, a pointer  is a tab-delimited file with two or three fields indicating the location of the input data files. For more details, please check the `qAlign` [documentation](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign). Here we show how our pointer file looks like.
 ```{r, eval=TRUE}
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 suppressMessages(readr::read_delim(Qinput, delim = "\t"))
 ```
 
@@ -90,7 +90,7 @@ qQCReport(Qinput, pdfFilename=NULL, chunkSize=1e6L, useSampleNames=FALSE, clObj=
 ### Bait capture efficiency
 If SMF was performed on an large genome (e.g Mouse) it is possible that bait capture was performed to focus the sequencing efforts: here we check how efficient that process was by essentially computing the ratio of genomic alignments inside bait regions over the total ones.
 ```{r, eval=TRUE}
-BaitRegions = import(system.file("extdata", "mm10_baits.bed.gz", package = "SingleMoleculeFootprinting", mustWork = T), format="bed")
+BaitRegions = import(system.file("extdata", "mm10_baits.bed.gz", package = "SingleMoleculeFootprinting", mustWork = TRUE), format="bed")
 BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
 print(BaitCaptureEfficiency)
 ```
@@ -189,7 +189,7 @@ Here, we show a usage case for the `SortReadsByTFCluster` function, as we have a
 SortedReads_TFCluster = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
 ```
 
-```{r, echo=F}
+```{r, echo=FALSE}
 print(paste0("Number of retrieved states: ", as.character(length(SortedReads_TFCluster))))
 print("States population:")
 unlist(lapply(SortedReads_TFCluster, length))
