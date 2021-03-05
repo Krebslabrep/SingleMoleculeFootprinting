@@ -264,7 +264,6 @@ CoverageFilter <- function(MethGR, thr){
 
   # do the actual filtering
   MethGRFiltered = MethGR[!(rowSums(is.na(as.matrix(elementMetadata(MethGR)))) == length(elementMetadata(MethGR)))]
-  MethGRFiltered = MethGR[complete.cases(elementMetadata(MethGR))]
 
   return(MethGRFiltered)
 
