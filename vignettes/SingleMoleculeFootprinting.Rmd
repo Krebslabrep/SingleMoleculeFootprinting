@@ -138,7 +138,7 @@ Methylation = CallContextMethylation(sampleSheet = Qinput,
                                      genome = BSgenome.Mmusculus.UCSC.mm10, 
                                      range = Region_of_interest, 
                                      coverage = 20, 
-                                     ConvRate.thr = 0.2)
+                                     ConvRate.thr = 0.8)
 Methylation[[1]]
 Methylation[[2]][1:10, 1:10]
 ```
