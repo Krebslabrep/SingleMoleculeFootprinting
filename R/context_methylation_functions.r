@@ -114,8 +114,20 @@ DetectExperimentType = function(Samples){
 FilterContextCytosines = function(MethGR, genome, context){
 
   CytosineRanges = GRanges(seqnames(MethGR), ranges(MethGR), strand(MethGR)) # performing operation without metadata to make it lighter
+  seqinfo(CytosineRanges) <- seqinfo(MethGR)
 
-  GenomicContext = Biostrings::getSeq(genome, IRanges::resize(CytosineRanges, width = 5, fix = "center"), as.character = FALSE)# I checked: it is strand-aware
+  GenomicContext = Biostrings::getSeq(genome,  suppressWarnings(trim(IRanges::resize(CytosineRanges, width = 5, fix = "center"))), as.character = FALSE)# I checked: it is strand-aware
+  
+  # Fix the truncated sites
+  trimmed <- which(!width(GenomicContext) == 5)
+  for(k in trimmed){
+    if(as.character(strand(CytosineRanges[k])) == '+'){
+      GenomicContext[k] <- paste0(c(rep('N', 5-width(GenomicContext[k])), as.character(GenomicContext[k])), collapse="")
+    } else if(as.character(strand(CytosineRanges[k])) == '-'){
+      GenomicContext[k] <- paste0(c(as.character(GenomicContext[k]), rep('N', 5-width(GenomicContext[k]))), collapse="")
+    }
+  }
+
   IsInContext = unlist(lapply(Biostrings::vmatchPattern(context, subject = GenomicContext, fixed = FALSE), function(i){length(i)>0}))
   # elementMetadata(CytosineRanges)$GenomicContext = GenomicContext
   # elementMetadata(CytosineRanges)$IsInContext = IsInContext
@@ -332,6 +344,7 @@ MergeMatrixes = function(matrixes){
 #'
 #' @return List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
 #'
+
 CallContextMethylation = function(sampleSheet, sample, genome, range, coverage=20, ConvRate.thr = 0.8, returnSM = TRUE){
 
   message("Setting QuasR project")
@@ -340,30 +353,40 @@ CallContextMethylation = function(sampleSheet, sample, genome, range, coverage=2
 
   message("Calling methylation at all Cytosines")
   MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = TRUE, keepZero = TRUE)
-  if (returnSM){MethSM = GetSingleMolMethMat(QuasRprj, range, sample)} # this selects the sample internally ---> TO FIX
   if (all(elementMetadata(MethGR)[,1] == 0)){
     message("No bulk methylation info found for the given range")
     MethGR = MethGR[elementMetadata(MethGR)[,1]!=0]
     return(MethGR) # ignoring MethSM here since it would be empty anyway
   }
-  if (returnSM){MethSM = FilterByConversionRate(MethSM, chr = seqnames(range), genome = genome, thr = ConvRate.thr)}
+  
+  if (returnSM){
+    MethSM = GetSingleMolMethMat(QuasRprj, range, sample) # this selects the sample internally ---> TO FIX
+    MethSM = FilterByConversionRate(MethSM, chr = seqnames(range), genome = genome, thr = ConvRate.thr)
+  }
 
   message("Subsetting Cytosines by permissive genomic context (NGCNN, NNCGN)") # Here we use a permissive context: needed for the strand collapsing
   ContextFilteredMethGR = list(GC = FilterContextCytosines(MethGR, genome, "NGCNN"),
                                CG = FilterContextCytosines(MethGR, genome, "NNCGN"))
-  if (returnSM){ContextFilteredMethSM = lapply(seq_along(ContextFilteredMethGR), function(i){MethSM[,colnames(MethSM) %in% as.character(start(ContextFilteredMethGR[[i]])), drop=FALSE]})}
+  if (returnSM){
+    ContextFilteredMethSM = lapply(seq_along(ContextFilteredMethGR), 
+                                   function(i){MethSM[,colnames(MethSM) %in% as.character(start(ContextFilteredMethGR[[i]])), drop=FALSE]})
+  }
 
   message("Collapsing strands")
   StrandCollapsedMethGR = list(GC = CollapseStrands(ContextFilteredMethGR[[1]], context = "GC"),
                                CG = CollapseStrands(ContextFilteredMethGR[[2]], context = "CG"))
-  if (returnSM){StrandCollapsedMethSM = list(GC = CollapseStrandsSM(ContextFilteredMethSM[[1]], context = "GC", genome = genome, chr = as.character(seqnames(range))),
-                                             CG = CollapseStrandsSM(ContextFilteredMethSM[[2]], context = "CG", genome = genome, chr = as.character(seqnames(range))))}
+  if (returnSM){
+    StrandCollapsedMethSM = list(GC = CollapseStrandsSM(ContextFilteredMethSM[[1]], context = "GC", genome = genome, chr = as.character(seqnames(range))),
+                                             CG = CollapseStrandsSM(ContextFilteredMethSM[[2]], context = "CG", genome = genome, chr = as.character(seqnames(range))))
+  }
 
   message("Filtering Cs for coverage")
   CoverageFilteredMethGR = list(GC = CoverageFilter(StrandCollapsedMethGR[[1]], thr = coverage),
                                 CG = CoverageFilter(StrandCollapsedMethGR[[2]], thr = coverage))
-  if (returnSM){CoverageFilteredMethSM = lapply(seq_along(CoverageFilteredMethGR),
-                                                function(i){StrandCollapsedMethSM[[i]][,colnames(StrandCollapsedMethSM[[i]]) %in% as.character(start(CoverageFilteredMethGR[[i]])), drop=FALSE]})}
+  if (returnSM){
+    CoverageFilteredMethSM = lapply(seq_along(CoverageFilteredMethGR), 
+                                    function(i){StrandCollapsedMethSM[[i]][,colnames(StrandCollapsedMethSM[[i]]) %in% as.character(start(CoverageFilteredMethGR[[i]])), drop=FALSE]})
+  }
 
   # Determining stric context based on ExpType
   ExpType = DetectExperimentType(Samples)
@@ -386,12 +409,10 @@ CallContextMethylation = function(sampleSheet, sample, genome, range, coverage=2
     message("Merging matrixes")
     MergedGR = sort(append(ContextFilteredMethGR_strict[[1]], ContextFilteredMethGR_strict[[2]]))
     if (returnSM){MergedSM = MergeMatrixes(ContextFilteredMethSM_strict)}
-
   } else {
     message("Returning non merged matrixes")
     MergedGR = ContextFilteredMethGR_strict
     if (returnSM){MergedSM = ContextFilteredMethSM_strict}
-
   }
 
   if (returnSM){
