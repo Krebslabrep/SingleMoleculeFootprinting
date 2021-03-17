@@ -19,3 +19,14 @@ filtered Granges obj
 \description{
 Filter Cytosines in context
 }
+\examples{
+
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+Samples = QuasR::alignments(QuasRprj)[[1]]$SampleName
+sample = Samples[1]
+MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = TRUE, keepZero = TRUE)
+
+FilterContextCytosines(MethGR, BSgenome.Mmusculus.UCSC.mm10, "NGCNN")
+
+}

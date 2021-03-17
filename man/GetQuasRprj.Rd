@@ -14,3 +14,9 @@ GetQuasRprj(sampleSheet, genome)
 \description{
 Get QuasRprj
 }
+\examples{
+
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+
+}

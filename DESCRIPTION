@@ -29,16 +29,18 @@ Imports:
     data.table,
     dplyr,
     grDevices,
+    parallel,
     plyr,
     IRanges,
     RColorBrewer,
-    QuasR
+    QuasR,
+    stats
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
     according to their state.
 biocViews: 
-  DNAMethylation, Coverage, NucleosomePositioning, DataRepresentation, Epigenetics, MethylSeq, QualityControl
+  DNAMethylation, Coverage, NucleosomePositioning, DataRepresentation, Epigenetics, MethylSeq, QualityControl, Sequencing
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

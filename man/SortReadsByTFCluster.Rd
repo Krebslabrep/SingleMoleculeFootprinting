@@ -17,3 +17,12 @@ List of reads sorted by TF cluster
 \description{
 Wrapper to SortReads for TF cluster case
 }
+\examples{
+
+TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106216, 88106253), c(88106226, 88106263)), strand = "-")
+elementMetadata(TFBSs)$name = c("NRF1", "NRF1")
+names(TFBSs) = c(paste0("TFBS_", c(4305215, 4305216)))
+
+SortedReads = SortReadsByTFCluster(MethSM = MethSM, TFBSs = TFBSs)
+
+}

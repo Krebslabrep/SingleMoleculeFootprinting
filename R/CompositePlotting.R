@@ -37,11 +37,12 @@ CollectCompositeData = function(sampleSheet, sample, genome, TFBSs, minCytosines
 
     FilteredMethCalls[[n]] %>%
       as_tibble() %>%
-      select(-seqnames, -end, -width, -strand) %>%
-      mutate(start = start - TFBS_center, TFBS = TFBS_index)
+      # select(-seqnames, -end, -width, -strand) %>%
+      select(-end, -width, -strand) %>%
+      mutate(relStart = start - TFBS_center, TFBS = TFBS_index)
 
   }, mc.cores = cores)) -> CompositeDF
-  colnames(CompositeDF)[2] = "SMF"
+  colnames(CompositeDF)[3] = "SMF"
 
   return(CompositeDF)
 

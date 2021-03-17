@@ -186,19 +186,19 @@ For each read, the binary methylation status of the cytosines contained in each 
 
 Here, we show a usage case for the `SortReadsByTFCluster` function, as we have already identified the double binding of NRF1 at the genomic site under scrutiny. Usage and exploration of the output is identical for the other function, except for the the format of the *TFBSs* argument which should consist of a GRanges object of length 1 for `SortReadsBySingleTF` and of length $>$ 1 for `SortReadsByTFCluster`.
 ```{r, eval=TRUE}
-SortedReads_TFCluster = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
+SortedReads = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
 ```
 
 ```{r, echo=FALSE}
-print(paste0("Number of retrieved states: ", as.character(length(SortedReads_TFCluster))))
+print(paste0("Number of retrieved states: ", as.character(length(SortedReads))))
 print("States population:")
-unlist(lapply(SortedReads_TFCluster, length))
+unlist(lapply(SortedReads, length))
 ```
 N.b. non-populated states are not returned. \
 
 The output of each of these sorting functions can be passed directly as the `SortedReads` argument of the `PlotSM` function.
 ```{r}
-PlotSM(MethSM = Methylation[[2]], range = Region_of_interest, SortedReads = SortedReads_TFCluster)
+PlotSM(MethSM = Methylation[[2]], range = Region_of_interest, SortedReads = SortedReads)
 ```
 
 N.b. despite sorting reads by a TF cluster is in principle possible with clusters of any size, as of now the `PlotSM` function can only deal with TF pairs.
@@ -206,7 +206,7 @@ N.b. despite sorting reads by a TF cluster is in principle possible with cluster
 
 In order to be quantitative about these observations, the user can employ the `StateQuantificationPlot`. The function outputs a bar plot annotated with the percentage of reads found in each state. The function takes, as argument, the output of either of the two sorting functions.
 ```{r}
-StateQuantificationPlot(SortedReads = SortedReads_TFCluster)
+StateQuantificationPlot(SortedReads = SortedReads)
 ```
 
 Finally, we provide the wrapper function `PlotSingleSiteSMF` to plot at once the three kinds of information detailed above and to export results as a pdf.
@@ -214,7 +214,7 @@ Finally, we provide the wrapper function `PlotSingleSiteSMF` to plot at once the
 PlotSingleSiteSMF(ContextMethylation = Methylation, 
                   sample = MySample, 
                   range = Region_of_interest, 
-                  SortedReads = SortedReads_TFCluster, 
+                  SortedReads = SortedReads, 
                   TFBSs = TFBSs, 
                   saveAs = NULL)
 ```

@@ -21,3 +21,13 @@ list of sorted reads
 \description{
 Sort reads by single TF
 }
+\examples{
+
+BinsCoord = list(c(-35,-25), c(-15,15), c(25,35))
+TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+elementMetadata(TFBSs)$name = c("NRF1")
+names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+
+SortedReads = SortReads(MethSM, TFBSs, BinsCoord, SortByCluster = FALSE)
+
+}

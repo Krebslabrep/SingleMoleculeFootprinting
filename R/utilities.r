@@ -103,6 +103,7 @@ panel.hist <- function(x, ...){
   rect(breaks[-nB], 0, breaks[-1], y, col="grey", ...)
 }
 
+#' @importFrom IRanges cor
 panel.cor <- function(x, y, digits=2, prefix="", cex.cor) {
   usr <- par("usr"); on.exit(par(usr))
   par(usr = c(0, 1, 0, 1))
