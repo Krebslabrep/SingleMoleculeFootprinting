@@ -1,0 +1,72 @@
+on:
+  push:
+    branches:
+      - main
+      - gha-workflow
+  pull_request:
+    branches:
+      - main
+
+name: R-CMD-check
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - { os: windows-latest, r: 'devel'}
+        - { os: macOS-latest, r: 'devel'}
+        #- { os: ubuntu-16.04, r: 'devel', cran: "https://packagemanager.rstudio.com/all/__linux__/xenial/latest"}
+        #- { os: ubuntu-18.04, r: 'devel', cran: "https://packagemanager.rstudio.com/all/__linux__/bionic/latest"}
+        - { os: ubuntu-20.04, r: 'devel', cran: "https://packagemanager.rstudio.com/all/__linux__/focal/latest"}
+
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      CRAN: ${{ matrix.config.rspm }}
+
+    steps:
+
+      - name: Install system libraries
+        if: ${{ runner.os == 'Linux'  }}
+        run: |
+          sudo apt-get install libcurl4-openssl-dev
+
+      - name: Configure git
+        run: |
+          git config --global core.autocrlf false
+          git config --global user.email "ghau@example.com"
+          git config --global user.name "GitHub Actions User"
+
+      - uses: actions/checkout@v1
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@master
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      - uses: r-lib/actions/setup-pandoc@master
+
+      - name: Install dependencies
+        run: |
+          options(install.packages.check.source = "no")
+          install.packages(c('BiocManager', 'remotes', 'rcmdcheck'))
+          BiocManager::install(version = 'devel', ask = FALSE, update = FALSE)
+          toInstall <- remotes::dev_package_deps(dependencies = TRUE)[,"package"]
+          BiocManager::install(toInstall)
+        shell: Rscript {0}
+
+      - name: Run R CMD check
+        run: |
+          Rscript -e "rcmdcheck::rcmdcheck(args = c('--no-manual'), error_on = 'warning', check_dir = 'check')"
+
+      - name: Upload check results
+        if: always()
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.config.os }}-r-${{ matrix.config.r }}-results
+          path: check/*.Rcheck/00install.out
