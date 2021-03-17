@@ -14,3 +14,18 @@ PlotSingleMoleculeStack(MethSM, range)
 \description{
 Plot single molecule stack
 }
+\examples{
+
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
+Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+Methylation = CallContextMethylation(sampleSheet = Qinput,
+                                     sample = MySample,
+                                     genome = BSgenome.Mmusculus.UCSC.mm10,
+                                     range = Region_of_interest,
+                                     coverage = 20,
+                                     ConvRate.thr = 0.2)
+
+PlotSingleMoleculeStack(MethSM = Methylation[[2]], range = Region_of_interest)
+
+}
