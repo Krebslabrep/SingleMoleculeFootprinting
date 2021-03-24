@@ -32,6 +32,7 @@ GetQuasRprj = function(sampleSheet, genome){
 #' @import QuasR
 #' @importFrom data.table data.table
 #' @importFrom data.table dcast
+#' @importFrom IRanges isEmpty
 #'
 #' @return Single molecule methylation matrix (all Cytosines)
 #'

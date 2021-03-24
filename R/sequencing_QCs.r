@@ -57,7 +57,7 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #'
 #' @import BiocGenerics
 #' @importFrom QuasR qCount
-#' @importFrom GenomeInfoDb seqlengths
+#' @importFrom GenomeInfoDb seqlengths, seqlevels
 #' @importFrom parallel makeCluster
 #'
 #' @export
