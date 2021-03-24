@@ -57,17 +57,13 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #'
 #' @import BiocGenerics
 #' @importFrom QuasR qCount
-#' @importFrom GenomeInfoDb seqlengths, seqlevels
+#' @importFrom GenomeInfoDb seqlengths
 #' @importFrom parallel makeCluster
 #'
 #' @export
 BaitCapture = function(sampleSheet, genome, baits, cores=1){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
-
-  if (length(grep("chr", seqlevels(BaitRegions))) == 0){
-    seqlevels(BaitRegions) = paste0("chr", seqlevels(BaitRegions))
-  }
 
   cl = makeCluster(cores)
   InBaits=QuasR::qCount(QuasRprj, BaitRegions, clObj = cl)
