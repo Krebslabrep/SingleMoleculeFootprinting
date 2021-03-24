@@ -98,14 +98,17 @@ In this case the capture efficiency equals to `r toString(BaitCaptureEfficiency)
 
 ### Conversion rate precision
 Here we ask how much of the observed Cytosine methylation falls in the expected contexts (*CpG* or *GpC*). Beware, this is a much slower computation than the above.
-```{r, eval=TRUE, echo=FALSE}
-ConversionRatePrecision = 92.4
-```
 
-
-```{r, eval=FALSE}
+```{r conversion-rate-precision, eval=FALSE, echo = TRUE}
 ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 6)
 ```
+
+```{r load-conversion-rate-precision, eval=TRUE, echo = FALSE}
+## the code above takes > 10 minutes to run, so we load a precomputed value here
+ConversionRatePrecision = readRDS(file = system.file("extdata", "vignette_ConversionRatePrecision.rds", 
+                                                     package = "SingleMoleculeFootprinting"))
+```
+
 For this sample, the observed conversion rate is `r toString(ConversionRatePrecision)`%. This value happens to be slightly below the expected value of ~95%
 
 ```{r, eval=FALSE, echo=FALSE}
