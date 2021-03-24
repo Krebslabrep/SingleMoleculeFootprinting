@@ -11,6 +11,14 @@
 #'
 #' @export
 #'
+#' @examples
+#'
+#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#' elementMetadata(TFBSs)$name = c("NRF1")
+#' names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'
+#' binMethylationValues = BinMethylation(MethSM = MethSM, TFBS = TFBSs, bin = c(-15,15))
+#'
 BinMethylation = function(MethSM, TFBS, bin){
 
   midP = start(resize(TFBS, 1, fix='center'))
@@ -46,6 +54,15 @@ BinMethylation = function(MethSM, TFBS, bin){
 #' @return list of sorted reads
 #'
 #' @export
+#'
+#' @examples
+#'
+#' BinsCoord = list(c(-35,-25), c(-15,15), c(25,35))
+#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#' elementMetadata(TFBSs)$name = c("NRF1")
+#' names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'
+#' SortedReads = SortReads(MethSM, TFBSs, BinsCoord, SortByCluster = FALSE)
 #'
 SortReads = function(MethSM, TFBS, BinsCoord, SortByCluster){
 
@@ -95,6 +112,14 @@ SortReads = function(MethSM, TFBS, BinsCoord, SortByCluster){
 #'
 #' @export
 #'
+#' @examples
+#'
+#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#' elementMetadata(TFBSs)$name = c("NRF1")
+#' names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'
+#' SortedReads = SortReadsBySingleTF(MethSM = MethSM, TFBS = TFBSs)
+#'
 SortReadsBySingleTF = function(MethSM, TFBS){
 
   BinsCoord = list(c(-35,-25), c(-15,15), c(25,35))
@@ -111,6 +136,14 @@ SortReadsBySingleTF = function(MethSM, TFBS){
 #' @return List of reads sorted by TF cluster
 #'
 #' @export
+#'
+#' @examples
+#'
+#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106216, 88106253), c(88106226, 88106263)), strand = "-")
+#' elementMetadata(TFBSs)$name = c("NRF1", "NRF1")
+#' names(TFBSs) = c(paste0("TFBS_", c(4305215, 4305216)))
+#'
+#' SortedReads = SortReadsByTFCluster(MethSM = MethSM, TFBSs = TFBSs)
 #'
 SortReadsByTFCluster = function(MethSM, TFBSs){
 

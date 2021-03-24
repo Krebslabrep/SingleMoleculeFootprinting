@@ -13,12 +13,15 @@ PlotSM(MethSM, range, SortedReads = NULL)
 
 \item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
 }
+\value{
+Single molecule stack plot
+}
 \description{
 adds the convenience of arranging reads before plotting
 }
 \examples{
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
 Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
 Methylation = CallContextMethylation(sampleSheet = Qinput,

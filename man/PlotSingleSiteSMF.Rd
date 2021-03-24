@@ -26,12 +26,15 @@ PlotSingleSiteSMF(
 
 \item{saveAs}{Full path to pdf file to save plot to. Defaults to NULL, in which case will only display}
 }
+\value{
+Single site plot including average SMF signal, single molecules stack and state quantification plot
+}
 \description{
 Plot SMF data at single site
 }
 \examples{
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
 Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
 Methylation = CallContextMethylation(sampleSheet = Qinput,

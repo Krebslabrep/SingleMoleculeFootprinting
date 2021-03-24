@@ -15,12 +15,15 @@ ConversionRate(sampleSheet, genome, chr = 19, cores = 1)
 
 \item{cores}{number of cores for parallel processing. Defaults to 1}
 }
+\value{
+Conversion rate
+}
 \description{
 calculate sequencing library conversion rate on a chromosome of choice
 }
 \examples{
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 
 ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 19, cores = 1)
 

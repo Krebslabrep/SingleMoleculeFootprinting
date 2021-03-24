@@ -11,12 +11,15 @@ GetQuasRprj(sampleSheet, genome)
 
 \item{genome}{BSgenome}
 }
+\value{
+QuasR project object as returned by QuasR::qAlign function
+}
 \description{
 Get QuasRprj
 }
 \examples{
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 
 }

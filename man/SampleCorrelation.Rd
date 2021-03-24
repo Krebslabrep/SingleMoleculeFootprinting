@@ -13,11 +13,10 @@ SampleCorrelation(samples, context, CellType, saveAs = NULL)
 
 \item{CellType}{Cell type to compare your samples to. At the moment, this can be one of "ES", "NP", "TKO".}
 
-\item{saveAs}{Full path to output plot file
-
-# export
-
-# examples}
+\item{saveAs}{Full path to output plot file}
+}
+\value{
+Inter-sample correlation plot
 }
 \description{
 pair plot of sample correlations

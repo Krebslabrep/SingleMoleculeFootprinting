@@ -13,12 +13,15 @@ PlotAvgSMF(MethGR, range, TFBSs)
 
 \item{TFBSs}{GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset.}
 }
+\value{
+Average SMF signal at single site
+}
 \description{
 Plot average methylation
 }
 \examples{
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
 Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
 Methylation = CallContextMethylation(sampleSheet = Qinput,

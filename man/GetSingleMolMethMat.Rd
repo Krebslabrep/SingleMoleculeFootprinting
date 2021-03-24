@@ -21,7 +21,7 @@ Used internally as the first step in CallContextMethylation
 }
 \examples{
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 sample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
 range = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")

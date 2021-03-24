@@ -8,13 +8,22 @@
 #'
 #' @importFrom QuasR qMeth
 #' @importFrom GenomeInfoDb seqlengths
-#' @importFrom parallel makeCluster
+#' @importFrom parallel makeCluster stopCluster
 #' @importFrom BSgenome getSeq
 #' @importFrom IRanges resize
 #' @importFrom Biostrings vcountPattern
 #' @importFrom BiocGenerics grep
 #'
+#' @return Conversion rate
+#'
 #' @export
+#'
+#' @examples
+#'
+#' Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
+#'
+#' ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 19, cores = 1)
+#'
 ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
@@ -58,9 +67,18 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #' @import BiocGenerics
 #' @importFrom QuasR qCount
 #' @importFrom GenomeInfoDb seqlengths
-#' @importFrom parallel makeCluster
+#' @importFrom parallel makeCluster stopCluster
+#'
+#' @return bait capture efficiency
 #'
 #' @export
+#'
+#' @examples
+#'
+#' Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
+#'
+#' BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+#'
 BaitCapture = function(sampleSheet, genome, baits, cores=1){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
@@ -96,7 +114,10 @@ BaitCapture = function(sampleSheet, genome, baits, cores=1){
 #' @param CellType Cell type to compare your samples to. At the moment, this can be one of "ES", "NP", "TKO".
 #' @param saveAs Full path to output plot file
 #'
+#' @return Inter-sample correlation plot
+#'
 #' @export
+#'
 SampleCorrelation = function(samples, context, CellType, saveAs=NULL){
 
   # Get methylation data from previous SMF experiments

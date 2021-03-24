@@ -9,12 +9,15 @@ DetectExperimentType(Samples)
 \arguments{
 \item{Samples}{SampleNames field from QuasR sampleSheet}
 }
+\value{
+String indicating the type of experiment detected
+}
 \description{
 Detect type of experiment
 }
 \examples{
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 Samples = QuasR::alignments(QuasRprj)[[1]]$SampleName
 

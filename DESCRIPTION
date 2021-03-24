@@ -19,7 +19,7 @@ Authors@R: c(
            comment = c(ORCID = "0000-0002-7800-3848"))
     )
 Depends:
-  R (>= 3.5.0)
+  R (>= 4.1.0)
 Imports: 
     BiocGenerics,
     Biostrings,
@@ -27,11 +27,12 @@ Imports:
     GenomeInfoDb,
     GenomicRanges,
     data.table,
-    dplyr,
     grDevices,
     plyr,
     IRanges,
+    parallel,
     RColorBrewer,
+    stats,
     QuasR
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 

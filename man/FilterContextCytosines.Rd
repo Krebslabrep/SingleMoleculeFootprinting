@@ -21,7 +21,7 @@ Filter Cytosines in context
 }
 \examples{
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
 QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 Samples = QuasR::alignments(QuasRprj)[[1]]$SampleName
 sample = Samples[1]
