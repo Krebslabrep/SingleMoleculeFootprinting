@@ -10,7 +10,8 @@ CallContextMethylation(
   genome,
   range,
   coverage = 20,
-  ConvRate.thr = 0.2
+  ConvRate.thr = 0.8,
+  returnSM = TRUE
 )
 }
 \arguments{
@@ -24,11 +25,27 @@ CallContextMethylation(
 
 \item{coverage}{coverage threshold. Defaults to 20.}
 
-\item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.2}
+\item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.8}
+
+\item{returnSM}{whether to return the single molecule matrix, defaults to TRUE}
 }
 \value{
 List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
 }
 \description{
 Can deal with multiple samples
+}
+\examples{
+
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
+Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+
+Methylation = CallContextMethylation(sampleSheet = Qinput,
+                                     sample = MySample,
+                                     genome = BSgenome.Mmusculus.UCSC.mm10,
+                                     range = Region_of_interest,
+                                     coverage = 20,
+                                     ConvRate.thr = 0.2)
+
 }

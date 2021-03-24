@@ -16,3 +16,21 @@ PlotAvgSMF(MethGR, range, TFBSs)
 \description{
 Plot average methylation
 }
+\examples{
+
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
+Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+Methylation = CallContextMethylation(sampleSheet = Qinput,
+                                     sample = MySample,
+                                     genome = BSgenome.Mmusculus.UCSC.mm10,
+                                     range = Region_of_interest,
+                                     coverage = 20,
+                                     ConvRate.thr = 0.2)
+TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+elementMetadata(TFBSs)$name = c("NRF1")
+names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+
+PlotAvgSMF(MethGR = Methylation[[1]], range = Region_of_interest, TFBSs = TFBSs)
+
+}

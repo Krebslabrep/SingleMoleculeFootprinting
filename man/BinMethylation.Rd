@@ -19,3 +19,12 @@ Reads covering bin with their summarized methylation status
 \description{
 Summarize methylation inside sorting bins
 }
+\examples{
+
+TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+elementMetadata(TFBSs)$name = c("NRF1")
+names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+
+binMethylationValues = BinMethylation(MethSM = MethSM, TFBS = TFBSs, bin = c(-15,15))
+
+}

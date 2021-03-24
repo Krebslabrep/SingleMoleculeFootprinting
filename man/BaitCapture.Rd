@@ -18,3 +18,10 @@ BaitCapture(sampleSheet, genome, baits, cores = 1)
 \description{
 check bait capture efficiency. Expected to be ~70% for mouse genome
 }
+\examples{
+
+Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+
+BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+
+}
