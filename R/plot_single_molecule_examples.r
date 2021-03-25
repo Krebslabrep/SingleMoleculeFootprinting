@@ -7,14 +7,21 @@
 #'
 HierarchicalClustering = function(MethSM){
 
-  if(nrow(MethSM) > 500){ #subset to 500 molecules to avoid problem with Hc
-    MethSM_subset = MethSM[sample(dimnames(MethSM)[[1]],500),]
+  SubsetSize = 500
+  if(nrow(MethSM) > SubsetSize){ #subset to 500 molecules to avoid problem with Hc
+    MethSM_subset = MethSM[sample(dimnames(MethSM)[[1]],SubsetSize),]
   }else{
     MethSM_subset = MethSM
   }
   ReadsDist = dist(MethSM_subset)
+  iteration = 0
   while(sum(is.na(ReadsDist)) > 0){ # sometimes dist between some pair of reads is NA, possibly because of no overlapping Cs
-    MethSM_subset = MethSM[sample(dimnames(MethSM)[[1]],500),]
+    iteration = iteration + 1
+    if (iteration > SubsetSize) {
+      SubsetSize = ceiling(SubsetSize*0.9)
+      iteration = 0
+    }
+    MethSM_subset = MethSM[sample(dimnames(MethSM)[[1]],SubsetSize),]
     ReadsDist = dist(MethSM_subset)
   }
   hc=hclust(ReadsDist)
