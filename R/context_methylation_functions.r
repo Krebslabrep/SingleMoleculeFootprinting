@@ -343,8 +343,8 @@ CoverageFilter = function(MethGR, thr){
   # bind the GRanges with the scores
   elementMetadata(MethGR)[grep("_T$", colnames(elementMetadata(MethGR)))] = Tcounts
   elementMetadata(MethGR)[grep("_M$", colnames(elementMetadata(MethGR)))] = MethylationMatrix
-  colnames(elementMetadata(MethGR)) = gsub("_T", "_Coverage", colnames(elementMetadata(MethGR)))
-  colnames(elementMetadata(MethGR)) = gsub("_M", "_MethRate", colnames(elementMetadata(MethGR)))
+  colnames(elementMetadata(MethGR)) = gsub("_T$", "_Coverage", colnames(elementMetadata(MethGR)))
+  colnames(elementMetadata(MethGR)) = gsub("_M$", "_MethRate", colnames(elementMetadata(MethGR)))
 
   # do the actual filtering
   MethGRFiltered = MethGR[!(rowSums(is.na(elementMetadata(MethGR)[,-length(elementMetadata(MethGR))])) == (length(elementMetadata(MethGR))-1))]
