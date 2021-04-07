@@ -16,21 +16,28 @@ Bar plot quantifying states
 Plot states quantification bar
 }
 \examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+library(BSgenome.Mmusculus.UCSC.mm10)
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
-MySample = suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
-Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
-Methylation = CallContextMethylation(sampleSheet = Qinput,
+if(file.exists(Qinput)){
+    QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+
+    MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+    Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+
+    Methylation = CallContextMethylation(sampleSheet = Qinput,
                                      sample = MySample,
                                      genome = BSgenome.Mmusculus.UCSC.mm10,
                                      range = Region_of_interest,
                                      coverage = 20,
                                      ConvRate.thr = 0.2)
-TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
-elementMetadata(TFBSs)$name = c("NRF1")
-names(TFBSs) = c(paste0("TFBS_", c(4305216)))
-SortedReads = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
 
-StateQuantificationPlot(SortedReads = SortedReads)
+    TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+    elementMetadata(TFBSs)$name = c("NRF1")
+    names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+
+    SortedReads = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
+    StateQuantificationPlot(SortedReads = SortedReads)
+}
 
 }

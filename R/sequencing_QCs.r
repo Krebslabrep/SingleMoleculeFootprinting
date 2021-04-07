@@ -19,10 +19,13 @@
 #' @export
 #'
 #' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
-#'
-#' ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 19, cores = 1)
+#' if(file.exists(Qinput)){
+#'     # DO NOT RUN
+#'     # ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 19, cores = 1)
+#' }
 #'
 ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 
@@ -64,6 +67,9 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #' @param baits Full path to bed file containing bait coordinates. If chromosome names are in e.g. "1" format, they'll be temporarily converted to "chr1"
 #' @param cores number of cores for parallel processing. Defaults to 1
 #'
+#' @import AnnotationHub
+#' @import ExperimentHub
+#' @import SingleMoleculeFootprintingData
 #' @import BiocGenerics
 #' @importFrom QuasR qCount
 #' @importFrom GenomeInfoDb seqlengths
@@ -74,10 +80,14 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #' @export
 #'
 #' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
-#'
-#' BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+#' if(file.exists(Qinput)){
+#'     # DO NOT RUN
+#'     # BaitRegions = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
+#'     # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+#' }
 #'
 BaitCapture = function(sampleSheet, genome, baits, cores=1){
 

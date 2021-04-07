@@ -20,13 +20,18 @@ filtered Granges obj
 Filter Cytosines in context
 }
 \examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+library(BSgenome.Mmusculus.UCSC.mm10)
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
-QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
-Samples = QuasR::alignments(QuasRprj)[[1]]$SampleName
-sample = Samples[1]
-MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = TRUE, keepZero = TRUE)
+if(file.exists(Qinput)){
+    QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 
-FilterContextCytosines(MethGR, BSgenome.Mmusculus.UCSC.mm10, "NGCNN")
+    Samples = readr::read_delim(Qinput, delim = "\t")$SampleName
+    sample = Samples[1]
+    range = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+
+    MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = TRUE, keepZero = TRUE)
+    FilterContextCytosines(MethGR, BSgenome.Mmusculus.UCSC.mm10, "NGCNN")
+}
 
 }

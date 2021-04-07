@@ -16,11 +16,11 @@ String indicating the type of experiment detected
 Detect type of experiment
 }
 \examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
-QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
-Samples = QuasR::alignments(QuasRprj)[[1]]$SampleName
-
-ExpType = DetectExperimentType(Samples)
+if(file.exists(Qinput)){
+    sample = readr::read_delim(Qinput, delim = "\t")$SampleName
+    ExpType = DetectExperimentType(sample)
+}
 
 }

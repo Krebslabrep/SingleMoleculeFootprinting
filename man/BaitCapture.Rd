@@ -22,9 +22,13 @@ bait capture efficiency
 check bait capture efficiency. Expected to be ~70% for mouse genome
 }
 \examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+library(BSgenome.Mmusculus.UCSC.mm10)
 
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
-
-BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+if(file.exists(Qinput)){
+    # DO NOT RUN
+    # BaitRegions = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
+    # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+}
 
 }

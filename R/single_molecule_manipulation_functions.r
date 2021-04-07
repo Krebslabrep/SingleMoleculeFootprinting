@@ -12,12 +12,28 @@
 #' @export
 #'
 #' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
-#' elementMetadata(TFBSs)$name = c("NRF1")
-#' names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' binMethylationValues = BinMethylation(MethSM = MethSM, TFBS = TFBSs, bin = c(-15,15))
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#'
+#'     TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#'     elementMetadata(TFBSs)$name = c("NRF1")
+#'     names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'
+#'     binMethylationValues = BinMethylation(MethSM = Methylation[[2]], TFBS = TFBSs, bin = c(-15,15))
+#' }
 #'
 BinMethylation = function(MethSM, TFBS, bin){
 
@@ -56,13 +72,29 @@ BinMethylation = function(MethSM, TFBS, bin){
 #' @export
 #'
 #' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' BinsCoord = list(c(-35,-25), c(-15,15), c(25,35))
-#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
-#' elementMetadata(TFBSs)$name = c("NRF1")
-#' names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' SortedReads = SortReads(MethSM, TFBSs, BinsCoord, SortByCluster = FALSE)
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#'
+#'     TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#'     elementMetadata(TFBSs)$name = c("NRF1")
+#'     names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'     BinsCoord = list(c(-35,-25), c(-15,15), c(25,35))
+#'
+#'     SortedReads = SortReads(Methylation[[2]], TFBSs, BinsCoord, SortByCluster = FALSE)
+#' }
 #'
 SortReads = function(MethSM, TFBS, BinsCoord, SortByCluster){
 
@@ -113,12 +145,28 @@ SortReads = function(MethSM, TFBS, BinsCoord, SortByCluster){
 #' @export
 #'
 #' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
-#' elementMetadata(TFBSs)$name = c("NRF1")
-#' names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' SortedReads = SortReadsBySingleTF(MethSM = MethSM, TFBS = TFBSs)
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#'
+#'     TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#'     elementMetadata(TFBSs)$name = c("NRF1")
+#'     names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'
+#'     SortedReads = SortReadsBySingleTF(MethSM = Methylation[[2]], TFBS = TFBSs)
+#' }
 #'
 SortReadsBySingleTF = function(MethSM, TFBS){
 
@@ -138,12 +186,28 @@ SortReadsBySingleTF = function(MethSM, TFBS){
 #' @export
 #'
 #' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106216, 88106253), c(88106226, 88106263)), strand = "-")
-#' elementMetadata(TFBSs)$name = c("NRF1", "NRF1")
-#' names(TFBSs) = c(paste0("TFBS_", c(4305215, 4305216)))
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' SortedReads = SortReadsByTFCluster(MethSM = MethSM, TFBSs = TFBSs)
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#'
+#'     TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#'     elementMetadata(TFBSs)$name = c("NRF1")
+#'     names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'
+#'     SortedReads = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
+#' }
 #'
 SortReadsByTFCluster = function(MethSM, TFBSs){
 
