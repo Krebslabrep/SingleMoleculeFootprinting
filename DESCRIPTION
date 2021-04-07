@@ -19,24 +19,35 @@ Authors@R: c(
            comment = c(ORCID = "0000-0002-7800-3848"))
     )
 Depends:
-  R (>= 3.5.0)
+  R (>= 4.1.0)
 Imports: 
+    AnnotationHub,
     BiocGenerics,
     Biostrings,
     BSgenome,
     GenomeInfoDb,
     GenomicRanges,
     data.table,
-    dplyr,
+    ExperimentHub,
     grDevices,
     plyr,
     IRanges,
+    parallel,
     RColorBrewer,
+    SingleMoleculeFootprintingData,
+    stats,
     QuasR
-Description: This package provides convenience functions tailored 
-    for SMF data. At present, we provide functions to call methylation 
-    values for the relevant contexts and to sort single molecules    
-    according to their state.
+Description: SingleMoleculeFootprinting is an R package providing functions 
+    to analyze Single Molecule Footprinting (SMF) data. 
+    Following the workflow exemplified in this vignette, 
+    the user will be able to perform basic data analysis 
+    of SMF data with minimal coding effort.
+    Starting from an aligned bam file, we show how to 
+    - perform quality controls over sequencing libraries, 
+    - extract methylation information at the single molecule level 
+    accounting for the two possible kind of SMF experiments (single enzyme or double enzyme) 
+    - classify single molecules based on their patterns of molecular occupancy
+    - plot SMF information at a given genomic location
 biocViews: 
   DNAMethylation, Coverage, NucleosomePositioning, DataRepresentation, Epigenetics, MethylSeq, QualityControl
 License: GPL-3

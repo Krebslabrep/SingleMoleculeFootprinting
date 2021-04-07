@@ -32,3 +32,22 @@ List with two Granges objects: average methylation call (GRanges) and single mol
 \description{
 Can deal with multiple samples
 }
+\examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+library(BSgenome.Mmusculus.UCSC.mm10)
+
+if(file.exists(Qinput)){
+    QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+
+    MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+    Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+
+    Methylation = CallContextMethylation(sampleSheet = Qinput,
+                                     sample = MySample,
+                                     genome = BSgenome.Mmusculus.UCSC.mm10,
+                                     range = Region_of_interest,
+                                     coverage = 20,
+                                     ConvRate.thr = 0.2)
+}
+
+}

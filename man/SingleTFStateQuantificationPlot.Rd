@@ -11,6 +11,9 @@ SingleTFStateQuantificationPlot(states, OrderedReads)
 
 \item{OrderedReads}{Reads ordered by states}
 }
+\value{
+single TF state quantification plot
+}
 \description{
 Single TF state quantification bar
 }

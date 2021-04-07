@@ -8,13 +8,25 @@
 #'
 #' @importFrom QuasR qMeth
 #' @importFrom GenomeInfoDb seqlengths
-#' @importFrom parallel makeCluster
+#' @importFrom parallel makeCluster stopCluster
 #' @importFrom BSgenome getSeq
 #' @importFrom IRanges resize
 #' @importFrom Biostrings vcountPattern
 #' @importFrom BiocGenerics grep
 #'
+#' @return Conversion rate
+#'
 #' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     # DO NOT RUN
+#'     # ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 19, cores = 1)
+#' }
+#'
 ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
@@ -55,19 +67,31 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #' @param baits Full path to bed file containing bait coordinates. If chromosome names are in e.g. "1" format, they'll be temporarily converted to "chr1"
 #' @param cores number of cores for parallel processing. Defaults to 1
 #'
+#' @import AnnotationHub
+#' @import ExperimentHub
+#' @import SingleMoleculeFootprintingData
 #' @import BiocGenerics
 #' @importFrom QuasR qCount
 #' @importFrom GenomeInfoDb seqlengths
-#' @importFrom parallel makeCluster
+#' @importFrom parallel makeCluster stopCluster
+#'
+#' @return bait capture efficiency
 #'
 #' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     # DO NOT RUN
+#'     # BaitRegions = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
+#'     # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+#' }
+#'
 BaitCapture = function(sampleSheet, genome, baits, cores=1){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
-
-  if (length(grep("chr", seqlevels(BaitRegions))) == 0){
-    seqlevels(BaitRegions) = paste0("chr", seqlevels(BaitRegions))
-  }
 
   cl = makeCluster(cores)
   InBaits=QuasR::qCount(QuasRprj, BaitRegions, clObj = cl)
@@ -100,7 +124,10 @@ BaitCapture = function(sampleSheet, genome, baits, cores=1){
 #' @param CellType Cell type to compare your samples to. At the moment, this can be one of "ES", "NP", "TKO".
 #' @param saveAs Full path to output plot file
 #'
+#' @return Inter-sample correlation plot
+#'
 #' @export
+#'
 SampleCorrelation = function(samples, context, CellType, saveAs=NULL){
 
   # Get methylation data from previous SMF experiments

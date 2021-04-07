@@ -11,6 +11,9 @@ TFPairStateQuantificationPlot(states, OrderedReads)
 
 \item{OrderedReads}{Reads ordered by states}
 }
+\value{
+TF pair state quantification plot
+}
 \description{
 TF pair state quantification bar
 }

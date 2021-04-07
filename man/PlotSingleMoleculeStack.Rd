@@ -11,6 +11,9 @@ PlotSingleMoleculeStack(MethSM, range)
 
 \item{range}{GRanges interval to plot}
 }
+\value{
+Single molecule plot
+}
 \description{
 Plot single molecule stack
 }

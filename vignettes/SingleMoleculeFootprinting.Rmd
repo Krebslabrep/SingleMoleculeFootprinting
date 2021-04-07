@@ -16,8 +16,8 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   # comment = "#>", 
-  tidy = F, 
-  cache = F, 
+  tidy = FALSE, 
+  cache = FALSE, 
   results = 'markup'
 )
 ```
@@ -71,9 +71,39 @@ library(SingleMoleculeFootprinting)
 ```
 
 ## Define arguments
-*SingleMoleculeFootprinting* inherits *QuasR*'s philosophy of working with pointer files. Briefly, a pointer  is a tab-delimited file with two or three fields indicating the location of the input data files. For more details, please check the `qAlign` [documentation](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign). Here we show how our pointer file looks like.
+*SingleMoleculeFootprinting* inherits *QuasR*'s philosophy of working with pointer files. Briefly, a pointer  is a tab-delimited file with two or three fields indicating the location of the input data files. For more details, please check the `qAlign` [documentation](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign). Here we show how our pointer file looks like.\
+
+N.b.: The execution of the example code in this vignette, as well as some functions of this software package, depend on accessory data that can be downloaded and cached through the data package *SingleMoleculeFootprintingData*. Under the hood, we download this data for the user and create the QuasR sampleSheet file for the example data at `tempdir()` under the name `NRF1Pair_Qinput.txt`.\
+We just ask the user to make sure that their default cache directory has enough storage capacity (~1 Gb). The user can check this via `ExperimentHub::getExperimentHubOption(arg = "CACHE")` and eventually change this value via `ExperimentHub::setExperimentHubOption(arg = "CACHE", value = "/your/favourite/location")`.
+```{r, include=FALSE}
+# Under the hood:
+#       download and cache SingleMoleculeFootprintingData data
+#       locate bam file and make QuasR sampleSheet
+
+CacheDir = ExperimentHub::getExperimentHubOption(arg = "CACHE") # <------- grab this as the cache dir. And write somewhere to set a sensible location for the user
+eh = ExperimentHub::ExperimentHub()
+SMFdata = AnnotationHub::query(eh, "SingleMoleculeFootprintingData")
+ExperimentHub::loadResources(hub = SMFdata, package = "SingleMoleculeFootprintingData")
+
+RecordIDs = rownames(AnnotationHub::mcols(x = SMFdata))[1:2]
+CachedBamPath = AnnotationHub::fileName(object = SMFdata)[names(AnnotationHub::fileName(object = SMFdata))==RecordIDs[1]][[1]]
+CachedBaiPath = AnnotationHub::fileName(object = SMFdata)[names(AnnotationHub::fileName(object = SMFdata))==RecordIDs[2]][[1]]
+# Copy example data to tempdir()
+file.copy(from = CachedBamPath, to = tempdir())
+file.copy(from = CachedBaiPath, to = tempdir())
+# Rename
+file.rename(from = paste0(tempdir(), "/", rev(rev(base::strsplit(CachedBamPath, "/")[[1]])[1])), to = paste0(tempdir(), "/NRF1pair.bam"))
+file.rename(from = paste0(tempdir(), "/", rev(rev(base::strsplit(CachedBaiPath, "/")[[1]])[1])), to = paste0(tempdir(), "/NRF1pair.bam.bai"))
+# Make sampleSheet
+data.frame(
+  FileName = list.files(tempdir(), pattern = ".bam$", full.names = TRUE),
+  SampleName = "NRF1pair_DE_"
+  ) -> df
+readr::write_delim(df, paste0(tempdir(), "/NRF1Pair_Qinput.txt"), delim = "\t")
+```
+
 ```{r, eval=TRUE}
-Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = TRUE)
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
 suppressMessages(readr::read_delim(Qinput, delim = "\t"))
 ```
 
@@ -90,7 +120,7 @@ qQCReport(Qinput, pdfFilename=NULL, chunkSize=1e6L, useSampleNames=FALSE, clObj=
 ### Bait capture efficiency
 If SMF was performed on an large genome (e.g Mouse) it is possible that bait capture was performed to focus the sequencing efforts: here we check how efficient that process was by essentially computing the ratio of genomic alignments inside bait regions over the total ones.
 ```{r, eval=TRUE}
-BaitRegions = import(system.file("extdata", "mm10_baits.bed.gz", package = "SingleMoleculeFootprinting", mustWork = TRUE), format="bed")
+BaitRegions = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
 BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
 print(BaitCaptureEfficiency)
 ```
@@ -104,7 +134,7 @@ ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome
 ```
 
 ```{r load-conversion-rate-precision, eval=TRUE, echo = FALSE}
-## the code above takes > 10 minutes to run, so we load a precomputed value here
+## the code above takes > 10 minutes to run, so we load a pre-computed value here
 ConversionRatePrecision = readRDS(file = system.file("extdata", "vignette_ConversionRatePrecision.rds", 
                                                      package = "SingleMoleculeFootprinting"))
 ```
@@ -165,7 +195,7 @@ print(TFBSs)
 PlotAvgSMF(MethGR = Methylation[[1]], range = Region_of_interest, TFBSs = TFBSs)
 ```
 
-Furthermore, the function `PlotSM` can be uesd to plot the single molecule SMF information at a given site.
+Furthermore, the function `PlotSM` can be used to plot the single molecule SMF information at a given site.
 ```{r}
 PlotSM(MethSM = Methylation[[2]], range = Region_of_interest)
 ```
@@ -217,58 +247,4 @@ PlotSingleSiteSMF(ContextMethylation = Methylation,
                   SortedReads = SortedReads_TFCluster, 
                   TFBSs = TFBSs, 
                   saveAs = NULL)
-```
-
-```{r, eval=FALSE, echo=FALSE}
-
-# --------
-# ********
-# 
-# ## Genome-wide analysis
-# Given the example data only cover one genomic region, we are going to restrict the following chunk to the interested chromosome only
-# This process can be quite lengthy and computationally demanding, it is advisable to run it on a cluster.
-
-
-# Partition a genome by chromosome ("natural partitioning")
-musmus_length=seqlengths(Mmusculus)[1:21] # change [1] to [1:21] to expand the analysis to the whole genome
-tiles <- tileGenome(musmus_length, tilewidth=max(musmus_length),cut.last.tile.in.chrom=TRUE)
-
-# Call the methylation genome wide for all Cs, loop/chromosome
-# Cluster object for parallel processing of multiple samples
-cluObj=makeCluster(length(SMFaln$SampleName))
-lapply(1:length(tiles),function(i){
-
-  print(i)
-  
-	meth_gr <- QuasR::qMeth(SMFproj, mode="allC", tiles[i], clObj=cluObj)
-	contextMet=CallContextMethylation(meth_gr, cO, Mmusculus)
-	saveRDS(contextMet, paste0(out_path,'/Context_met_call_',SMFproj@projectName,'_',as.character(seqnames( tiles[i])),'_Co',as.character(cO),'.rds',sep=''))
-
-	})
-
-# Filter away Cytosines with low coverage in all samples and combine chromosome-specific objects
-AllCf=mclapply(1:length(tiles),function(i){
-
-	contextMet=readRDS(paste(out_path,'/Context_met_call_',SMFproj@projectName,'_',as.character(seqnames( tiles[i])),'_Co',as.character(cO),'.rds',sep=''))
-	CG=contextMet[[1]]
-	GC=contextMet[[2]]
-	AllC=c(CG,GC)
-	met=elementMetadata(AllC)
-	met2=met[,1:(ncol(met)-1)]
-	cov.inx=!rowSums(is.na(met2))==ncol(met2)
-	AllCf=AllC[cov.inx]
-	AllCf
-
-}, mc.cores=length(tiles))
-
-AllC=unlist(GRangesList(AllCf))
-AllC=sort(AllC)
-
-# save final object
-saveRDS(AllC, paste0(out_path,'/Context_methylation_call_',SMFproj@projectName,'.rds'))
-
-# remove chromosome-wise temporary files
-lapply(1:length(tiles), function(i){
-  file.remove(paste0(out_path,'/Context_met_call_',SMFproj@projectName,'_',as.character(seqnames( tiles[i])),'_Co',as.character(cO),'.rds',sep=''))
-})
 ```

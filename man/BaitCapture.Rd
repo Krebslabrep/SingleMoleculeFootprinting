@@ -15,6 +15,20 @@ BaitCapture(sampleSheet, genome, baits, cores = 1)
 
 \item{cores}{number of cores for parallel processing. Defaults to 1}
 }
+\value{
+bait capture efficiency
+}
 \description{
 check bait capture efficiency. Expected to be ~70% for mouse genome
+}
+\examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+library(BSgenome.Mmusculus.UCSC.mm10)
+
+if(file.exists(Qinput)){
+    # DO NOT RUN
+    # BaitRegions = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
+    # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+}
+
 }

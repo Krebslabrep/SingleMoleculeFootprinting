@@ -19,3 +19,17 @@ Single molecule methylation matrix (all Cytosines)
 \description{
 Used internally as the first step in CallContextMethylation
 }
+\examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+library(BSgenome.Mmusculus.UCSC.mm10)
+
+if(file.exists(Qinput)){
+    QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+
+    sample = readr::read_delim(Qinput, delim = "\t")$SampleName
+    range = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+
+    MethSM = GetSingleMolMethMat(QuasRprj, range, sample)
+}
+
+}

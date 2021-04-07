@@ -9,6 +9,18 @@ DetectExperimentType(Samples)
 \arguments{
 \item{Samples}{SampleNames field from QuasR sampleSheet}
 }
+\value{
+String indicating the type of experiment detected
+}
 \description{
 Detect type of experiment
+}
+\examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+
+if(file.exists(Qinput)){
+    sample = readr::read_delim(Qinput, delim = "\t")$SampleName
+    ExpType = DetectExperimentType(sample)
+}
+
 }

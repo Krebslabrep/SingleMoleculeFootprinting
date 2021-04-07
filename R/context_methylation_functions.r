@@ -5,13 +5,23 @@
 #'
 #' @import QuasR
 #'
+#' @return QuasR project object as returned by QuasR::qAlign function
+#'
 #' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#' }
 #'
 GetQuasRprj = function(sampleSheet, genome){
 
   QuasRprj=QuasR::qAlign(sampleFile=sampleSheet,
                         genome=genome@pkgname,
-                        projectName = "NRF1pair_DE_example",
+                        projectName = "prj",
                         paired="fr",
                         aligner = "Rbowtie",
                         bisulfite="undir")
@@ -32,10 +42,24 @@ GetQuasRprj = function(sampleSheet, genome){
 #' @import QuasR
 #' @importFrom data.table data.table
 #' @importFrom data.table dcast
+#' @importFrom IRanges isEmpty
 #'
 #' @return Single molecule methylation matrix (all Cytosines)
 #'
 #' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#'
+#'     sample = readr::read_delim(Qinput, delim = "\t")$SampleName
+#'     range = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     MethSM = GetSingleMolMethMat(QuasRprj, range, sample)
+#' }
 #'
 GetSingleMolMethMat<-function(QuasRprj,range,sample){
 
@@ -64,6 +88,22 @@ GetSingleMolMethMat<-function(QuasRprj,range,sample){
 #'
 #' @return Filtered MethSM
 #'
+#' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#'
+#'     sample = readr::read_delim(Qinput, delim = "\t")$SampleName
+#'     range = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     MethSM = GetSingleMolMethMat(QuasRprj, range, sample)
+#'     MethSM = FilterByConversionRate(MethSM, chr = "chr6", genome = BSgenome.Mmusculus.UCSC.mm10, thr = 0.8)
+#' }
+#'
 FilterByConversionRate = function(MethSM, chr, genome, thr=0.2){
 
   CytosineRanges = GRanges(chr,IRanges(as.numeric(colnames(MethSM)),width = 1))
@@ -82,6 +122,18 @@ FilterByConversionRate = function(MethSM, chr, genome, thr=0.2){
 #' Detect type of experiment
 #'
 #' @param Samples SampleNames field from QuasR sampleSheet
+#'
+#' @return String indicating the type of experiment detected
+#'
+#' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#'
+#' if(file.exists(Qinput)){
+#'     sample = readr::read_delim(Qinput, delim = "\t")$SampleName
+#'     ExpType = DetectExperimentType(sample)
+#' }
 #'
 DetectExperimentType = function(Samples){
 
@@ -108,6 +160,23 @@ DetectExperimentType = function(Samples){
 #' @import Biostrings
 #'
 #' @return filtered Granges obj
+#'
+#' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#'
+#'     Samples = readr::read_delim(Qinput, delim = "\t")$SampleName
+#'     sample = Samples[1]
+#'     range = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     MethGR = QuasR::qMeth(QuasRprj[grep(sample, Samples)], mode="allC", range, collapseBySample = TRUE, keepZero = TRUE)
+#'     FilterContextCytosines(MethGR, BSgenome.Mmusculus.UCSC.mm10, "NGCNN")
+#' }
 #'
 FilterContextCytosines <- function(MethGR, genome, context){
 
@@ -287,6 +356,26 @@ CoverageFilter <- function(MethGR, thr){
 #' @import BiocGenerics
 #'
 #' @return List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
+#'
+#' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#'
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#' }
 #'
 CallContextMethylation=function(sampleSheet, sample, genome, range, coverage=20, ConvRate.thr = 0.2){
 

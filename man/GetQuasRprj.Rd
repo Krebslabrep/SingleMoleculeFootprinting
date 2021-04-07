@@ -11,6 +11,18 @@ GetQuasRprj(sampleSheet, genome)
 
 \item{genome}{BSgenome}
 }
+\value{
+QuasR project object as returned by QuasR::qAlign function
+}
 \description{
 Get QuasRprj
+}
+\examples{
+Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+library(BSgenome.Mmusculus.UCSC.mm10)
+
+if(file.exists(Qinput)){
+    QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+}
+
 }

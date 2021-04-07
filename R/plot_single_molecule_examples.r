@@ -5,6 +5,8 @@
 #' @importFrom stats hclust
 #' @importFrom stats dist
 #'
+#' @return Single molecule matrix after hierarchical clustering
+#'
 HierarchicalClustering = function(MethSM){
 
   if(nrow(MethSM) > 500){ #subset to 500 molecules to avoid problem with Hc
@@ -12,7 +14,12 @@ HierarchicalClustering = function(MethSM){
   }else{
     MethSM_subset = MethSM
   }
-  hc=hclust(dist(MethSM_subset))
+  ReadsDist = dist(MethSM_subset)
+  while(sum(is.na(ReadsDist)) > 0){ # sometimes dist between some pair of reads is NA, possibly because of no overlapping Cs
+    MethSM_subset = MethSM[sample(dimnames(MethSM)[[1]],500),]
+    ReadsDist = dist(MethSM_subset)
+  }
+  hc=hclust(ReadsDist)
   MethSM_HC = MethSM_subset[hc$order,]
 
   return(MethSM_HC)
@@ -27,7 +34,33 @@ HierarchicalClustering = function(MethSM){
 #'
 #' @import GenomicRanges
 #'
+#' @return Average SMF signal at single site
+#'
 #' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#'
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#'
+#'     TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#'     elementMetadata(TFBSs)$name = c("NRF1")
+#'     names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'
+#'     PlotAvgSMF(MethGR = Methylation[[1]], range = Region_of_interest, TFBSs = TFBSs)
+#' }
 #'
 PlotAvgSMF = function(MethGR, range, TFBSs){
 
@@ -47,7 +80,7 @@ PlotAvgSMF = function(MethGR, range, TFBSs){
 #'
 #' @import GenomicRanges
 #'
-#' @export
+#' @return Single molecule plot
 #'
 PlotSingleMoleculeStack = function(MethSM, range){
 
@@ -67,7 +100,29 @@ PlotSingleMoleculeStack = function(MethSM, range){
 #' @param range GRanges interval to plot
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
 #'
+#' @return Single molecule stack plot
+#'
 #' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#'
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#'
+#'     PlotSM(MethSM = Methylation[[2]], range = Region_of_interest)
+#' }
 #'
 PlotSM = function(MethSM, range, SortedReads = NULL){
 
@@ -101,7 +156,7 @@ PlotSM = function(MethSM, range, SortedReads = NULL){
 #'
 #' @importFrom RColorBrewer brewer.pal
 #'
-#' @export
+#' @return single TF state quantification plot
 #'
 SingleTFStateQuantificationPlot = function(states, OrderedReads){
 
@@ -133,6 +188,8 @@ SingleTFStateQuantificationPlot = function(states, OrderedReads){
 #' @param OrderedReads Reads ordered by states
 #'
 #' @importFrom RColorBrewer brewer.pal
+#'
+#' @return TF pair state quantification plot
 #'
 TFPairStateQuantificationPlot = function(states, OrderedReads){
 
@@ -176,6 +233,31 @@ TFPairStateQuantificationPlot = function(states, OrderedReads){
 #'
 #' @export
 #'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#'
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#'
+#'     TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#'     elementMetadata(TFBSs)$name = c("NRF1")
+#'     names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'
+#'     SortedReads = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
+#'     StateQuantificationPlot(SortedReads = SortedReads)
+#' }
+#'
 StateQuantificationPlot = function(SortedReads){
 
   if (length(SortedReads) <= 8){ # Single TF
@@ -209,7 +291,39 @@ StateQuantificationPlot = function(SortedReads){
 #' @importFrom GenomicRanges start
 #' @import grDevices
 #'
+#' @return Single site plot including average SMF signal, single molecules stack and state quantification plot
+#'
 #' @export
+#'
+#' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
+#'
+#' if(file.exists(Qinput)){
+#'     QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
+#'
+#'     MySample = readr::read_delim(Qinput, delim = "\t")$SampleName[1]
+#'     Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 88106000, end = 88106500), strand = "*")
+#'
+#'     Methylation = CallContextMethylation(sampleSheet = Qinput,
+#'                                      sample = MySample,
+#'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
+#'                                      range = Region_of_interest,
+#'                                      coverage = 20,
+#'                                      ConvRate.thr = 0.2)
+#'
+#'     TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand = "-")
+#'     elementMetadata(TFBSs)$name = c("NRF1")
+#'     names(TFBSs) = c(paste0("TFBS_", c(4305216)))
+#'     SortedReads = SortReadsByTFCluster(MethSM = Methylation[[2]], TFBSs = TFBSs)
+#'
+#'     PlotSingleSiteSMF(ContextMethylation = Methylation,
+#'                       sample = MySample,
+#'                       range = Region_of_interest,
+#'                       SortedReads = SortedReads,
+#'                       TFBSs = TFBSs,
+#'                       saveAs = NULL)
+#' }
 #'
 PlotSingleSiteSMF = function(ContextMethylation, sample, range, SortedReads=NULL, TFBSs, saveAs=NULL){
 
