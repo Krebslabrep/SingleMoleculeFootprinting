@@ -105,7 +105,7 @@ SortReads = function(MethSM, TFBS, BinsCoord, SortByCluster){
   } else {
     # The following is terrible code and should be fixed
     message("TF cluster mode")
-    TFBSs = sort(TFBSs)
+    TFBSs = sort(TFBS)
     UpstreamBinMethylation = BinMethylation(MethSM, TFBSs[1], BinsCoord[[1]])
     TFBSsBinMethylation = lapply(seq_along(TFBSs), function(i){BinMethylation(MethSM, TFBSs[i], BinsCoord[[2]])}) # apply to each TFBS
     DownstramBinMethylation = BinMethylation(MethSM, TFBSs[length(TFBSs)], BinsCoord[[3]])
