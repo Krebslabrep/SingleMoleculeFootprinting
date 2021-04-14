@@ -333,7 +333,7 @@ CoverageFilter = function(MethGR, thr){
   Mcounts = as.matrix(elementMetadata(MethGR)[grep("_M$", colnames(elementMetadata(MethGR)))])
 
   # filter for coverage
-  CoverageMask = Tcounts <= thr
+  CoverageMask = Tcounts < thr
   Tcounts[CoverageMask] = NA
   Mcounts[CoverageMask] = NA
 
@@ -400,7 +400,7 @@ MergeMatrixes = function(matrixes){
 #' @param sample for now this works for sure on one sample at the time only
 #' @param genome BSgenome
 #' @param RegionOfInterest GenimocRange representing the genomic region of interest
-#' @param coverage coverage threshold. Defaults to 20.
+#' @param coverage coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.
 #' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8
 #' @param returnSM whether to return the single molecule matrix, defaults to TRUE
 #'
