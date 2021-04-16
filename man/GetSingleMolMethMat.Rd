@@ -14,7 +14,7 @@ GetSingleMolMethMat(QuasRprj, range, sample)
 \item{sample}{One of the sample names as reported in the SampleName field of the QuasR pointer file provided to qAlign. N.b. all the files with the passed sample name will be used to call methylation}
 }
 \value{
-Single molecule methylation matrix (all Cytosines)
+List of single molecule methylation matrixes (all Cytosines), one per sample
 }
 \description{
 Used internally as the first step in CallContextMethylation

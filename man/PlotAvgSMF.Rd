@@ -4,14 +4,24 @@
 \alias{PlotAvgSMF}
 \title{Plot average methylation}
 \usage{
-PlotAvgSMF(MethGR, range, TFBSs)
+PlotAvgSMF(
+  MethGR,
+  RegionOfInterest,
+  TFBSs = NULL,
+  SNPs = NULL,
+  SortingBins = NULL
+)
 }
 \arguments{
 \item{MethGR}{Average methylation GRanges obj}
 
-\item{range}{GRanges interval to plot}
+\item{RegionOfInterest}{GRanges interval to plot}
 
-\item{TFBSs}{GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset.}
+\item{TFBSs}{GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"}
+
+\item{SNPs}{GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"}
+
+\item{SortingBins}{GRanges object of sorting bins (absolute) coordinate to visualize}
 }
 \description{
 Plot average methylation
@@ -31,6 +41,6 @@ TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand
 elementMetadata(TFBSs)$name = c("NRF1")
 names(TFBSs) = c(paste0("TFBS_", c(4305216)))
 
-PlotAvgSMF(MethGR = Methylation[[1]], range = Region_of_interest, TFBSs = TFBSs)
+PlotAvgSMF(MethGR = Methylation[[1]], Region_of_interest = Region_of_interest, TFBSs = TFBSs)
 
 }
