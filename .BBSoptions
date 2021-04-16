@@ -1,0 +1,3 @@
+# We refer to https://github.com/fmicompbio/QuasR/blob/master/.BBSoptions
+# for the explainaiton of where this originates.
+UnsupportedPlatforms: win32
