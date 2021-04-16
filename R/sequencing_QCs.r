@@ -97,7 +97,136 @@ BaitCapture = function(sampleSheet, genome, baits, cores=1){
 
 }
 
+#' Subset Granges for given samples
+#'
+#' Inner utility for LowCoverageMethRateDistribution
+#'
+#' @param Single GRanges object as returned by CallContextMethylation function
+#' @param Samples vector of sample names as they appear in the SampleName field of the QuasR sampleSheet
+#'
+#' @import GenomicRanges
+#' @importFrom dplyr as_tibble
+#'
+SubsetGRangesForSamples = function(GRanges_obj, Samples){
 
+  Cols2Discard = grep(paste0(c(Samples, "^GenomicContext$"), collapse = "|"), colnames(elementMetadata(GRanges_obj)), invert = TRUE)
+  elementMetadata(GRanges_obj)[,Cols2Discard] = NULL
+  All_NA_rows = is.na(rowMeans(as_tibble(elementMetadata(GRanges_obj)[,-ncol(elementMetadata(GRanges_obj))]), na.rm = TRUE))
+  GRanges_obj_subset = GRanges_obj[!All_NA_rows]
+
+  return(GRanges_obj_subset)
+
+}
+
+#' Manipulate GRanges into data.frame
+#'
+#' Inner utility for LowCoverageMethRateDistribution
+#'
+#' @param Single GRanges object as returned by CallContextMethylation function
+#'
+#' @import dplyr
+#'
+GRanges_to_DF = function(GRanges_obj){
+
+  GRanges_obj %>%
+    as_tibble() %>%
+    select(matches("^seqnames$|^start$|_MethRate$|_Coverage$|^GenomicContext$|^Bins$")) %>%
+    gather(Sample, Score, -seqnames, -start, -GenomicContext, -Bins) %>%
+    na.omit() %>%
+    extract(Sample, c("Sample", "Measurement"), regex = "(.*)_(Coverage$|MethRate|)") %>%
+    spread(Measurement, Score) %>%
+    mutate(Methylated = Coverage*MethRate) %>%
+    group_by(Sample, GenomicContext, Bins) %>%
+    summarise(TotCoverage = sum(Coverage), TotMethylated = sum(Methylated), Bin_MethRate = TotMethylated/TotCoverage, BinCount = n()) %>%
+    mutate(CumSum = cumsum(BinCount), CumSumMax = max(CumSum), CumSumPerc = (CumSum/CumSumMax)*100) %>%
+    ungroup() %>%
+    select(-TotCoverage, -TotMethylated, -CumSum, -CumSumMax, -BinCount, -Bins) -> DF
+
+  return(DF)
+
+}
+
+#' Plot low coverage methylation rate
+#'
+#' Inner utility for LowCoverageMethRateDistribution
+#'
+#' @param Plotting_DF data.frame as returned by GRanges_to_DF function.
+#'
+#' @import ggplot2
+#'
+Plot_LowCoverageMethRate = function(Plotting_DF){
+
+  ggplot(Plotting_DF, aes(x=Bin_MethRate, y=CumSumPerc, group=interaction(Sample, Coverage), linetype=Coverage, color=Sample)) +
+    geom_line() +
+    ylab("Cumulative count (%)") +
+    xlab("Binned methylation rate") +
+    facet_wrap(~GenomicContext) +
+    theme_classic()
+
+}
+
+#' Low Coverage Methylation Rate
+#'
+#' Monitor methylation rate distribution in a low coverage samples as compared to a high coverage "reference" one.
+#' It bins cytosines with similar methylation rates (as observed in the HighCoverage sample) into bins. A single
+#' methylation rate value is computed for each bin
+#'
+#' @param LowCoverage Single GRanges object as returned by CallContextMethylation function to inspect. The object can also contain cytosines from multiple contexts
+#' @param LowCoverage_samples Samples to use from the LowCoverage object. Either a string or a vector (for multiple samples).
+#' @param HighCoverage Single GRanges object as returned by CallContextMethylation function to inspect. The object can also contain cytosines from multiple contexts.
+#' @param HighCoverage_samples Single sample to use from HighCoverage. String
+#' @param bins The number of bins for which to calculate the "binned" methylation rate. Defaults to 50
+#' @param returnDF Whether to return the data.frame used for plotting. Defaults to FALSE
+#' @param returnPlot Whether to return the plot. Defaults to TRUE
+#'
+#' @import GenomicRanges
+#' @importFrom dplyr mutate
+#'
+#' @export
+#'
+#' @examples
+#' # I don't have enough example data for this
+#' # LowCoverageMethRateDistribution(LowCoverage = LowCoverage$DGCHN,
+#' #                                 LowCoverage_samples = LowCoverage_Samples,
+#' #                                 HighCoverage = HighCoverage$DGCHN,
+#' #                                 HighCoverage_samples = HighCoverage_samples[1],
+#' #                                 returnDF = FALSE,
+#' #                                 returnPlot = TRUE)
+#'
+LowCoverageMethRateDistribution = function(LowCoverage, LowCoverage_samples, HighCoverage, HighCoverage_samples,
+                                           bins = 50, returnDF = FALSE, returnPlot = TRUE){
+
+  message("Subsetting GRanges for given samples")
+  HighCoverage = SubsetGRangesForSamples(HighCoverage, HighCoverage_samples)
+  LowCoverage = SubsetGRangesForSamples(LowCoverage, LowCoverage_samples)
+
+  message("Identifying bins on high coverage sample")
+  HighCoverage_MethRate = elementMetadata(HighCoverage)[,grep("_MethRate$", colnames(elementMetadata(HighCoverage)))]
+  HighCoverage$Bins = cut(HighCoverage_MethRate, breaks = seq(0,1,1/bins), include.lowest = TRUE)
+
+  message("Assigning bins to low coverage samples")
+  Overlaps = findOverlaps(LowCoverage, HighCoverage)
+  LowCoverage$Bins = factor(NA, levels = levels(HighCoverage$Bins))
+  LowCoverage$Bins[queryHits(Overlaps)] = HighCoverage$Bins[subjectHits(Overlaps)]
+
+  message("Computing binned methylation rates")
+  GRanges_objects = list(HighCoverage, LowCoverage)
+  Coverages = c("High", "Low")
+  BinnedMethRate = Reduce(rbind, lapply(seq_along(GRanges_objects), function(nr){
+    mutate(GRanges_to_DF(GRanges_objects[[nr]]), Coverage = Coverages[nr])
+  }))
+
+  Plot = Plot_LowCoverageMethRate(BinnedMethRate)
+
+  if (returnDF & returnPlot){
+    return(list(Plot, BinnedMethRate))
+  } else if (returnDF & !returnPlot) {
+    return(BinnedMethRate)
+  } else if (!returnDF & returnPlot){
+    return(Plot)
+  }
+
+}
 
 
 # NEED TO DO: following function now doesn't work with external data, and correlation for example data is NA

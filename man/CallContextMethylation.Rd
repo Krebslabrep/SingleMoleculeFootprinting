@@ -8,7 +8,7 @@ CallContextMethylation(
   sampleSheet,
   sample,
   genome,
-  range,
+  RegionOfInterest,
   coverage = 20,
   ConvRate.thr = 0.8,
   returnSM = TRUE
@@ -21,9 +21,9 @@ CallContextMethylation(
 
 \item{genome}{BSgenome}
 
-\item{range}{GenimocRange representing the genomic region of interest}
+\item{RegionOfInterest}{GenimocRange representing the genomic region of interest}
 
-\item{coverage}{coverage threshold. Defaults to 20.}
+\item{coverage}{coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.}
 
 \item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.8}
 
@@ -44,7 +44,7 @@ Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 8810600
 Methylation = CallContextMethylation(sampleSheet = Qinput,
                                      sample = MySample,
                                      genome = BSgenome.Mmusculus.UCSC.mm10,
-                                     range = Region_of_interest,
+                                     RegionOfInterest = Region_of_interest,
                                      coverage = 20,
                                      ConvRate.thr = 0.2)
 

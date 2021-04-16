@@ -11,6 +11,7 @@ HierarchicalClustering = function(MethSM){
   if(nrow(MethSM) > SubsetSize){ #subset to 500 molecules to avoid problem with Hc
     MethSM_subset = MethSM[sample(dimnames(MethSM)[[1]],SubsetSize),]
   }else{
+    SubsetSize = nrow(MethSM)
     MethSM_subset = MethSM
   }
   ReadsDist = dist(MethSM_subset)
@@ -34,10 +35,13 @@ HierarchicalClustering = function(MethSM){
 #' Plot average methylation
 #'
 #' @param MethGR Average methylation GRanges obj
-#' @param range GRanges interval to plot
-#' @param TFBSs GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset.
+#' @param RegionOfInterest GRanges interval to plot
+#' @param TFBSs GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"
+#' @param SNPs GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"
+#' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
 #'
 #' @import GenomicRanges
+#' @import tidyverse
 #'
 #' @export
 #'
@@ -56,16 +60,65 @@ HierarchicalClustering = function(MethSM){
 #' elementMetadata(TFBSs)$name = c("NRF1")
 #' names(TFBSs) = c(paste0("TFBS_", c(4305216)))
 #'
-#' PlotAvgSMF(MethGR = Methylation[[1]], range = Region_of_interest, TFBSs = TFBSs)
+#' PlotAvgSMF(MethGR = Methylation[[1]], Region_of_interest = Region_of_interest, TFBSs = TFBSs)
 #'
-PlotAvgSMF = function(MethGR, range, TFBSs){
+PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL){
 
-  plot(NA,xlim=c(start(range),end(range)),ylim=c(-0.2,1),xlab='',ylab='SMF',main=range)
-  points(start(MethGR), 1-elementMetadata(MethGR)[[1]], type='l') #, lwd=4
-  points(start(MethGR), 1-elementMetadata(MethGR)[[1]], pch=20) #, lwd=5
-  abline(h=0)
-  rect(start(TFBSs),-0.2,end(TFBSs),-0.15)#, lwd=2
-  text(start(resize(TFBSs,1,fix='center')),rep(-0.1,length(TFBSs)),TFBSs$name,cex=0.8)
+  # Prepare SMF data
+  MethGR %>%
+    as_tibble() %>%
+    select(-grep("_Coverage$", colnames(.)), -end, -width, -strand) %>%
+    gather(sample, MethRate, -seqnames, -start, -GenomicContext) -> PlottingDF
+  OurFavouriteColors = c("Black", "Red", "Blue", "Green")
+  ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$sample))]
+
+  # Prepare TFBS
+  if(!is.null(TFBSs)){
+    TFBSs %>%
+      as_tibble() %>%
+      select(start, end, TF) -> TFBS_PlottingDF
+  }
+
+  # Prepare SNPs
+  if(!is.null(SNPs)){
+    SNPs %>%
+      as_tibble() %>%
+      select(start, R, A) %>%
+      gather(Genotype, Sequence, -start) %>%
+      mutate(y_coord = rep(c(-0.18,-0.21), each=length(SNPs))) %>%
+      add_row(start=min(start(SNPs))-40, Genotype = c("R", "A"),
+              Sequence =  c("Genotype:R", "Genotype:A"), y_coord = c(-0.18, -0.21)) -> SNPs_PlottingDF
+  }
+
+  # Prepare SortingBins
+  if(!is.null(SortingBins)){
+    SortingBins %>%
+      as_tibble() %>%
+      select(start, end) -> Bins_PlottingDF
+  }
+
+  PlottingDF %>%
+    ggplot(aes(x=start, y=1-MethRate, color=sample)) +
+    geom_line() +
+    geom_point() +
+    {if(!is.null(TFBSs)){geom_rect(TFBS_PlottingDF, mapping = aes(xmin=start, xmax=end, ymin=-0.15, ymax=-0.1), inherit.aes = FALSE)}} +
+    {if(!is.null(TFBSs)){geom_text(TFBS_PlottingDF, mapping = aes(x=start+((end-start)/2), y=-0.08, label=TF), inherit.aes = FALSE)}} +
+    {if(!is.null(SNPs)){geom_text(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord, label=Sequence), size=3, inherit.aes = FALSE)}} +
+    {if(!is.null(SortingBins)){geom_rect(Bins_PlottingDF, mapping = aes(xmin=start, xmax=end, ymin=-0.02, ymax=0), color="black", fill="white", inherit.aes = FALSE)}} +
+    geom_hline(aes(yintercept=0)) +
+    ylab("SMF") +
+    xlab("") +
+    ylim(c(-0.25,1)) +
+    ggtitle(RegionOfInterest) +
+    scale_color_manual(values = ColorsToUse) +
+    theme_classic()
+
+  # plot(NA,xlim=c(start(range),end(range)),ylim=c(-0.2,1),xlab='',ylab='SMF',main=range)
+  # points(start(MethGR), 1-elementMetadata(MethGR)[[1]], type='l') #, lwd=4
+  # points(start(MethGR), 1-elementMetadata(MethGR)[[1]], pch=20) #, lwd=5
+  # abline(h=0)
+  # rect(start(TFBSs),-0.2,end(TFBSs),-0.15)#, lwd=2
+  # text(start(resize(TFBSs,1,fix='center')),rep(-0.1,length(TFBSs)),TFBSs$name,cex=0.8)
 
 }
 
