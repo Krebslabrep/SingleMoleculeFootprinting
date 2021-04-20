@@ -289,7 +289,7 @@ StateQuantificationPlot = function(SortedReads){
 #'
 #' @importFrom IRanges subsetByOverlaps resize
 #' @importFrom GenomicRanges start
-#' @import grDevices
+#' @importFrom grDevices pdf dev.off dev.list
 #'
 #' @return Single site plot including average SMF signal, single molecules stack and state quantification plot
 #'
