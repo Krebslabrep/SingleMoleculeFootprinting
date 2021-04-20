@@ -5,3 +5,6 @@ SingleMoleculeFootprinting.Rproj
 doc
 Meta
 Rplots.pdf
+vignette/*.R
+vignette/SingleMoleculeFootprinting_cache
+vignette/SingleMoleculeFootprinting_files
