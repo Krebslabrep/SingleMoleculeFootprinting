@@ -155,6 +155,7 @@ PlotSM = function(MethSM, range, SortedReads = NULL){
 #' @param OrderedReads Reads ordered by states
 #'
 #' @importFrom RColorBrewer brewer.pal
+#' @importFrom grDevices colorRampPalette
 #'
 #' @return single TF state quantification plot
 #'
@@ -165,7 +166,7 @@ SingleTFStateQuantificationPlot = function(states, OrderedReads){
   }))
   names(GroupedCounts) = names(states)
 
-  Colors = colorRampPalette(RColorBrewer::brewer.pal(9,"Set1"))(9)[c(4,3,2,9)]
+  Colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9,"Set1"))(9)[c(4,3,2,9)]
   names(Colors) = names(states)
   boundaries = cumsum(GroupedCounts)
   ColorVector = lapply(seq_along(boundaries), function(j){
@@ -188,6 +189,7 @@ SingleTFStateQuantificationPlot = function(states, OrderedReads){
 #' @param OrderedReads Reads ordered by states
 #'
 #' @importFrom RColorBrewer brewer.pal
+#' @importFrom grDevices colorRampPalette
 #'
 #' @return TF pair state quantification plot
 #'
@@ -200,8 +202,8 @@ TFPairStateQuantificationPlot = function(states, OrderedReads){
   }))
   names(GroupedCounts) = names(states)
 
-  TF1c = colorRampPalette(RColorBrewer::brewer.pal(9,"Set1"))(9)[c(9,9,4,9)]
-  TF2c = colorRampPalette(RColorBrewer::brewer.pal(9,"Set1"))(9)[c(9,4,9,9)]
+  TF1c = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9,"Set1"))(9)[c(9,9,4,9)]
+  TF2c = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9,"Set1"))(9)[c(9,4,9,9)]
   names(TF1c) = c("00", "01", "10", "11")
   names(TF2c) = c("00", "01", "10", "11")
 
