@@ -4,14 +4,12 @@
 \alias{BinMethylation}
 \title{Summarize methylation inside sorting bins}
 \usage{
-BinMethylation(MethSM, TFBS, bin)
+BinMethylation(MethSM, Bin)
 }
 \arguments{
 \item{MethSM}{Single molecule matrix}
 
-\item{TFBS}{Transcription factor binding site to use for sorting, passed as a GRanges object of length 1}
-
-\item{bin}{vector of two integers representing the coordinate of a bin relative to the center of the TFBS}
+\item{Bin}{IRanges object with absolute coordinates for single sorting bin.}
 }
 \value{
 Reads covering bin with their summarized methylation status
@@ -25,6 +23,10 @@ TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand
 elementMetadata(TFBSs)$name = c("NRF1")
 names(TFBSs) = c(paste0("TFBS_", c(4305216)))
 
-binMethylationValues = BinMethylation(MethSM = MethSM, TFBS = TFBSs, bin = c(-15,15))
+TFBS_center = start(TFBS) + (end(TFBS)-start(TFBS))/2
+BinsCoordinates = IRanges(start = c(TFBS_center+bins[[1]][1], TFBS_center+bins[[2]][1], TFBS_center+bins[[3]][1]),
+                          end = c(TFBS_center+bins[[1]][2], TFBS_center+bins[[2]][2], TFBS_center+bins[[3]][2]))
+
+binMethylationValues = BinMethylation(MethSM = MethSM, Bin = BinsCoordinates[1]))
 
 }

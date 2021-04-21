@@ -4,12 +4,21 @@
 \alias{SortReadsBySingleTF}
 \title{Wrapper to SortReads for single TF case}
 \usage{
-SortReadsBySingleTF(MethSM, TFBS)
+SortReadsBySingleTF(
+  MethSM,
+  TFBS,
+  bins = list(c(-35, -25), c(-15, 15), c(25, 35))
+)
 }
 \arguments{
 \item{MethSM}{Single molecule matrix}
 
 \item{TFBS}{Transcription factor binding site to use for sorting, passed as a GRanges object of length 1}
+
+\item{bins}{list of 3 relative bin coordinates. Defaults to list(c(-35,-25), c(-15,15), c(25,35)).
+bins[[1]] represents the upstream bin, with coordinates relative to the start of the TFBS.
+bins[[2]] represents the TFBS bin, with coordinates relative to the center of the TFBS.
+bins[[3]] represents the downstream bin, with coordinates relative to the end of the TFBS.}
 }
 \value{
 List of reads sorted by single TF
