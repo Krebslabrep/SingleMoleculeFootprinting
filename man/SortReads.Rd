@@ -4,16 +4,12 @@
 \alias{SortReads}
 \title{Sort reads by single TF}
 \usage{
-SortReads(MethSM, TFBS, BinsCoord, SortByCluster)
+SortReads(MethSM, BinsCoordinates)
 }
 \arguments{
 \item{MethSM}{Single molecule matrix}
 
-\item{TFBS}{Transcription factor binding site to use for sorting}
-
-\item{BinsCoord}{list of 3 bin coordinates relative to the center of the TFBS.}
-
-\item{SortByCluster}{T/F}
+\item{BinsCoordinates}{IRanges object of absolute coordinates for sorting bins}
 }
 \value{
 list of sorted reads
@@ -28,6 +24,10 @@ TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106253), c(88106263)), strand
 elementMetadata(TFBSs)$name = c("NRF1")
 names(TFBSs) = c(paste0("TFBS_", c(4305216)))
 
-SortedReads = SortReads(MethSM, TFBSs, BinsCoord, SortByCluster = FALSE)
+TFBS_center = start(TFBS) + (end(TFBS)-start(TFBS))/2
+BinsCoordinates = IRanges(start = c(TFBS_center+bins[[1]][1], TFBS_center+bins[[2]][1], TFBS_center+bins[[3]][1]),
+                          end = c(TFBS_center+bins[[1]][2], TFBS_center+bins[[2]][2], TFBS_center+bins[[3]][2]))
+
+SortedReads = SortReads(MethSM, BinsCoordinates)
 
 }
