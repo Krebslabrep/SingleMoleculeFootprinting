@@ -187,7 +187,7 @@ FilterContextCytosines = function(MethGR, genome, context){
   IsInContext = Biostrings::vcountPattern(context, subject = GenomicContext, fixed = FixedPattern) > 0
 
   MethGR_InContext = MethGR[IsInContext]
-  MethGR_InContext$GenomicContext = context
+  MethGR_InContext$GenomicContext = rep(context, length(MethGR_InContext))
 
   return(MethGR_InContext)
 
@@ -430,7 +430,7 @@ MergeMatrixes = function(matrixes){
 # genome = BSgenome.Mmusculus.UCSC.mm10
 # coverage = 20
 # ConvRate.thr = 0.8
-# returnSM = FALSE
+# returnSM = TRUE
 CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest, coverage = 20, ConvRate.thr = 0.8, returnSM = TRUE){
 
   message("Setting QuasR project")
@@ -459,7 +459,6 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
     MethSM = GetSingleMolMethMat(QuasRprj, RegionOfInterest, sample)
     MethSM = lapply(seq_along(unique(sample)), function(i){
       FilterByConversionRate(MethSM[[i]], chr = seqnames(RegionOfInterest), genome = genome, thr = ConvRate.thr)})
-
   }
 
   message("Subsetting Cytosines by permissive genomic context (GC, CG)") # Here we use a permissive context: needed for the strand collapsing
@@ -524,10 +523,16 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   } else {
     message("Returning non merged matrixes")
     MergedGR = ContextFilteredMethGR_strict
-    if (returnSM){MergedSM = ContextFilteredMethSM_strict}
+    if (returnSM){
+      MergedSM = ContextFilteredMethSM_strict
+      for (i in seq_along(MergedSM)){
+        names(MergedSM[[i]]) = ExpType_contexts
+        }
+      }
   }
 
   if (returnSM){
+    names(MergedSM) = unique(QuasRprj_sample@alignments$SampleName)
     return(list(MergedGR, MergedSM))
   } else {
     return(MergedGR)

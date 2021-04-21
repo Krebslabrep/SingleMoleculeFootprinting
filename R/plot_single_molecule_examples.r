@@ -109,6 +109,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
     ylab("SMF") +
     xlab("") +
     ylim(c(-0.25,1)) +
+    xlim(c(start(RegionOfInterest),end(RegionOfInterest))) +
     ggtitle(RegionOfInterest) +
     scale_color_manual(values = ColorsToUse) +
     theme_classic()
@@ -125,7 +126,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
 #' Plot single molecule stack
 #'
 #' @param MethSM Single molecule methylation matrix
-#' @param range GRanges interval to plot
+#' @param RegionOfInterest GRanges interval to plot
 #'
 #' @import GenomicRanges
 #'
@@ -143,15 +144,45 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
 #'                                      coverage = 20,
 #'                                      ConvRate.thr = 0.2)
 #'
-#' PlotSingleMoleculeStack(MethSM = Methylation[[2]], range = Region_of_interest)
+#' PlotSingleMoleculeStack(MethSM = Methylation[[2]], RegionOfInterest = Region_of_interest)
 #'
-PlotSingleMoleculeStack = function(MethSM, range){
+PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
+  
+  Reduce(rbind, lapply(seq_along(MethSM), function(i){
+    MethSM[[i]] %>%
+      as.data.frame() %>%
+      rownames_to_column(var = "ReadID") %>%
+      mutate(Sample = names(MethSM)[i])
+  })) %>%
+    gather(Coordinate, Methylation, -ReadID, -Sample) %>%
+    na.omit() %>%
+    mutate(Methylation = as.factor(Methylation), Coordinate = as.numeric(Coordinate)) -> PlottingDF
+  
+  PlottingDF %>%
+    group_by(Sample) %>%
+    summarise(NrReads = length(unique(ReadID))) %>%
+    ungroup() %>%
+    mutate(Label = paste0(Sample, " (", NrReads, " reads)")) %>%
+    select(Sample, Label) -> Labels
+  names(Labels$Label) = Labels$Sample
 
-  vR1=VectorizeReads(range,MethSM)
-  BR=c(col=c('black','grey'))
-  colors=BR
-  plot(NA,pch='_',col=colors[as.factor(vR1[[3]])],xlim=c(start(range),end(range)),ylim=c(-1,length(unique(vR1[[2]]))), ylab=paste0(nrow(MethSM), " reads"), xlab="")
-  points(vR1[[1]],vR1[[2]],pch='_',cex=1.2,col=colors[as.factor(vR1[[3]])],xlim=c(start(range),end(range)))
+  PlottingDF %>%
+    ggplot(aes(x=Coordinate, y=ReadID)) + 
+    geom_tile(aes(fill=Methylation), height=1, width=1) +
+    facet_wrap(~Sample, scales = "free_y", dir = 'v', 
+               labeller = as_labeller(Labels$Label)) +
+    ylab("") +
+    xlab("") +
+    xlim(c(start(RegionOfInterest),end(RegionOfInterest))) +
+    scale_discrete_manual(aesthetics = "fill", values = c("black", "grey")) +
+    theme_classic() +
+    theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
+
+  # vR1=VectorizeReads(range,MethSM)
+  # BR=c(col=c('black','grey'))
+  # colors=BR
+  # plot(NA,pch='_',col=colors[as.factor(vR1[[3]])],xlim=c(start(range),end(range)),ylim=c(-1,length(unique(vR1[[2]]))), ylab=paste0(nrow(MethSM), " reads"), xlab="")
+  # points(vR1[[1]],vR1[[2]],pch='_',cex=1.2,col=colors[as.factor(vR1[[3]])],xlim=c(start(range),end(range)))
 
 }
 
@@ -160,7 +191,7 @@ PlotSingleMoleculeStack = function(MethSM, range){
 #' adds the convenience of arranging reads before plotting
 #'
 #' @param MethSM Single molecule methylation matrix
-#' @param range GRanges interval to plot
+#' @param RegionOfInterest
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
 #'
 #' @export
@@ -173,34 +204,48 @@ PlotSingleMoleculeStack = function(MethSM, range){
 #' Methylation = CallContextMethylation(sampleSheet = Qinput,
 #'                                      sample = MySample,
 #'                                      genome = BSgenome.Mmusculus.UCSC.mm10,
-#'                                      range = Region_of_interest,
+#'                                      RegionOfInterest = Region_of_interest,
 #'                                      coverage = 20,
 #'                                      ConvRate.thr = 0.2)
 #'
-#'  PlotSM(MethSM = Methylation[[2]], range = Region_of_interest)
+#'  PlotSM(MethSM = Methylation[[2]], RegionOfInterest = Region_of_interest)
 #'
-PlotSM = function(MethSM, range, SortedReads = NULL){
+PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL){
 
   if (is.null(SortedReads)){
+    
     message("No sorting passed or specified, will plot unsorted reads")
-    PlotSingleMoleculeStack(MethSM, range)
+    
   } else if (is.list(SortedReads)){
+    
     message("Sorting reads according to passed values before plotting")
-    if (length(SortedReads) <= 8){ # Single TF
+    PatternLength = unique(unlist(lapply(seq_along(SortedReads), function(i){unique(nchar(names(SortedReads[[i]])))})))
+    if (PatternLength == 3){ # Single TF
       message("Inferring sorting was performed by single TF")
-      OrderedReads = SortedReads[as.character(unlist(OneTFstates()))]
-      OrderedReads = rev(OrderedReads)
-    } else if (length(SortedReads) > 8 & length(SortedReads) <= 16){ # TF pair
+      NAMES = names(MethSM)
+      MethSM = lapply(seq_along(MethSM), function(i){
+        MethSM[[i]][unlist(SortedReads[[i]][rev(as.character(unlist(OneTFstates())))]),]
+      })
+      names(MethSM) = NAMES
+    } else if (PatternLength == 4){ # TF pair
       message("Inferring sorting was performed by TF pair")
-      OrderedReads = SortedReads[as.character(unlist(TFpairStates()))]
+      NAMES = names(MethSM)
+      MethSM = lapply(seq_along(MethSM), function(i){
+        MethSM[[i]][unlist(SortedReads[[i]][as.character(unlist(TFpairStates()))]),]
+      })
+      names(MethSM) = NAMES
+    } else {
+      stop("Unrecognized sorting strategy")
     }
-    MethSM = MethSM[unlist(OrderedReads),]
-    PlotSingleMoleculeStack(MethSM, range)
+    
   } else if (SortedReads == "HC"){
+    
     message("Perfoming hierarchical clustering on single molecules before plotting")
-    MethSM = HierarchicalClustering(MethSM)
-    PlotSingleMoleculeStack(MethSM, range)
+    MethSM = lapply(MethSM, HierarchicalClustering)
+    
   }
+  
+  PlotSingleMoleculeStack(MethSM, RegionOfInterest)
 
 }
 

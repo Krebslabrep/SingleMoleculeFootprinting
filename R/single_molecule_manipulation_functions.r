@@ -31,7 +31,7 @@ BinMethylation = function(MethSM, Bin){
   } else if (length(binCytosines) == 1){
     binSummarisedMeth = MethSM[,binCytosines[1]]
   } else if (length(binCytosines) == 0){
-    stop(paste0("[", Bin[1], ";", Bin[2], "]", " bin overlaps with no covered Cytosines"))
+    stop(paste0("[", start(Bin), ";", end(Bin), "]", " bin overlaps with no covered Cytosines"))
   }
 
   binSummarisedMeth = binSummarisedMeth[!(is.na(binSummarisedMeth))]
@@ -91,7 +91,7 @@ SortReads = function(MethSM, BinsCoordinates){
 
 #' Wrapper to SortReads for single TF case
 #'
-#' @param MethSM Single molecule matrix
+#' @param MethSM Single molecule matrix list as returned by CallContextMethylation
 #' @param TFBS Transcription factor binding site to use for sorting, passed as a GRanges object of length 1
 #' @param bins list of 3 relative bin coordinates. Defaults to list(c(-35,-25), c(-15,15), c(25,35)).
 #'             bins[[1]] represents the upstream bin, with coordinates relative to the start of the TFBS.
@@ -117,14 +117,15 @@ SortReadsBySingleTF = function(MethSM, TFBS, bins = list(c(-35,-25), c(-15,15), 
   BinsCoordinates = IRanges(start = c(TFBS_center+bins[[1]][1], TFBS_center+bins[[2]][1], TFBS_center+bins[[3]][1]),
                             end = c(TFBS_center+bins[[1]][2], TFBS_center+bins[[2]][2], TFBS_center+bins[[3]][2]))
 
-  SortedReads = SortReads(MethSM = MethSM, BinsCoordinates = BinsCoordinates)
+  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates)
+  
   return(SortedReads)
 
 }
 
 #' Wrapper to SortReads for TF cluster case
 #'
-#' @param MethSM Single molecule matrix
+#' @param MethSM Single molecule matrix list as returned by CallContextMethylation
 #' @param TFBS_cluster Transcription factor binding sites to use for sorting, passed as a GRanges object of length > 1
 #' @param bins list of 3 relative bin coordinates. Defaults to list(c(-35,-25), c(-7,7), c(25,35)).
 #'             bins[[1]] represents the upstream bin, with coordinates relative to the start of the most upstream TFBS.
@@ -152,8 +153,8 @@ SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(
   BinsCoordinates = IRanges(start = c(min(TFBS_centers)+bins[[1]][1], TFBS_centers+bins[[2]][1], max(TFBS_centers)+bins[[3]][1]),
                       end = c(min(TFBS_centers)+bins[[1]][2], TFBS_centers+bins[[2]][2], max(TFBS_centers)+bins[[3]][2]))
 
-  SortedReads = SortReads(MethSM = MethSM, BinsCoordinates = BinsCoordinates)
-  # SortedReads = SortReads(MethSM, TFBS = TFBS_cluster, BinsCoord, SortByCluster = TRUE)
+  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates)
+  
   return(SortedReads)
 
 }
