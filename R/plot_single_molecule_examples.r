@@ -356,13 +356,13 @@ StateQuantificationPlot = function(SortedReads){
 
     message("Inferring sorting was performed by single TF")
     states = OneTFstates()
-    SingleTFStateQuantificationPlot(states, OrderedReads)
+    SingleTFStateQuantificationPlot(SortedReads, states)
 
   } else if (PatternLength == 4){ # TF pair
 
     message("Inferring sorting was performed by TF pair")
     states = TFpairStates()
-    TFPairStateQuantificationPlot(states, OrderedReads)
+    TFPairStateQuantificationPlot(SortedReads, states)
 
   } else {
     
@@ -427,19 +427,25 @@ PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NUL
     pdf(saveAs, width = 8, height = 5)
   }
 
-  # Average
+  message("Producing average SMF plot")
   PlotAvgSMF(MethGR = Methylation[[1]],
              RegionOfInterest = RegionOfInterest,
              TFBSs = TFBSs,
              SNPs = SNPs,
-             SortingBins = SortingBins)
+             SortingBins = SortingBins) 
   # PlotAvgSMF(MethGR, extende_range, subset_TFBSs)
 
-  # Single Molecule
+  message("Producing Single Molecule stacks")
   PlotSM(MethSM = Methylation[[2]], RegionOfInterest = RegionOfInterest, SortedReads = SortedReads)
 
   # State quantification plot
-  StateQuantificationPlot(SortedReads = SortedReads)
+  if(is.list(SortedReads)){
+    message("Producing state quantification plots")
+    StateQuantificationPlot(SortedReads = SortedReads)
+  }
+  
+  message("Combining plots")
+  
 
   if (!is.null(saveAs)){
     dev.off()

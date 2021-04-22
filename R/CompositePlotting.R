@@ -20,7 +20,7 @@ CollectCompositeData = function(sampleSheet, sample, genome, TFBSs, minCytosines
 
   mclapply(seq_along(TFBSs), function(n){
 
-    CallContextMethylation(sampleSheet = sampleSheet, sample = sample, genome = genome, range = TFBSs[n], returnSM = FALSE)
+    CallContextMethylation(sampleSheet = sampleSheet, sample = sample, genome = genome, RegionOfInterest = TFBSs[n], returnSM = FALSE)
 
   }, mc.cores = cores) -> MethCalls
   names(MethCalls) = paste0("TFBS_", seq_along(TFBSs))
