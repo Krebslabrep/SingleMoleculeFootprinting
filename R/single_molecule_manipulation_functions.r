@@ -158,3 +158,70 @@ SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(
   return(SortedReads)
 
 }
+
+#' Convenience for calculating state frequencies
+#' 
+#' @param SortedReads List of sorted reads (can be multiple samples) as returned by either read sorting function (SortReads, SortReadsBySingleTF, SortReadsByTFCluster)
+#' @param states states reporting the biological interpretation of patterns as return by either OneTFstates or TFpairStates functions.
+#' 
+#' @return tibble with state frequency information
+#' 
+#' @export
+#' 
+StateQuantification = function(SortedReads, states){
+  
+  OrderedReads = lapply(SortedReads, function(sR){sR[as.character(unlist(states))]})
+  
+  Reduce(rbind,
+  lapply(seq_along(OrderedReads), function(i){
+    
+    unlist(lapply(seq_along(states), function(j){
+      length(unlist(OrderedReads[[i]][states[[j]]]))
+    })) -> Counts
+    
+    tibble(Sample = names(OrderedReads)[i], 
+           State = names(states), 
+           Counts = Counts, 
+           Freqs = (Counts/sum(Counts))*100)
+    
+  })) -> StateQuantification_tbl
+  
+  return(StateQuantification_tbl)
+  
+}
+
+#' Convenience for calculating state frequencies after sorting reads by single TF
+#' 
+#' wraps around StateQuantification function
+#' 
+#' @param SortedReads List of sorted reads (can be multiple samples) as returned by SortReadsBySingleTF (or SortReads run with analogous parameters)
+#' 
+#' @return tibble with state frequency information
+#' 
+#' @export
+#' 
+StateQuantificationBySingleTF = function(SortedReads){
+  
+  states = OneTFstates()
+  res = StateQuantification(SortedReads = SortedReads, states = states)
+  return(res)
+  
+}
+
+#' Convenience for calculating state frequencies after sorting reads by TF pair
+#' 
+#' wraps around StateQuantification function
+#' 
+#' @param SortedReads List of sorted reads (can be multiple samples) as returned by SortReadsByTFCluster run for clusters of size 2 (or SortReads run with analogous parameters)
+#' 
+#' @return tibble with state frequency information
+#' 
+#' @export
+#' 
+StateQuantificationByTFPair = function(SortedReads){
+  
+  states = TFpairStates()
+  res = StateQuantification(SortedReads = SortedReads, states = states)
+  return(res)
+  
+}
