@@ -187,44 +187,9 @@ FilterContextCytosines = function(MethGR, genome, context){
   IsInContext = Biostrings::vcountPattern(context, subject = GenomicContext, fixed = FixedPattern) > 0
 
   MethGR_InContext = MethGR[IsInContext]
-  MethGR_InContext$GenomicContext = context
+  MethGR_InContext$GenomicContext = rep(context, length(MethGR_InContext))
 
   return(MethGR_InContext)
-
-}
-
-#' Fixing overhang before stand collapsing
-#'
-#' @param MethGR Granges obj of average methylation
-#' @param context context
-#' @param which "Top"|"Bottom"
-#'
-#' @import GenomicRanges
-#' @import BiocGenerics
-#' @importFrom IRanges IRanges
-#'
-#' @return MethGR with fixed overhang
-#'
-FixOverhang = function(MethGR, context, which){
-
-  if (which == "Top"){
-    newParams = list(min(start(MethGR)) - 1, ifelse(context == "CG", "+", "-"))
-  } else if (which == "Bottom"){
-    newParams = list(max(start(MethGR)) + 1, ifelse(context == "CG", "-", "+"))
-  }
-
-  overhang_fix = GRanges(seqnames = unique(as.character(seqnames(MethGR))), ranges = IRanges(newParams[[1]], width = 1), strand = newParams[[2]])
-  fix_metadata = data.frame(matrix(0, ncol = length(colnames(elementMetadata(MethGR))), nrow = 1))
-  colnames(fix_metadata) = colnames(elementMetadata(MethGR))
-  elementMetadata(overhang_fix) = fix_metadata
-
-  if (which == "Top"){
-    MethGR = append(overhang_fix, MethGR)
-  } else if (which == "Bottom"){
-    MethGR = append(MethGR, overhang_fix)
-  }
-
-  return(MethGR)
 
 }
 
@@ -243,22 +208,9 @@ CollapseStrands = function(MethGR, context){
     return(MethGR)
   }
 
-  # TopStrandToFix = ifelse(context == "CG", "-", "+") # if this is GR first strand, we need to fix
-  # # GC needs to start with "-", CG with "+"
-  # if (as.character(strand(MethGR[1]))==TopStrandToFix){
-  #   message("Strand collapsing: Fixing top (left) overhang")
-  #   MethGR = FixOverhang(MethGR, context, "Top")
-  # }
-  # # CG needs to start with "+", CG with "-"
-  # BottomStrandToFix = ifelse(context == "CG", "+", "-") # if this is GR last strand, we need to fix
-  # if (as.character(strand(MethGR[length(MethGR)]))==BottomStrandToFix){
-  #   message("Strand collapsing: Fixing bottom (right) overhang")
-  #   MethGR = FixOverhang(MethGR, context, "Bottom")
-  # }
-
   # find the + stranded cytosines and make them -
   MethGR_plus = MethGR[strand(MethGR) == "+"]
-  start(MethGR_plus) = start(MethGR_plus) + ifelse(context == "CG", +1, -1)
+  start(MethGR_plus) = start(MethGR_plus) + ifelse(grepl("CG", context), +1, -1)
   end(MethGR_plus) = start(MethGR_plus)
   strand(MethGR_plus) = "-"
 
@@ -306,7 +258,7 @@ CollapseStrandsSM = function(MethSM, context, genome, chr){
   message(paste0(ifelse(is.null(NrPlusReads), 0, NrPlusReads), " reads found mapping to the + strand, collapsing to -"))
 
   # Turn + into -
-  offset = ifelse(context == "GC", -1, +1) # the opposite if I was to turn - into +
+  offset = ifelse(grepl("GC", context), -1, +1) # the opposite if I was to turn - into +
   colnames(MethSM_plus) = as.character(as.numeric(colnames(MethSM_plus)) + offset)
 
   # Merge matrixes
@@ -430,7 +382,7 @@ MergeMatrixes = function(matrixes){
 # genome = BSgenome.Mmusculus.UCSC.mm10
 # coverage = 20
 # ConvRate.thr = 0.8
-# returnSM = FALSE
+# returnSM = TRUE
 CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest, coverage = 20, ConvRate.thr = 0.8, returnSM = TRUE){
 
   message("Setting QuasR project")
@@ -459,28 +411,27 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
     MethSM = GetSingleMolMethMat(QuasRprj, RegionOfInterest, sample)
     MethSM = lapply(seq_along(unique(sample)), function(i){
       FilterByConversionRate(MethSM[[i]], chr = seqnames(RegionOfInterest), genome = genome, thr = ConvRate.thr)})
-
   }
-
-  message("Subsetting Cytosines by permissive genomic context (GC, CG)") # Here we use a permissive context: needed for the strand collapsing
+  
+  message("Subsetting Cytosines by permissive genomic context (GC, HCG)") # Here we use a permissive context: needed for the strand collapsing
   ContextFilteredMethGR = list(GC = FilterContextCytosines(MethGR, genome, "GC"),
-                               CG = FilterContextCytosines(MethGR, genome, "CG"))
+                               CG = FilterContextCytosines(MethGR, genome, "HCG"))
   if (returnSM){
     ContextFilteredMethSM = lapply(seq_along(MethSM),
                                    function(n){lapply(seq_along(ContextFilteredMethGR),
                                                       function(i){MethSM[[n]][,colnames(MethSM[[n]]) %in% as.character(start(ContextFilteredMethGR[[i]])), drop=FALSE]})})
   }
-
+  
   message("Collapsing strands")
   StrandCollapsedMethGR = list(GC = CollapseStrands(MethGR = ContextFilteredMethGR[[1]], context = "GC"),
-                               CG = CollapseStrands(MethGR = ContextFilteredMethGR[[2]], context = "CG"))
+                               CG = CollapseStrands(MethGR = ContextFilteredMethGR[[2]], context = "HCG"))
   if (returnSM){
     StrandCollapsedMethSM = lapply(seq_along(ContextFilteredMethSM),
                                    function(n){
                                      list(GC = CollapseStrandsSM(ContextFilteredMethSM[[n]][[1]], context = "GC", genome = genome, chr = as.character(seqnames(RegionOfInterest))),
-                                          CG = CollapseStrandsSM(ContextFilteredMethSM[[n]][[2]], context = "CG", genome = genome, chr = as.character(seqnames(RegionOfInterest))))})
+                                          CG = CollapseStrandsSM(ContextFilteredMethSM[[n]][[2]], context = "HCG", genome = genome, chr = as.character(seqnames(RegionOfInterest))))})
   }
-
+  
   message("Filtering Cs for coverage")
   CoverageFilteredMethGR = list(GC = CoverageFilter(MethGR = StrandCollapsedMethGR[[1]], thr = coverage),
                                 CG = CoverageFilter(MethGR = StrandCollapsedMethGR[[2]], thr = coverage))
@@ -491,9 +442,8 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
                                                          CsCoveredEnough = as.character(start(CoverageFilteredMethGR[[i]]))[
                                                            !is.na(elementMetadata(CoverageFilteredMethGR[[i]])[,grep("_Coverage$", colnames(elementMetadata(CoverageFilteredMethGR[[i]])))[n]])]
                                                          StrandCollapsedMethSM[[n]][[i]][,colnames(StrandCollapsedMethSM[[n]][[i]]) %in% CsCoveredEnough, drop=FALSE]
-                                                         })})
-
-  }
+                                                       })})
+    }
 
   # Determining stric context based on ExpType
   ExpType = DetectExperimentType(sample)
@@ -513,7 +463,7 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
     ContextFilteredMethSM_strict = lapply(seq_along(CoverageFilteredMethSM),
                                           function(n){lapply(seq_along(ContextFilteredMethGR_strict),
                                                              function(i){CoverageFilteredMethSM[[n]][[i]][,colnames(CoverageFilteredMethSM[[n]][[i]]) %in% as.character(start(ContextFilteredMethGR_strict[[i]])), drop=FALSE]})})
-    }
+  }
 
   if (ExpType == "DE"){
     message("Merging matrixes")
@@ -524,10 +474,16 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   } else {
     message("Returning non merged matrixes")
     MergedGR = ContextFilteredMethGR_strict
-    if (returnSM){MergedSM = ContextFilteredMethSM_strict}
+    if (returnSM){
+      MergedSM = ContextFilteredMethSM_strict
+      for (i in seq_along(MergedSM)){
+        names(MergedSM[[i]]) = ExpType_contexts
+        }
+      }
   }
 
   if (returnSM){
+    names(MergedSM) = unique(QuasRprj_sample@alignments$SampleName)
     return(list(MergedGR, MergedSM))
   } else {
     return(MergedGR)
