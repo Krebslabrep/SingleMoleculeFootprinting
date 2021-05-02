@@ -5,24 +5,27 @@
 \title{Plot SMF data at single site}
 \usage{
 PlotSingleSiteSMF(
-  ContextMethylation,
-  sample,
-  range,
+  Methylation,
+  RegionOfInterest,
+  TFBSs = NULL,
+  SNPs = NULL,
+  SortingBins = NULL,
   SortedReads = NULL,
-  TFBSs,
   saveAs = NULL
 )
 }
 \arguments{
-\item{ContextMethylation}{Context methylation object as returned by CallContextMethylation function}
+\item{Methylation}{Context methylation object as returned by CallContextMethylation function}
 
-\item{sample}{one sample as reported in the SampleName files of the QuasR sampleSheet}
+\item{RegionOfInterest}{GRanges interval to plot}
 
-\item{range}{GRange interval to plot}
+\item{TFBSs}{GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"}
+
+\item{SNPs}{GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"}
+
+\item{SortingBins}{GRanges object of sorting bins (absolute) coordinate to visualize}
 
 \item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
-
-\item{TFBSs}{GRange or GRangesList of transcription factor binding sites to add to the plot. If SortedReads are passed, the format of TFBSs (GRanges vs GRangesList) will be used to determie if single molecules were sorted based on one or multiple TFs}
 
 \item{saveAs}{Full path to pdf file to save plot to. Defaults to NULL, in which case will only display}
 }

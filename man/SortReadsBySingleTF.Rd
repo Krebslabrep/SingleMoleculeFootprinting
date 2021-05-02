@@ -11,7 +11,7 @@ SortReadsBySingleTF(
 )
 }
 \arguments{
-\item{MethSM}{Single molecule matrix}
+\item{MethSM}{Single molecule matrix list as returned by CallContextMethylation}
 
 \item{TFBS}{Transcription factor binding site to use for sorting, passed as a GRanges object of length 1}
 

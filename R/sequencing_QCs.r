@@ -125,6 +125,7 @@ SubsetGRangesForSamples = function(GRanges_obj, Samples){
 #' @param Single GRanges object as returned by CallContextMethylation function
 #'
 #' @import dplyr
+#' @importFrom tidyr spread gather extract
 #'
 GRanges_to_DF = function(GRanges_obj){
 
@@ -140,7 +141,7 @@ GRanges_to_DF = function(GRanges_obj){
     summarise(TotCoverage = sum(Coverage), TotMethylated = sum(Methylated), Bin_MethRate = TotMethylated/TotCoverage, BinCount = n()) %>%
     mutate(CumSum = cumsum(BinCount), CumSumMax = max(CumSum), CumSumPerc = (CumSum/CumSumMax)*100) %>%
     ungroup() %>%
-    select(-TotCoverage, -TotMethylated, -CumSum, -CumSumMax, -BinCount, -Bins) -> DF
+    select(-TotCoverage, -TotMethylated, -CumSum, -CumSumMax, -BinCount) -> DF
 
   return(DF)
 
@@ -222,7 +223,7 @@ LowCoverageMethRateDistribution = function(LowCoverage, LowCoverage_samples, Hig
     return(list(Plot, BinnedMethRate))
   } else if (returnDF & !returnPlot) {
     return(BinnedMethRate)
-  } else if (!returnDF & returnPlot){
+  } else if (!returnDF & returnPlot) {
     return(Plot)
   }
 

@@ -468,12 +468,14 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   if (ExpType == "DE"){
     message("Merging matrixes")
     MergedGR = sort(append(ContextFilteredMethGR_strict[[1]], ContextFilteredMethGR_strict[[2]]))
+    NAMES = unique(gsub("_Coverage$", "", grep("_Coverage$", colnames(elementMetadata(MergedGR)), value=TRUE)))
     if (returnSM){
       MergedSM = lapply(seq_along(ContextFilteredMethSM_strict), function(n){MergeMatrixes(ContextFilteredMethSM_strict[[n]])})
       }
   } else {
     message("Returning non merged matrixes")
     MergedGR = ContextFilteredMethGR_strict
+    NAMES = unique(gsub("_Coverage$", "", grep("_Coverage$", colnames(elementMetadata(MergedGR$DGCHN)), value=TRUE)))
     if (returnSM){
       MergedSM = ContextFilteredMethSM_strict
       for (i in seq_along(MergedSM)){
@@ -483,7 +485,7 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   }
 
   if (returnSM){
-    names(MergedSM) = unique(QuasRprj_sample@alignments$SampleName)
+    names(MergedSM) = NAMES
     return(list(MergedGR, MergedSM))
   } else {
     return(MergedGR)
