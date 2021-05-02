@@ -43,16 +43,16 @@ Description: SingleMoleculeFootprinting is an R package providing functions
     the user will be able to perform basic data analysis 
     of SMF data with minimal coding effort.
     Starting from an aligned bam file, we show how to 
-    - perform quality controls over sequencing libraries, 
-    - extract methylation information at the single molecule level 
-    accounting for the two possible kind of SMF experiments (single enzyme or double enzyme) 
-    - classify single molecules based on their patterns of molecular occupancy
-    - plot SMF information at a given genomic location
+    perform quality controls over sequencing libraries, 
+    extract methylation information at the single molecule level 
+    accounting for the two possible kind of SMF experiments (single enzyme or double enzyme), 
+    classify single molecules based on their patterns of molecular occupancy,
+    plot SMF information at a given genomic location
 biocViews: 
   DNAMethylation, Coverage, NucleosomePositioning, DataRepresentation, Epigenetics, MethylSeq, QualityControl
+BugReports: https://github.com/Krebslabrep/SingleMoleculeFootprinting/issues
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
 Suggests: 
     BSgenome.Mmusculus.UCSC.mm10,
     devtools,

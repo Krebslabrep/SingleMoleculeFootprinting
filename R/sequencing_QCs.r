@@ -122,19 +122,19 @@ BaitCapture = function(sampleSheet, genome, baits, cores=1){
 #' @param samples Avg methylation object. Can also be set to "Example" to produce plot using example data of the kind specified by the @param CellType
 #' @param context one of "AllCs", "DGCHN", "NWCGW". The first should be chosen for TKO experiments. For experiments carried on WT cells, we recommend checking both the "DGCHN" and "NWCGW" contexts by running this function once per context.
 #' @param CellType Cell type to compare your samples to. At the moment, this can be one of "ES", "NP", "TKO".
-#' @param saveAs Full path to output plot file
 #'
 #' @return Inter-sample correlation plot
 #'
 #' @export
 #'
-SampleCorrelation = function(samples, context, CellType, saveAs=NULL){
+SampleCorrelation = function(samples, context, CellType){
 
   # Get methylation data from previous SMF experiments
   # AllC = readRDS(system.file("extdata", "AllCreduced.rds", package = "SingleMoleculeFootprinting", mustWork = TRUE))
   # metMat_ref = readRDS(system.file("extdata", "ReducedRefMat.rds", package = "SingleMoleculeFootprinting", mustWork = TRUE))
-  AllC = readRDS("/g/krebs/barzaghi/Rscripts/R_package/AllCreduced.rds")
-  metMat_ref = readRDS("/g/krebs/barzaghi/Rscripts/R_package/ReducedRefMat.rds")
+  AllC = SingleMoleculeFootprintingData::AllCs.rds()
+  metMat_ref = SingleMoleculeFootprintingData::ReferenceMethylation.rds()
+
 
   # Pick reference data
   if (length(grep(CellType, colnames(metMat_ref))) > 0){
@@ -179,12 +179,6 @@ SampleCorrelation = function(samples, context, CellType, saveAs=NULL){
     stop("Unsupported context")
   }
 
-  if (!is.null(saveAs)){
-    pdf(saveAs)
-    pairs(comparison_mat[CytosinesIndex & NAindex_comparison,], upper.panel = panel.cor, diag.panel = panel.hist, lower.panel = panel.jet, labels = colnames(comparison_mat))
-    dev.off()
-  } else {
-    pairs(comparison_mat[CytosinesIndex & NAindex_comparison,], upper.panel = panel.cor, diag.panel = panel.hist, lower.panel = panel.jet, labels = colnames(comparison_mat))
-  }
+  pairs(comparison_mat[CytosinesIndex & NAindex_comparison,], upper.panel = panel.cor, diag.panel = panel.hist, lower.panel = panel.jet, labels = colnames(comparison_mat))
 
 }
