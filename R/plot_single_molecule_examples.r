@@ -123,6 +123,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
 #' @param RegionOfInterest GRanges interval to plot
 #'
 #' @import GenomicRanges
+#' @import tidyverse
 #'
 #' @export
 #'
@@ -385,7 +386,6 @@ StateQuantificationPlot = function(SortedReads){
 #' @param SNPs GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
-#' @param saveAs Full path to pdf file to save plot to. Defaults to NULL, in which case will only display
 #'
 #' @importFrom grDevices dev.list dev.off pdf
 #' @importFrom patchwork plot_layout
@@ -415,23 +415,7 @@ StateQuantificationPlot = function(SortedReads){
 #'                   TFBSs = TFBSs,
 #'                   saveAs = NULL)
 #'
-PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL, SortedReads=NULL, saveAs=NULL){
-
-  # #' @importFrom IRanges subsetByOverlaps resize
-  # #' @importFrom GenomicRanges start
-  # extende_range = resize(range, 600, fix='center')
-  # 
-  # message("Subsetting data by range (extended)")
-  # subset_TFBSs = subsetByOverlaps(TFBSs, extende_range, ignore.strand=TRUE)
-  # MethGR = subsetByOverlaps(ContextMethylation[[1]], extende_range)
-  # MethSM = ContextMethylation[[2]][, as.character(start(ContextMethylation[[1]]))]
-
-  ## PLOT ##
-  # start graphical device
-  if (!is.null(saveAs)){
-    if(!is.null(dev.list())){dev.off()}
-    pdf(saveAs, width = 10, height = 10)
-  }
+PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL, SortedReads=NULL){
 
   message("Producing average SMF plot")
   PlotAvgSMF(MethGR = Methylation[[1]],
@@ -439,7 +423,6 @@ PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NUL
              TFBSs = TFBSs,
              SNPs = SNPs,
              SortingBins = SortingBins) -> Avg_pl
-  # PlotAvgSMF(MethGR, extende_range, subset_TFBSs)
 
   message("Producing Single Molecule stacks")
   PlotSM(MethSM = Methylation[[2]], RegionOfInterest = RegionOfInterest, SortedReads = SortedReads) -> SM_pl
@@ -459,13 +442,8 @@ PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NUL
   "
   Avg_pl + SM_pl + StateQuant_pl +
     patchwork::plot_layout(ncol = 2, design = layout, widths = c(0.25, 1), heights = c(1, 0.8), guides = "collect") -> FinalPlot
-
-  if (!is.null(saveAs)){
-    FinalPlot
-    dev.off()
-  } else {
-    FinalPlot
-  }
+  
+  return(FinalPlot)
 
 }
 

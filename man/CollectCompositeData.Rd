@@ -9,8 +9,11 @@ CollectCompositeData(
   sample,
   genome,
   TFBSs,
+  window,
+  coverage = 20,
+  ConvRate.thr = 0.8,
   minCytosines = 0,
-  cores = 20
+  clObj = NULL
 )
 }
 \arguments{
@@ -22,9 +25,15 @@ CollectCompositeData(
 
 \item{TFBSs}{GRanges object of TF binding sites to collect info for}
 
+\item{window}{window size to collect methylation information for}
+
+\item{coverage}{coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.}
+
+\item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.8. For more information, check out the details section}
+
 \item{minCytosines}{minimum number of cytosines covered per TFBS}
 
-\item{cores}{number of cores}
+\item{clObj}{cluster object for parallel processing. Should be the output of a parallel::makeCluster() call}
 }
 \value{
 data.frame of bulk SMF info ready for plotting
