@@ -1,6 +1,6 @@
 Package: SingleMoleculeFootprinting
 Title: Analysis tools for Single Molecule Footprinting (SMF) data
-Version: 0.99.10
+Version: 0.99.11
 Authors@R: c(
     person(given = "Guido",
            family = "Barzaghi",

@@ -90,7 +90,7 @@ BaitCapture = function(sampleSheet, genome, baits, clObj=NULL){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
 
-  InBaits=QuasR::qCount(QuasRprj, BaitRegions, clObj = clObj)
+  InBaits=QuasR::qCount(QuasRprj, baits, clObj = clObj)
 
   seq_length = seqlengths(genome)
   tiles = tileGenome(seq_length, tilewidth = max(seq_length), cut.last.tile.in.chrom=TRUE)
