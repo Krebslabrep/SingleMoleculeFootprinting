@@ -8,7 +8,7 @@ test_that("BaitCapture returns a numeric", {
 
   expect_true(is.numeric(BaitCapture(sampleSheet = Qinput,
                                      genome = BSgenome.Mmusculus.UCSC.mm10,
-                                     baits = EnrichmentRegions_mm10.rds()))
+                                     baits = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()))
     )
 
 })

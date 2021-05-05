@@ -18,8 +18,9 @@ test_that("GetSingleMolMethMat returns a matrix", {
 
 test_that("DetectExperimentType behaves as expected", {
 
-  expect_true(is.character(DetectExperimentType(Samples = alignments(QuasRprj)[[1]]$SampleName)))
-  expect_message(DetectExperimentType(Samples = alignments(QuasRprj)[[1]]$SampleName, verbose = TRUE))
+  Samples = QuasR::alignments(QuasRprj)[[1]]$SampleName
+  expect_true(is.character(DetectExperimentType(Samples = Samples)))
+  expect_message(DetectExperimentType(Samples = Samples, verbose = TRUE))
 
 })
 
