@@ -1,6 +1,6 @@
 Package: SingleMoleculeFootprinting
 Title: Analysis tools for Single Molecule Footprinting (SMF) data
-Version: 0.99.8
+Version: 0.99.9
 Authors@R: c(
     person(given = "Guido",
            family = "Barzaghi",
@@ -53,6 +53,7 @@ Encoding: UTF-8
 Suggests: 
     BSgenome.Mmusculus.UCSC.mm10,
     devtools,
+    ExperimentHub,
     knitr,
     parallel,
     rmarkdown,
