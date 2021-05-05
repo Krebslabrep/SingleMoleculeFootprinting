@@ -42,6 +42,10 @@ BiocManager::install("SingleMoleculeFootprinting")
 
 For compatibility with our analysis tools, we recommend the user to perform genomic alignments using the [`qAlign`](https://www.rdocumentation.org/packages/QuasR/versions/1.12.0/topics/qAlign) function from QuasR as exemplified in the chunk below.
 ```{r, eval=FALSE}
+library(parallel)
+library(QuasR)
+library(BSgenome.Mmusculus.UCSC.mm10) 
+
 cl <- makeCluster(40)
 prj <- QuasR::qAlign(sampleFile = Qinput,
                      genome = "BSgenome.Mmusculus.UCSC.mm10",
@@ -59,6 +63,7 @@ prj <- QuasR::qAlign(sampleFile = Qinput,
 ```{r setup, message=FALSE, eval=TRUE}
 library(BSgenome.Mmusculus.UCSC.mm10)
 library(SingleMoleculeFootprinting)
+library(parallel)
 ```
 
 ## Define arguments
@@ -69,32 +74,30 @@ We just ask the user to make sure that their default cache directory has enough 
 ```{r, include=FALSE}
 # Under the hood:
 #       download and cache SingleMoleculeFootprintingData data
-#       locate bam file and make QuasR sampleSheet
+#       locate bam file and write QuasR sampleSheet
 
-CacheDir <- ExperimentHub::getExperimentHubOption(arg = "CACHE") # <------- grab this as the cache dir. And write somewhere to set a sensible location for the user
-eh <- ExperimentHub::ExperimentHub()
-SMFdata <- AnnotationHub::query(eh, "SingleMoleculeFootprintingData")
-ExperimentHub::loadResources(hub = SMFdata, package = "SingleMoleculeFootprintingData")
+# Download and cache
+CachedBamPath = SingleMoleculeFootprintingData::NRF1pair.bam()[[1]]
+CachedBaiPath = SingleMoleculeFootprintingData::NRF1pair.bam.bai()[[1]]
+SingleMoleculeFootprintingData::AllCs.rds()
+SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
+SingleMoleculeFootprintingData::ReferenceMethylation.rds()
 
-RecordIDs <- rownames(AnnotationHub::mcols(x = SMFdata))[1:2]
-CachedBamPath <- AnnotationHub::fileName(object = SMFdata)[names(AnnotationHub::fileName(object = SMFdata))==RecordIDs[1]][[1]]
-CachedBaiPath <- AnnotationHub::fileName(object = SMFdata)[names(AnnotationHub::fileName(object = SMFdata))==RecordIDs[2]][[1]]
-# Copy example data to tempdir()
-file.copy(from = CachedBamPath, to = tempdir())
-file.copy(from = CachedBaiPath, to = tempdir())
-# Rename
-file.rename(from = paste0(tempdir(), "/", rev(rev(base::strsplit(CachedBamPath, "/")[[1]])[1])), to = paste0(tempdir(), "/NRF1pair.bam"))
-file.rename(from = paste0(tempdir(), "/", rev(rev(base::strsplit(CachedBaiPath, "/")[[1]])[1])), to = paste0(tempdir(), "/NRF1pair.bam.bai"))
-# Make sampleSheet
+# Create copy of bam and bai files with relevant names
+CacheDir <- ExperimentHub::getExperimentHubOption(arg = "CACHE")
+file.copy(from = CachedBamPath, to = paste0(CacheDir, "/", "NRF1pair.bam"))
+file.copy(from = CachedBaiPath, to = paste0(CacheDir, "/", "NRF1pair.bam.bai"))
+
+# Write QuasR input
 data.frame(
-  FileName = list.files(tempdir(), pattern = ".bam$", full.names = TRUE),
+  FileName = paste0(CacheDir, "/", "NRF1pair.bam"),
   SampleName = "NRF1pair_DE_"
   ) -> df
-readr::write_delim(df, paste0(tempdir(), "/NRF1Pair_Qinput.txt"), delim = "\t")
+readr::write_delim(df, paste0(CacheDir, "/NRF1Pair_Qinput.txt"), delim = "\t")
 ```
 
 ```{r, eval=TRUE}
-Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+Qinput = paste0(CacheDir, "/NRF1Pair_Qinput.txt")
 suppressMessages(readr::read_delim(Qinput, delim = "\t"))
 ```
 
@@ -108,9 +111,11 @@ It is always a good idea to examine canonical quality measures after aligning. W
 If SMF was performed on an large genome (e.g Mouse) it is possible that bait capture was performed to focus the sequencing efforts: here we check how efficient that process was by essentially computing the ratio of genomic alignments inside bait regions over the total ones.
 ```{r, eval=TRUE}
 BaitRegions <- SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
+clObj = makeCluster(5)
 BaitCaptureEfficiency <- BaitCapture(sampleSheet = Qinput, 
                                      genome = BSgenome.Mmusculus.UCSC.mm10, 
-                                     baits = BaitRegions)
+                                     baits = BaitRegions, clObj = clObj)
+stopCluster(clObj)
 BaitCaptureEfficiency
 ```
 In this case the capture efficiency equals to `r toString(BaitCaptureEfficiency)` because the example data was purposefully subset for an interesting region which falls entirely within baits. Under normal circumstances, one expects this value to be lower than 1 for the mouse genome for example we observe values around 0.7.

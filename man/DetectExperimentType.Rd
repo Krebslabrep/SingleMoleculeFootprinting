@@ -4,10 +4,12 @@
 \alias{DetectExperimentType}
 \title{Detect type of experiment}
 \usage{
-DetectExperimentType(Samples)
+DetectExperimentType(Samples, verbose = TRUE)
 }
 \arguments{
 \item{Samples}{SampleNames field from QuasR sampleSheet}
+
+\item{verbose}{TRUE/FALSE}
 }
 \value{
 String indicating the type of experiment detected

@@ -4,7 +4,7 @@
 \alias{CollapseStrandsSM}
 \title{Collapse strands in single molecule matrix}
 \usage{
-CollapseStrandsSM(MethSM, context, genome, chr)
+CollapseStrandsSM(MethSM, context, genome, chr, verbose = TRUE)
 }
 \arguments{
 \item{MethSM}{Single molecule matrix}
@@ -14,6 +14,8 @@ CollapseStrandsSM(MethSM, context, genome, chr)
 \item{genome}{BSgenome}
 
 \item{chr}{Chromosome, MethSM doesn't carry this info}
+
+\item{verbose}{TRUE/FALSE}
 }
 \value{
 Strand collapsed MethSM

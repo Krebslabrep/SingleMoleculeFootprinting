@@ -4,11 +4,10 @@
 #' @param sampleSheet QuasR sample sheet
 #' @param genome BS genome
 #' @param chr chromosome to calculate conversion rate on (default: 19)
-#' @param cores number of cores for parallel processing. Defaults to 1
+#' @param clObj cluster object to emply for parallel processing created using the parallel::makeCluster function. Defaults to NULL
 #'
 #' @importFrom QuasR qMeth
 #' @importFrom GenomeInfoDb seqlengths
-#' @importFrom parallel makeCluster stopCluster
 #' @importFrom BSgenome getSeq
 #' @importFrom IRanges resize
 #' @importFrom Biostrings vcountPattern
@@ -24,10 +23,12 @@
 #'
 #' if(file.exists(Qinput)){
 #'     # DO NOT RUN
-#'     # ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 19, cores = 1)
+#'     # clObj = parallel::makeCluster(5)
+#'     # ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 19, clObj = clObj)
+#'     # parallel::stopCluster(clObj)
 #' }
 #'
-ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
+ConversionRate = function(sampleSheet, genome, chr=19, clObj=NULL){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
 
@@ -35,9 +36,7 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
   # how many of the non CG/GC cytosines are methylated?
   seq_length = seqlengths(genome)
   chr = tileGenome(seq_length[chr], tilewidth=max(seq_length[chr]), cut.last.tile.in.chrom=TRUE)
-  cl = makeCluster(cores)
-  methylation_calls_C = qMeth(QuasRprj, query = chr, mode="allC", reportLevel="C", keepZero = TRUE, clObj = cl, asGRanges = TRUE, collapseBySample = FALSE)
-  stopCluster(cl)
+  methylation_calls_C = qMeth(QuasRprj, query = chr, mode="allC", reportLevel="C", keepZero = TRUE, clObj = clObj, asGRanges = TRUE, collapseBySample = FALSE)
 
   seqContext = getSeq(genome, resize(methylation_calls_C, 3, fix='center'))
   GCc = vcountPattern(DNAString("GCN"), seqContext, fixed=FALSE) # take all context for exclusion
@@ -65,15 +64,11 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #' @param sampleSheet QuasR sample sheet
 #' @param genome BS genome
 #' @param baits Full path to bed file containing bait coordinates. If chromosome names are in e.g. "1" format, they'll be temporarily converted to "chr1"
-#' @param cores number of cores for parallel processing. Defaults to 1
+#' @param clObj cluster object to emply for parallel processing created using the parallel::makeCluster function. Defaults to NULL
 #'
-#' @import AnnotationHub
-#' @import ExperimentHub
-#' @import SingleMoleculeFootprintingData
 #' @import BiocGenerics
 #' @importFrom QuasR qCount
 #' @importFrom GenomeInfoDb seqlengths
-#' @importFrom parallel makeCluster stopCluster
 #'
 #' @return bait capture efficiency
 #'
@@ -85,22 +80,21 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #'
 #' if(file.exists(Qinput)){
 #'     # DO NOT RUN
+#'     # clObj = parallel::makeCluster(5)
 #'     # BaitRegions = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
-#'     # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+#'     # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions, clObj=clObj)
+#'     # parallel::stopCluster(clObj)
 #' }
 #'
-BaitCapture = function(sampleSheet, genome, baits, cores=1){
+BaitCapture = function(sampleSheet, genome, baits, clObj=NULL){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
 
-  cl = makeCluster(cores)
-  InBaits=QuasR::qCount(QuasRprj, BaitRegions, clObj = cl)
+  InBaits=QuasR::qCount(QuasRprj, BaitRegions, clObj = clObj)
 
   seq_length = seqlengths(genome)
   tiles = tileGenome(seq_length, tilewidth = max(seq_length), cut.last.tile.in.chrom=TRUE)
-  cl = makeCluster(cores)
-  GW = QuasR::qCount(QuasRprj, tiles, clObj=cl)
-  stopCluster(cl)
+  GW = QuasR::qCount(QuasRprj, tiles, clObj=clObj)
 
   capture_efficiency = c()
   for(n in seq_along(unique(QuasRprj@alignments$SampleName))){

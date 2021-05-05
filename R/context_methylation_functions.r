@@ -292,8 +292,8 @@ CollapseStrandsSM = function(MethSM, context, genome, chr, verbose=TRUE){
   IsMinusStrand = GenomicContext=="G" # no need to select for GC/CG context --> MethSM passed already subset
 
   # Separate MethSM into - and + strands
-  MethSM_minus = MethSM[apply(MethSM[,IsMinusStrand], 1, function(i){sum(is.na(i)) != length(i)}) > 0, IsMinusStrand]
-  MethSM_plus = MethSM[apply(MethSM[,!IsMinusStrand], 1, function(i){sum(is.na(i)) != length(i)}) > 0, !IsMinusStrand]
+  MethSM_minus = MethSM[apply(MethSM[,IsMinusStrand], 1, function(i){!all(is.na(i))}) > 0, IsMinusStrand, drop=FALSE]
+  MethSM_plus = MethSM[apply(MethSM[,!IsMinusStrand], 1, function(i){!all(is.na(i))}) > 0, !IsMinusStrand, drop=FALSE]
   NrPlusReads = dim(MethSM_plus[1])
   if(verbose){message(paste0(ifelse(is.null(NrPlusReads), 0, NrPlusReads), " reads found mapping to the + strand, collapsing to -"))}
 

@@ -4,7 +4,7 @@
 \alias{FilterByConversionRate}
 \title{Calculate reads conversion rate}
 \usage{
-FilterByConversionRate(MethSM, chr, genome, thr = 0.2)
+FilterByConversionRate(MethSM, chr, genome, thr = 0.2, verbose = TRUE)
 }
 \arguments{
 \item{MethSM}{as comes out of the func GetSingleMolMethMat}
@@ -14,6 +14,8 @@ FilterByConversionRate(MethSM, chr, genome, thr = 0.2)
 \item{genome}{BSgenome}
 
 \item{thr}{Double between 0 and 1. Threshold above which to filter reads. Defaults to 0.2}
+
+\item{verbose}{TRUE/FALSE}
 }
 \value{
 Filtered MethSM

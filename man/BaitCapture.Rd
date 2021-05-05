@@ -4,7 +4,7 @@
 \alias{BaitCapture}
 \title{Bait capture efficiency}
 \usage{
-BaitCapture(sampleSheet, genome, baits, cores = 1)
+BaitCapture(sampleSheet, genome, baits, clObj = NULL)
 }
 \arguments{
 \item{sampleSheet}{QuasR sample sheet}
@@ -13,7 +13,7 @@ BaitCapture(sampleSheet, genome, baits, cores = 1)
 
 \item{baits}{Full path to bed file containing bait coordinates. If chromosome names are in e.g. "1" format, they'll be temporarily converted to "chr1"}
 
-\item{cores}{number of cores for parallel processing. Defaults to 1}
+\item{clObj}{cluster object to emply for parallel processing created using the parallel::makeCluster function. Defaults to NULL}
 }
 \value{
 bait capture efficiency
@@ -27,8 +27,10 @@ library(BSgenome.Mmusculus.UCSC.mm10)
 
 if(file.exists(Qinput)){
     # DO NOT RUN
+    # clObj = parallel::makeCluster(5)
     # BaitRegions = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
-    # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
+    # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions, clObj=clObj)
+    # parallel::stopCluster(clObj)
 }
 
 }

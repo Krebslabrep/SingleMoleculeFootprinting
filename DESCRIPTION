@@ -21,18 +21,15 @@ Authors@R: c(
 Depends:
   R (>= 4.1.0)
 Imports: 
-    AnnotationHub,
     BiocGenerics,
     Biostrings,
     BSgenome,
     GenomeInfoDb,
     GenomicRanges,
     data.table,
-    ExperimentHub,
     grDevices,
     plyr,
     IRanges,
-    parallel,
     RColorBrewer,
     SingleMoleculeFootprintingData,
     stats,
@@ -57,8 +54,10 @@ Suggests:
     BSgenome.Mmusculus.UCSC.mm10,
     devtools,
     knitr,
+    parallel,
     rmarkdown,
     readr,
-    testthat
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
+Config/testthat/edition: 3

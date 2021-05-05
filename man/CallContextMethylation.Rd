@@ -10,7 +10,8 @@ CallContextMethylation(
   genome,
   range,
   coverage = 20,
-  ConvRate.thr = 0.2
+  ConvRate.thr = 0.2,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ CallContextMethylation(
 \item{coverage}{coverage threshold. Defaults to 20.}
 
 \item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.2}
+
+\item{verbose}{TRUE/FALSE}
 }
 \value{
 List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
