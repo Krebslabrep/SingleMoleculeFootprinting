@@ -2,6 +2,7 @@ library(SingleMoleculeFootprinting)
 library(BSgenome.Mmusculus.UCSC.mm10)
 library(testthat)
 
+CacheDir <- ExperimentHub::getExperimentHubOption(arg = "CACHE")
 Qinput = paste0(CacheDir, "/NRF1Pair_Qinput.txt")
 MySample <- suppressMessages(readr::read_delim(Qinput, delim = "\t")[[2]])
 Region_of_interest <- GRanges(seqnames = "chr6",
