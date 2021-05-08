@@ -138,10 +138,15 @@ GRanges_to_DF = function(GRanges_obj){
     spread(Measurement, Score) %>%
     mutate(Methylated = Coverage*MethRate) %>%
     group_by(Sample, GenomicContext, Bins) %>%
-    summarise(TotCoverage = sum(Coverage), TotMethylated = sum(Methylated), Bin_MethRate = TotMethylated/TotCoverage, BinCount = n()) %>%
-    mutate(CumSum = cumsum(BinCount), CumSumMax = max(CumSum), CumSumPerc = (CumSum/CumSumMax)*100) %>%
+    summarise(TotCoverage = sum(Coverage), TotMethylated = sum(Methylated), ObservedMeth = TotMethylated/TotCoverage) %>%
+    # summarise(TotCoverage = sum(Coverage), TotMethylated = sum(Methylated), Bin_MethRate = TotMethylated/TotCoverage, BinCount = n()) %>%
+    # mutate(CumSum = cumsum(BinCount), CumSumMax = max(CumSum), CumSumPerc = (CumSum/CumSumMax)*100) %>%
     ungroup() %>%
-    select(-TotCoverage, -TotMethylated, -CumSum, -CumSumMax, -BinCount) -> DF
+    group_by(Sample, GenomicContext) %>%
+    mutate(ExpectedMeth = seq(1,100,100/n())/100) %>%
+    ungroup() %>%
+    # select(-TotCoverage, -TotMethylated, -CumSum, -CumSumMax, -BinCount) -> DF
+    select(-TotCoverage, -TotMethylated, -Bins) -> DF
 
   return(DF)
 
@@ -157,12 +162,19 @@ GRanges_to_DF = function(GRanges_obj){
 #'
 Plot_LowCoverageMethRate = function(Plotting_DF){
 
-  ggplot(Plotting_DF, aes(x=Bin_MethRate, y=CumSumPerc, group=interaction(Sample, Coverage), linetype=Coverage, color=Sample)) +
+  ggplot(Plotting_DF, aes(x=ExpectedMeth, y=ObservedMeth, group=interaction(Sample, Coverage), linetype=Coverage, color=Sample)) +
     geom_line() +
-    ylab("Cumulative count (%)") +
-    xlab("Binned methylation rate") +
+    # ylab("Cumulative count (%)") +
+    # xlab("Binned methylation rate") +
     facet_wrap(~GenomicContext) +
     theme_classic()
+  
+  # ggplot(Plotting_DF, aes(x=Bin_MethRate, y=CumSumPerc, group=interaction(Sample, Coverage), linetype=Coverage, color=Sample)) +
+  #   geom_line() +
+  #   ylab("Cumulative count (%)") +
+  #   xlab("Binned methylation rate") +
+  #   facet_wrap(~GenomicContext) +
+  #   theme_classic()
 
 }
 

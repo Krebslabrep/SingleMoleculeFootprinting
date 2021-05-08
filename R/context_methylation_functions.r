@@ -174,7 +174,7 @@ FilterContextCytosines = function(MethGR, genome, context){
   seqinfo(CytosineRanges) = seqinfo(MethGR)
 
   NewWidth = ifelse(nchar(context) %% 2 == 1, nchar(context), nchar(context) + 1) # Make context nchar() odd so we can fix to 'center'
-  GenomicContext = Biostrings::getSeq(genome, suppressWarnings(trim(IRanges::resize(CytosineRanges, width = NewWidth, fix = "center"))), as.character = FALSE)# I checked: it is strand-aware
+  GenomicContext = Biostrings::getSeq(genome, suppressWarnings(trim(IRanges::resize(CytosineRanges, width = NewWidth, fix = "center"))))# I checked: it is strand-aware | , as.character = FALSE I don't know what was this here for
 
   # Fix the truncated sites
   trimmed <- which(!width(GenomicContext) == NewWidth)
