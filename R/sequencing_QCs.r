@@ -63,7 +63,7 @@ ConversionRate = function(sampleSheet, genome, chr=19, clObj=NULL){
 #' check bait capture efficiency. Expected to be ~70% for mouse genome
 #' @param sampleSheet QuasR sample sheet
 #' @param genome BS genome
-#' @param baits Full path to bed file containing bait coordinates. If chromosome names are in e.g. "1" format, they'll be temporarily converted to "chr1"
+#' @param baits GRanges obj of bait coordinates. We provide and example through SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
 #' @param clObj cluster object to emply for parallel processing created using the parallel::makeCluster function. Defaults to NULL
 #'
 #' @import BiocGenerics
@@ -126,6 +126,10 @@ SampleCorrelation = function(samples, context, CellType){
   # Get methylation data from previous SMF experiments
   # AllC = readRDS(system.file("extdata", "AllCreduced.rds", package = "SingleMoleculeFootprinting", mustWork = TRUE))
   # metMat_ref = readRDS(system.file("extdata", "ReducedRefMat.rds", package = "SingleMoleculeFootprinting", mustWork = TRUE))
+  if (!requireNamespace("SingleMoleculeFootprintingData", quietly = TRUE)){
+    stop("Install 'SingleMoleculeFootprintingData' to use this function")
+    }
+
   AllC = SingleMoleculeFootprintingData::AllCs.rds()
   metMat_ref = SingleMoleculeFootprintingData::ReferenceMethylation.rds()
 

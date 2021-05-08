@@ -31,7 +31,6 @@ Imports:
     plyr,
     IRanges,
     RColorBrewer,
-    SingleMoleculeFootprintingData,
     stats,
     QuasR
 Description: SingleMoleculeFootprinting is an R package providing functions 
@@ -58,6 +57,7 @@ Suggests:
     parallel,
     rmarkdown,
     readr,
+    SingleMoleculeFootprintingData,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
