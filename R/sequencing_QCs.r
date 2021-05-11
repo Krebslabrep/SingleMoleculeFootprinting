@@ -139,13 +139,10 @@ GRanges_to_DF = function(GRanges_obj){
     mutate(Methylated = Coverage*MethRate) %>%
     group_by(Sample, GenomicContext, Bins) %>%
     summarise(TotCoverage = sum(Coverage), TotMethylated = sum(Methylated), ObservedMeth = TotMethylated/TotCoverage) %>%
-    # summarise(TotCoverage = sum(Coverage), TotMethylated = sum(Methylated), Bin_MethRate = TotMethylated/TotCoverage, BinCount = n()) %>%
-    # mutate(CumSum = cumsum(BinCount), CumSumMax = max(CumSum), CumSumPerc = (CumSum/CumSumMax)*100) %>%
     ungroup() %>%
     group_by(Sample, GenomicContext) %>%
     mutate(ExpectedMeth = seq(1,100,100/n())/100) %>%
     ungroup() %>%
-    # select(-TotCoverage, -TotMethylated, -CumSum, -CumSumMax, -BinCount) -> DF
     select(-TotCoverage, -TotMethylated, -Bins) -> DF
 
   return(DF)
@@ -162,20 +159,61 @@ GRanges_to_DF = function(GRanges_obj){
 #'
 Plot_LowCoverageMethRate = function(Plotting_DF){
 
-  ggplot(Plotting_DF, aes(x=ExpectedMeth, y=ObservedMeth, group=interaction(Sample, Coverage), linetype=Coverage, color=Sample)) +
-    geom_line() +
-    # ylab("Cumulative count (%)") +
-    # xlab("Binned methylation rate") +
+  ggplot(Plotting_DF, aes(x=ExpectedMeth,y=ObservedMeth, group=interaction(Sample,Coverage), color=Sample)) +
+    geom_line(aes(linetype=Coverage, size=Coverage)) +
+    ylab("Observed Methylation Rate") +
+    xlab("Expected Methylation Rate") +
     facet_wrap(~GenomicContext) +
-    theme_classic()
-  
-  # ggplot(Plotting_DF, aes(x=Bin_MethRate, y=CumSumPerc, group=interaction(Sample, Coverage), linetype=Coverage, color=Sample)) +
-  #   geom_line() +
-  #   ylab("Cumulative count (%)") +
-  #   xlab("Binned methylation rate") +
-  #   facet_wrap(~GenomicContext) +
-  #   theme_classic()
+    theme_classic() +
+    scale_size_manual("type", values = c(2.5, 1), guide = "none")
 
+}
+
+#' Low Coverage Methylation Rate MSE
+#' 
+#' Calculate Mean squared error (MSE) of methylation rate distribution estimates for low coverage samples
+#' 
+#' @param BinnedMethRate data.frame as returned by GRanges_to_DF function.
+#'
+#' @importFrom dplyr filter
+#' 
+LowCoverageMethRate_MSE = function(BinnedMethRate){
+  
+  AllSamples = unique(BinnedMethRate$Sample)
+  MSE_DF = data.frame(Sample = c(), MSE = c())
+  for (sample in seq_along(AllSamples)){
+    
+    x = filter(BinnedMethRate, Sample == AllSamples[sample])$ExpectedMeth
+    y = filter(BinnedMethRate, Sample == AllSamples[sample])$ObservedMeth
+    
+    MSE_DF = rbind(MSE_DF, data.frame(Sample = AllSamples[sample], MSE = (mean((y - x) ** 2))))
+    
+  }
+  
+  return(MSE_DF)
+  
+}
+
+#' Plot Low Coverage Methylation Rate MSE
+#' 
+#' Produce barplot of MSE values calculated for methylation rate distribution estimates of low coverage samples
+#' 
+#' @param MSE_DF data.frame as returned by the LowCoverageMethRate_MSE function
+#' 
+#' @import ggplot2
+#' 
+Plot_LowCoverageMethRate_MSE = function(MSE_DF){
+  
+  RMSE_DF %>%
+    ggplot(aes(Sample, MSE)) +
+    geom_bar(stat = 'identity') +
+    ylab("Mean squared error\n(MSE)") +
+    xlab("") +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) -> pl
+  
+  return(pl)
+  
 }
 
 #' Low Coverage Methylation Rate
@@ -184,13 +222,16 @@ Plot_LowCoverageMethRate = function(Plotting_DF){
 #' It bins cytosines with similar methylation rates (as observed in the HighCoverage sample) into bins. A single
 #' methylation rate value is computed for each bin
 #'
-#' @param LowCoverage Single GRanges object as returned by CallContextMethylation function to inspect. The object can also contain cytosines from multiple contexts
+#' @param LowCoverage Single GRanges object as returned by CallContextMethylation function run with Coverage parameter set to 1. The object can also contain cytosines from multiple contexts
 #' @param LowCoverage_samples Samples to use from the LowCoverage object. Either a string or a vector (for multiple samples).
-#' @param HighCoverage Single GRanges object as returned by CallContextMethylation function to inspect. The object can also contain cytosines from multiple contexts.
+#' @param HighCoverage Single GRanges object as returned by CallContextMethylation function. The object can also contain cytosines from multiple contexts.
 #' @param HighCoverage_samples Single sample to use from HighCoverage. String
 #' @param bins The number of bins for which to calculate the "binned" methylation rate. Defaults to 50
 #' @param returnDF Whether to return the data.frame used for plotting. Defaults to FALSE
 #' @param returnPlot Whether to return the plot. Defaults to TRUE
+#' @param MSE Whether to calculate Mean squared error (MSE) of methylation rate distribution estimates for low coverage samples. Defaults to TRUE
+#' @param return_MSE_DF  Whether to return a data.frame of computed MSE values. Defaults to FALSE
+#' @param return_MSE_plot Whether to return a barplot of computed values. Defaults to TRUE
 #'
 #' @import GenomicRanges
 #' @importFrom dplyr mutate
@@ -204,10 +245,14 @@ Plot_LowCoverageMethRate = function(Plotting_DF){
 #' #                                 HighCoverage = HighCoverage$DGCHN,
 #' #                                 HighCoverage_samples = HighCoverage_samples[1],
 #' #                                 returnDF = FALSE,
-#' #                                 returnPlot = TRUE)
+#' #                                 returnPlot = TRUE, 
+#' #                                 MSE = TRUE, 
+#' #                                 return_MSE_DF = FALSE, 
+#' #                                 return_MSE_plot = TRUE)
 #'
 LowCoverageMethRateDistribution = function(LowCoverage, LowCoverage_samples, HighCoverage, HighCoverage_samples,
-                                           bins = 50, returnDF = FALSE, returnPlot = TRUE){
+                                           bins = 50, returnDF = FALSE, returnPlot = TRUE, 
+                                           MSE = TRUE, return_MSE_DF = FALSE, return_MSE_plot = TRUE){
 
   message("Subsetting GRanges for given samples")
   HighCoverage = SubsetGRangesForSamples(HighCoverage, HighCoverage_samples)
@@ -229,15 +274,33 @@ LowCoverageMethRateDistribution = function(LowCoverage, LowCoverage_samples, Hig
     mutate(GRanges_to_DF(GRanges_objects[[nr]]), Coverage = Coverages[nr])
   }))
 
-  Plot = Plot_LowCoverageMethRate(BinnedMethRate)
-
-  if (returnDF & returnPlot){
-    return(list(Plot, BinnedMethRate))
-  } else if (returnDF & !returnPlot) {
-    return(BinnedMethRate)
-  } else if (!returnDF & returnPlot) {
-    return(Plot)
+  ReturnList = list()
+  
+  if (returnDF){
+    ReturnList$MethylationDistribution_DF = BinnedMethRate
   }
+  
+  if (returnPlot) {
+    Plot = Plot_LowCoverageMethRate(BinnedMethRate)
+    ReturnList$MethylationDistribution_plot = Plot
+  }
+  
+  if (MSE){
+    
+    MSE_DF = LowCoverageMethRate_MSE(BinnedMethRate)
+    
+    if (return_MSE_DF){
+      ReturnList$MSE_DF = MSE_DF
+    }
+    
+    if (return_MSE_plot){
+      MSE_plot = Plot_LowCoverageMethRate_MSE(MSE_DF)
+      ReturnList$MSE_plot = MSE_plot
+    }
+    
+  }
+  
+  return(ReturnList)
 
 }
 
