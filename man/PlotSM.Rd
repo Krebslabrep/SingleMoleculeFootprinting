@@ -4,12 +4,12 @@
 \alias{PlotSM}
 \title{Wrapper for PlotSingleMoleculeStack function}
 \usage{
-PlotSM(MethSM, range, SortedReads = NULL)
+PlotSM(MethSM, RegionOfInterest, SortedReads = NULL)
 }
 \arguments{
 \item{MethSM}{Single molecule methylation matrix}
 
-\item{range}{GRanges interval to plot}
+\item{RegionOfInterest}{GRanges interval to plot}
 
 \item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
 }
@@ -24,10 +24,10 @@ Region_of_interest = GRanges(seqnames = "chr6", ranges = IRanges(start = 8810600
 Methylation = CallContextMethylation(sampleSheet = Qinput,
                                      sample = MySample,
                                      genome = BSgenome.Mmusculus.UCSC.mm10,
-                                     range = Region_of_interest,
+                                     RegionOfInterest = Region_of_interest,
                                      coverage = 20,
                                      ConvRate.thr = 0.2)
 
- PlotSM(MethSM = Methylation[[2]], range = Region_of_interest)
+ PlotSM(MethSM = Methylation[[2]], RegionOfInterest = Region_of_interest)
 
 }

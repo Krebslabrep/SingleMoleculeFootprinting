@@ -68,7 +68,8 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
   MethGR %>%
     as_tibble() %>%
     select(-grep("_Coverage$", colnames(.)), -end, -width, -strand) %>%
-    gather(sample, MethRate, -seqnames, -start, -GenomicContext) -> PlottingDF
+    gather(sample, MethRate, -seqnames, -start, -GenomicContext) %>%
+    na.omit() -> PlottingDF
   OurFavouriteColors = c("Black", "Red", "Blue", "Green")
   ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$sample))]
 
@@ -93,7 +94,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
   # Prepare SortingBins
   if(!is.null(SortingBins)){
     SortingBins %>%
-      as_tibble() %>%
+      as.data.frame() %>%
       select(start, end) -> Bins_PlottingDF
   }
 
@@ -122,6 +123,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
 #' @param RegionOfInterest GRanges interval to plot
 #'
 #' @import GenomicRanges
+#' @import tidyverse
 #'
 #' @export
 #'
@@ -145,11 +147,14 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
     MethSM[[i]] %>%
       as.data.frame() %>%
       rownames_to_column(var = "ReadID") %>%
-      mutate(Sample = names(MethSM)[i])
+      mutate(Sample = names(MethSM)[i]) %>%
+      gather(Coordinate, Methylation, -ReadID, -Sample)
   })) %>%
-    gather(Coordinate, Methylation, -ReadID, -Sample) %>%
     na.omit() %>%
     mutate(Methylation = as.factor(Methylation), Coordinate = as.numeric(Coordinate)) -> PlottingDF
+  PlottingDF$ReadID = factor(PlottingDF$ReadID, levels = Reduce(c, lapply(MethSM, rownames)))
+  OurFavouriteColors = c("Black", "Red", "Blue", "Green")
+  ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$Sample))]
   
   PlottingDF %>%
     group_by(Sample) %>%
@@ -161,7 +166,7 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 
   PlottingDF %>%
     ggplot(aes(x=Coordinate, y=ReadID)) + 
-    geom_tile(aes(fill=Methylation), height=1, width=1) +
+    geom_tile(aes(fill=Methylation), height=1, width=5) +
     facet_wrap(~Sample, scales = "free_y", dir = 'v', 
                labeller = as_labeller(Labels$Label)) +
     ylab("") +
@@ -211,7 +216,7 @@ PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL){
       message("Inferring sorting was performed by single TF")
       NAMES = names(MethSM)
       MethSM = lapply(seq_along(MethSM), function(i){
-        MethSM[[i]][unlist(SortedReads[[i]][rev(as.character(unlist(OneTFstates())))]),]
+        MethSM[[i]][unlist(SortedReads[[i]][rev(Reduce(c, OneTFstates()))]),]
       })
       names(MethSM) = NAMES
     } else if (PatternLength == 4){ # TF pair
@@ -309,6 +314,7 @@ TFPairStateQuantificationPlot = function(SortedReads, states){
     na.omit() %>% 
     separate(Pattern, into = c(paste0("Bin", seq(unique(nchar(unlist(states)))))), sep = "(?<=.)", extra = 'drop') %>%
     gather(Bin, Methylation, -ReadID, -Sample, -State) -> PlottingDF
+  PlottingDF$ReadID = factor(PlottingDF$ReadID, levels = unlist(OrderedReads))
   
   PlottingDF %>%
     ggplot(aes(x=Bin, y=ReadID)) + 
@@ -356,13 +362,13 @@ StateQuantificationPlot = function(SortedReads){
 
     message("Inferring sorting was performed by single TF")
     states = OneTFstates()
-    SingleTFStateQuantificationPlot(states, OrderedReads)
+    SingleTFStateQuantificationPlot(SortedReads, states)
 
   } else if (PatternLength == 4){ # TF pair
 
     message("Inferring sorting was performed by TF pair")
     states = TFpairStates()
-    TFPairStateQuantificationPlot(states, OrderedReads)
+    TFPairStateQuantificationPlot(SortedReads, states)
 
   } else {
     
@@ -380,11 +386,9 @@ StateQuantificationPlot = function(SortedReads){
 #' @param SNPs GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
-#' @param saveAs Full path to pdf file to save plot to. Defaults to NULL, in which case will only display
 #'
-#' @importFrom IRanges subsetByOverlaps resize
-#' @importFrom GenomicRanges start
-#' @import grDevices
+#' @importFrom grDevices dev.list dev.off pdf
+#' @importFrom patchwork plot_layout
 #'
 #' @export
 #'
@@ -411,39 +415,35 @@ StateQuantificationPlot = function(SortedReads){
 #'                   TFBSs = TFBSs,
 #'                   saveAs = NULL)
 #'
-PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL, SortedReads=NULL, saveAs=NULL){
+PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL, SortedReads=NULL){
 
-  # extende_range = resize(range, 600, fix='center')
-  # 
-  # message("Subsetting data by range (extended)")
-  # subset_TFBSs = subsetByOverlaps(TFBSs, extende_range, ignore.strand=TRUE)
-  # MethGR = subsetByOverlaps(ContextMethylation[[1]], extende_range)
-  # MethSM = ContextMethylation[[2]][, as.character(start(ContextMethylation[[1]]))]
-
-  ## PLOT ##
-  # start graphical device
-  if (!is.null(saveAs)){
-    if(!is.null(dev.list())){dev.off()}
-    pdf(saveAs, width = 8, height = 5)
-  }
-
-  # Average
+  message("Producing average SMF plot")
   PlotAvgSMF(MethGR = Methylation[[1]],
              RegionOfInterest = RegionOfInterest,
              TFBSs = TFBSs,
              SNPs = SNPs,
-             SortingBins = SortingBins)
-  # PlotAvgSMF(MethGR, extende_range, subset_TFBSs)
+             SortingBins = SortingBins) -> Avg_pl
 
-  # Single Molecule
-  PlotSM(MethSM = Methylation[[2]], RegionOfInterest = RegionOfInterest, SortedReads = SortedReads)
+  message("Producing Single Molecule stacks")
+  PlotSM(MethSM = Methylation[[2]], RegionOfInterest = RegionOfInterest, SortedReads = SortedReads) -> SM_pl
 
   # State quantification plot
-  StateQuantificationPlot(SortedReads = SortedReads)
-
-  if (!is.null(saveAs)){
-    dev.off()
+  if(is.list(SortedReads)){
+    message("Producing state quantification plots")
+    StateQuantificationPlot(SortedReads = SortedReads) -> StateQuant_pl
+  } else {
+    StateQuant_pl = NULL
   }
+  
+  message("Combining plots")
+  layout <- "
+  #A
+  CB
+  "
+  Avg_pl + SM_pl + StateQuant_pl +
+    patchwork::plot_layout(ncol = 2, design = layout, widths = c(0.25, 1), heights = c(1, 0.8), guides = "collect") -> FinalPlot
+  
+  return(FinalPlot)
 
 }
 

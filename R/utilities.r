@@ -22,8 +22,8 @@ OneTFstates = function(){
   states=list(
     bound=patternStrings[6],
     accessible=patternStrings[8],
-    closed=patternStrings[1],
-    unassigned=patternStrings[!seq_along(patternStrings)%in%c(1,6,8)]
+    closed=patternStrings[c(1,2,5)],
+    unassigned=patternStrings[!seq_along(patternStrings)%in%c(1,2,5,6,8)]
   )
 
   return(states)
@@ -61,6 +61,7 @@ TFpairStates = function(){
     combined_states[!stateM[,1]=='bound'& !stateM[,1]=='nucleosome' &stateM[,2]=='bound'],
     combined_states[(!stateM[,1]=='bound'& !stateM[,2]=='bound')|(stateM[,1]=='bound'& stateM[,2]=='nucleosome')|(stateM[,2]=='bound'& stateM[,1]=='nucleosome')])
   grouped_states = rev(grouped_states)
+  names(grouped_states) = c("misc", "misc_bound", "bound_misc", "bound_bound")
 
   return(grouped_states)
 }

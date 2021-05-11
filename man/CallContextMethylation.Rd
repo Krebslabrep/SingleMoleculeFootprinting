@@ -11,7 +11,8 @@ CallContextMethylation(
   RegionOfInterest,
   coverage = 20,
   ConvRate.thr = 0.8,
-  returnSM = TRUE
+  returnSM = TRUE,
+  clObj = NULL
 )
 }
 \arguments{
@@ -25,15 +26,20 @@ CallContextMethylation(
 
 \item{coverage}{coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.}
 
-\item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.8}
+\item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.8. For more information, check out the details section}
 
 \item{returnSM}{whether to return the single molecule matrix, defaults to TRUE}
+
+\item{clObj}{cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call}
 }
 \value{
 List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
 }
 \description{
 Can deal with multiple samples
+}
+\details{
+The ConvRate.thr argument should be used with care as it could create biases (e.g. when only one C out of context is present) while generally only marginally cleaning up the data
 }
 \examples{
 

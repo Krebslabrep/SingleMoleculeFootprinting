@@ -11,7 +11,7 @@ SortReadsByTFCluster(
 )
 }
 \arguments{
-\item{MethSM}{Single molecule matrix}
+\item{MethSM}{Single molecule matrix list as returned by CallContextMethylation}
 
 \item{TFBS_cluster}{Transcription factor binding sites to use for sorting, passed as a GRanges object of length > 1}
 

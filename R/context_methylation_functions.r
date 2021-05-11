@@ -106,6 +106,9 @@ FilterByConversionRate = function(MethSM, chr, genome, thr){
 
   # filter based on conversion
   ConvRate=rowMeans(MethSM[,!IsInContext, drop=FALSE],na.rm=TRUE)
+  if (nrow(MethSM) != length(ConvRate)){
+    stop("Discrepancy during FilterByConversionRate execution")
+  }
   message(paste0(100 - round((sum(ConvRate<thr)/length(ConvRate))*100, digits = 2), "% of reads found with conversion rate below ", thr))
   FilteredSM = MethSM[ConvRate<thr,, drop=FALSE]
 
@@ -171,7 +174,7 @@ FilterContextCytosines = function(MethGR, genome, context){
   seqinfo(CytosineRanges) = seqinfo(MethGR)
 
   NewWidth = ifelse(nchar(context) %% 2 == 1, nchar(context), nchar(context) + 1) # Make context nchar() odd so we can fix to 'center'
-  GenomicContext = Biostrings::getSeq(genome, suppressWarnings(trim(IRanges::resize(CytosineRanges, width = NewWidth, fix = "center"))), as.character = FALSE)# I checked: it is strand-aware
+  GenomicContext = Biostrings::getSeq(genome, suppressWarnings(trim(IRanges::resize(CytosineRanges, width = NewWidth, fix = "center"))))# I checked: it is strand-aware | , as.character = FALSE I don't know what was this here for
 
   # Fix the truncated sites
   trimmed <- which(!width(GenomicContext) == NewWidth)
@@ -353,14 +356,17 @@ MergeMatrixes = function(matrixes){
 #' @param genome BSgenome
 #' @param RegionOfInterest GenimocRange representing the genomic region of interest
 #' @param coverage coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.
-#' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8
+#' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8. For more information, check out the details section
 #' @param returnSM whether to return the single molecule matrix, defaults to TRUE
+#' @param clObj cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
 #'
 #' @import QuasR
 #' @import GenomicRanges
 #' @import BiocGenerics
 #'
 #' @return List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)
+#' 
+#' @details The ConvRate.thr argument should be used with care as it could create biases (e.g. when only one C out of context is present) while generally only marginally cleaning up the data
 #'
 #' @examples
 #'
@@ -375,15 +381,17 @@ MergeMatrixes = function(matrixes){
 #'                                      coverage = 20,
 #'                                      ConvRate.thr = 0.2)
 #'
-# sampleSheet = "/g/krebs/barzaghi/HTS/SMF/MM/2021-03-09-HKNVCBBXY/aln_mrg_ddup/QuasR_input_aln_dedup_DE_.txt"
-# sample = suppressMessages(readr::read_delim(sampleSheet, delim = "\t"))$SampleName
-# Tiles = tileGenome(seqlengths(BSgenome.Mmusculus.UCSC.mm10)[19], ntile = 1)
-# RegionOfInterest = Tiles[[ceiling(length(Tiles)/2)]]
+# sampleSheet = "/g/krebs/barzaghi/HTS/SMF/MM/QuasR_input_files/QuasR_input_AllCanWGpooled_dprm.txt"
+# sample = "SMF_MM_TKO_DE_R_NextSeq"
+# # Tiles = tileGenome(seqlengths(BSgenome.Mmusculus.UCSC.mm10)[19], ntile = 1)
+# # RegionOfInterest = GRanges("chr19", IRanges(61420566, 61433566))
+# BaitRegions = readRDS("/g/krebs/barzaghi/Rscripts/R_package/AWS_data_upload/EnrichmentRegions_mm10.rds")
+# RegionOfInterest = resize(BaitRegions[seqnames(BaitRegions) == "chr19"][1000], width = 2000, fix = 'center')
 # genome = BSgenome.Mmusculus.UCSC.mm10
 # coverage = 20
 # ConvRate.thr = 0.8
 # returnSM = TRUE
-CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest, coverage = 20, ConvRate.thr = 0.8, returnSM = TRUE){
+CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest, coverage = 20, ConvRate.thr = 0.8, returnSM = TRUE, clObj=NULL){
 
   message("Setting QuasR project")
   QuasRprj = GetQuasRprj(sampleSheet, genome)
@@ -468,12 +476,14 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   if (ExpType == "DE"){
     message("Merging matrixes")
     MergedGR = sort(append(ContextFilteredMethGR_strict[[1]], ContextFilteredMethGR_strict[[2]]))
+    NAMES = unique(gsub("_Coverage$", "", grep("_Coverage$", colnames(elementMetadata(MergedGR)), value=TRUE)))
     if (returnSM){
       MergedSM = lapply(seq_along(ContextFilteredMethSM_strict), function(n){MergeMatrixes(ContextFilteredMethSM_strict[[n]])})
       }
   } else {
     message("Returning non merged matrixes")
     MergedGR = ContextFilteredMethGR_strict
+    NAMES = unique(gsub("_Coverage$", "", grep("_Coverage$", colnames(elementMetadata(MergedGR$DGCHN)), value=TRUE)))
     if (returnSM){
       MergedSM = ContextFilteredMethSM_strict
       for (i in seq_along(MergedSM)){
@@ -483,7 +493,7 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   }
 
   if (returnSM){
-    names(MergedSM) = unique(QuasRprj_sample@alignments$SampleName)
+    names(MergedSM) = NAMES
     return(list(MergedGR, MergedSM))
   } else {
     return(MergedGR)

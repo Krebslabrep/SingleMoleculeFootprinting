@@ -4,12 +4,12 @@
 \alias{PlotSingleMoleculeStack}
 \title{Plot single molecule stack}
 \usage{
-PlotSingleMoleculeStack(MethSM, range)
+PlotSingleMoleculeStack(MethSM, RegionOfInterest)
 }
 \arguments{
 \item{MethSM}{Single molecule methylation matrix}
 
-\item{range}{GRanges interval to plot}
+\item{RegionOfInterest}{GRanges interval to plot}
 }
 \description{
 Plot single molecule stack
@@ -26,6 +26,6 @@ Methylation = CallContextMethylation(sampleSheet = Qinput,
                                      coverage = 20,
                                      ConvRate.thr = 0.2)
 
-PlotSingleMoleculeStack(MethSM = Methylation[[2]], range = Region_of_interest)
+PlotSingleMoleculeStack(MethSM = Methylation[[2]], RegionOfInterest = Region_of_interest)
 
 }
