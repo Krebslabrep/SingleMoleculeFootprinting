@@ -59,34 +59,38 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #' check bait capture efficiency. Expected to be ~70% for mouse genome
 #' @param sampleSheet QuasR sample sheet
 #' @param genome BS genome
-#' @param baits Full path to bed file containing bait coordinates. If chromosome names are in e.g. "1" format, they'll be temporarily converted to "chr1"
-#' @param cores number of cores for parallel processing. Defaults to 1
+#' @param baits GRanges obj of bait coordinates. We provide and example through SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
+#' @param clObj cluster object to emply for parallel processing created using the parallel::makeCluster function. Defaults to NULL
 #'
 #' @import BiocGenerics
 #' @importFrom QuasR qCount
 #' @importFrom GenomeInfoDb seqlengths
-#' @importFrom parallel makeCluster
+#'
+#' @return bait capture efficiency
 #'
 #' @export
 #'
 #' @examples
+#' Qinput = paste0(tempdir(), "/NRF1Pair_Qinput.txt")
+#' library(BSgenome.Mmusculus.UCSC.mm10)
 #'
-#' Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
+#' if(file.exists(Qinput)){
+#'     # DO NOT RUN
+#'     # clObj = parallel::makeCluster(5)
+#'     # BaitRegions = SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
+#'     # BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions, clObj=clObj)
+#'     # parallel::stopCluster(clObj)
+#' }
 #'
-#' BaitCaptureEfficiency = BaitCapture(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, baits = BaitRegions)
-#'
-BaitCapture = function(sampleSheet, genome, baits, cores=1){
+BaitCapture = function(sampleSheet, genome, baits, clObj=NULL){
 
   QuasRprj = GetQuasRprj(sampleSheet, genome)
 
-  cl = makeCluster(cores)
-  InBaits=QuasR::qCount(QuasRprj, BaitRegions, clObj = cl)
+  InBaits=QuasR::qCount(QuasRprj, baits, clObj = clObj)
 
   seq_length = seqlengths(genome)
   tiles = tileGenome(seq_length, tilewidth = max(seq_length), cut.last.tile.in.chrom=TRUE)
-  cl = makeCluster(cores)
-  GW = QuasR::qCount(QuasRprj, tiles, clObj=cl)
-  stopCluster(cl)
+  GW = QuasR::qCount(QuasRprj, tiles, clObj=clObj)
 
   capture_efficiency = c()
   for(n in seq_along(unique(QuasRprj@alignments$SampleName))){
@@ -170,50 +174,50 @@ Plot_LowCoverageMethRate = function(Plotting_DF){
 }
 
 #' Low Coverage Methylation Rate MSE
-#' 
+#'
 #' Calculate Mean squared error (MSE) of methylation rate distribution estimates for low coverage samples
-#' 
+#'
 #' @param BinnedMethRate data.frame as returned by GRanges_to_DF function.
 #'
 #' @importFrom dplyr filter
-#' 
+#'
 LowCoverageMethRate_MSE = function(BinnedMethRate){
-  
+
   AllSamples = unique(BinnedMethRate$Sample)
   MSE_DF = data.frame(Sample = c(), MSE = c())
   for (sample in seq_along(AllSamples)){
-    
+
     x = filter(BinnedMethRate, Sample == AllSamples[sample])$ExpectedMeth
     y = filter(BinnedMethRate, Sample == AllSamples[sample])$ObservedMeth
-    
+
     MSE_DF = rbind(MSE_DF, data.frame(Sample = AllSamples[sample], MSE = (mean((y - x) ** 2))))
-    
+
   }
-  
+
   return(MSE_DF)
-  
+
 }
 
 #' Plot Low Coverage Methylation Rate MSE
-#' 
+#'
 #' Produce barplot of MSE values calculated for methylation rate distribution estimates of low coverage samples
-#' 
+#'
 #' @param MSE_DF data.frame as returned by the LowCoverageMethRate_MSE function
-#' 
+#'
 #' @import ggplot2
-#' 
+#'
 Plot_LowCoverageMethRate_MSE = function(MSE_DF){
-  
-  RMSE_DF %>%
+
+  MSE_DF %>%
     ggplot(aes(Sample, MSE)) +
     geom_bar(stat = 'identity') +
     ylab("Mean squared error\n(MSE)") +
     xlab("") +
     theme_classic() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) -> pl
-  
+
   return(pl)
-  
+
 }
 
 #' Low Coverage Methylation Rate
@@ -245,13 +249,13 @@ Plot_LowCoverageMethRate_MSE = function(MSE_DF){
 #' #                                 HighCoverage = HighCoverage$DGCHN,
 #' #                                 HighCoverage_samples = HighCoverage_samples[1],
 #' #                                 returnDF = FALSE,
-#' #                                 returnPlot = TRUE, 
-#' #                                 MSE = TRUE, 
-#' #                                 return_MSE_DF = FALSE, 
+#' #                                 returnPlot = TRUE,
+#' #                                 MSE = TRUE,
+#' #                                 return_MSE_DF = FALSE,
 #' #                                 return_MSE_plot = TRUE)
 #'
 LowCoverageMethRateDistribution = function(LowCoverage, LowCoverage_samples, HighCoverage, HighCoverage_samples,
-                                           bins = 50, returnDF = FALSE, returnPlot = TRUE, 
+                                           bins = 50, returnDF = FALSE, returnPlot = TRUE,
                                            MSE = TRUE, return_MSE_DF = FALSE, return_MSE_plot = TRUE){
 
   message("Subsetting GRanges for given samples")
@@ -275,31 +279,31 @@ LowCoverageMethRateDistribution = function(LowCoverage, LowCoverage_samples, Hig
   }))
 
   ReturnList = list()
-  
+
   if (returnDF){
     ReturnList$MethylationDistribution_DF = BinnedMethRate
   }
-  
+
   if (returnPlot) {
     Plot = Plot_LowCoverageMethRate(BinnedMethRate)
     ReturnList$MethylationDistribution_plot = Plot
   }
-  
+
   if (MSE){
-    
+
     MSE_DF = LowCoverageMethRate_MSE(BinnedMethRate)
-    
+
     if (return_MSE_DF){
       ReturnList$MSE_DF = MSE_DF
     }
-    
+
     if (return_MSE_plot){
       MSE_plot = Plot_LowCoverageMethRate_MSE(MSE_DF)
       ReturnList$MSE_plot = MSE_plot
     }
-    
+
   }
-  
+
   return(ReturnList)
 
 }
