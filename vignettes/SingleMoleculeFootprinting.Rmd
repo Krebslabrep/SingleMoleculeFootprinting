@@ -63,6 +63,7 @@ prj <- QuasR::qAlign(sampleFile = Qinput,
 ```{r setup, message=FALSE, eval=TRUE}
 library(BSgenome.Mmusculus.UCSC.mm10)
 library(SingleMoleculeFootprinting)
+library(SingleMoleculeFootprintingData)
 library(parallel)
 ```
 
