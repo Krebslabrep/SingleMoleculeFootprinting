@@ -124,6 +124,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
 #'
 #' @import GenomicRanges
 #' @import tidyverse
+#' @importFrom tibble rownames_to_column
 #'
 #' @export
 #'
@@ -154,7 +155,7 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
     mutate(Methylation = as.factor(Methylation), Coordinate = as.numeric(Coordinate)) -> PlottingDF
   PlottingDF$ReadID = factor(PlottingDF$ReadID, levels = Reduce(c, lapply(MethSM, rownames)))
   OurFavouriteColors = c("Black", "Red", "Blue", "Green")
-  ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$Sample))]
+  # ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$Sample))] <------ WHAT DO I DO WITH YOU
   
   PlottingDF %>%
     group_by(Sample) %>%

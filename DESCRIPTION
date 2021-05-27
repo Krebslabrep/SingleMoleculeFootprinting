@@ -34,7 +34,8 @@ Imports:
     IRanges,
     RColorBrewer,
     QuasR,
-    stats
+    stats,
+    tibble
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
