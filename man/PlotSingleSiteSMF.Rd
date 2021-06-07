@@ -10,8 +10,7 @@ PlotSingleSiteSMF(
   TFBSs = NULL,
   SNPs = NULL,
   SortingBins = NULL,
-  SortedReads = NULL,
-  saveAs = NULL
+  SortedReads = NULL
 )
 }
 \arguments{
@@ -26,8 +25,6 @@ PlotSingleSiteSMF(
 \item{SortingBins}{GRanges object of sorting bins (absolute) coordinate to visualize}
 
 \item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
-
-\item{saveAs}{Full path to pdf file to save plot to. Defaults to NULL, in which case will only display}
 }
 \description{
 Plot SMF data at single site

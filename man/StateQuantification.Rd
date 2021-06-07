@@ -9,7 +9,7 @@ StateQuantification(SortedReads, states)
 \arguments{
 \item{SortedReads}{List of sorted reads (can be multiple samples) as returned by either read sorting function (SortReads, SortReadsBySingleTF, SortReadsByTFCluster)}
 
-\item{states}{states reporting the biological interpretation of patterns as return by either OneTFstates or TFpairStates functions.}
+\item{states}{states reporting the biological interpretation of patterns as return by either OneTFstates or TFpairStates functions. If NULL (default) will return frequencies without biological interpretation.}
 }
 \value{
 tibble with state frequency information

@@ -8,7 +8,7 @@
 #'
 #' @importFrom QuasR qMeth
 #' @importFrom GenomeInfoDb seqlengths
-#' @importFrom parallel makeCluster
+#' @importFrom parallel makeCluster stopCluster
 #' @importFrom BSgenome getSeq
 #' @importFrom IRanges resize
 #' @importFrom Biostrings vcountPattern
@@ -130,6 +130,7 @@ SubsetGRangesForSamples = function(GRanges_obj, Samples){
 #'
 #' @import dplyr
 #' @importFrom tidyr spread gather extract
+#' @importFrom stats na.omit
 #'
 GRanges_to_DF = function(GRanges_obj){
 

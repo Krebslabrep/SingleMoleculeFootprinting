@@ -2,7 +2,7 @@
 % Please edit documentation in R/context_methylation_functions.r
 \name{MergeMatrixes}
 \alias{MergeMatrixes}
-\title{Merged GC and CG matrix}
+\title{Merged GC and CG matrix (Obsolete since implementation of sparse SM)}
 \usage{
 MergeMatrixes(matrixes)
 }
@@ -13,7 +13,7 @@ MergeMatrixes(matrixes)
 merged matrix
 }
 \description{
-Merged GC and CG matrix
+Merged GC and CG matrix (Obsolete since implementation of sparse SM)
 }
 \examples{
 

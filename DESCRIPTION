@@ -24,18 +24,23 @@ Imports:
     BiocGenerics,
     Biostrings,
     BSgenome,
+    dplyr,
     GenomeInfoDb,
     GenomicRanges,
-    data.table,
-    dplyr,
+    ggplot2,
     grDevices,
-    parallel,
-    plyr,
     IRanges,
-    RColorBrewer,
+    Matrix,
+    parallel,
+    patchwork,
+    plyr,
     QuasR,
+    RColorBrewer,
+    S4Vectors,
     stats,
-    tibble
+    tibble,
+    tidyr,
+    tidyverse
 Description: This package provides convenience functions tailored 
     for SMF data. At present, we provide functions to call methylation 
     values for the relevant contexts and to sort single molecules    
