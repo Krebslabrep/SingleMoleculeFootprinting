@@ -19,24 +19,23 @@
 #' BinsCoordinates = IRanges(start = c(TFBS_center+bins[[1]][1], TFBS_center+bins[[2]][1], TFBS_center+bins[[3]][1]),
 #'                           end = c(TFBS_center+bins[[1]][2], TFBS_center+bins[[2]][2], TFBS_center+bins[[3]][2]))
 #'
-#' binMethylationValues = BinMethylation(MethSM = MethSM, Bin = BinsCoordinates[1]))
+#' binMethylationValues = BinMethylation(MethSM = MethSM, Bin = BinsCoordinates[1])
 #'
 BinMethylation = function(MethSM, Bin){
 
   binCytosines = colnames(MethSM)[as.numeric(colnames(MethSM)) >= start(Bin) & as.numeric(colnames(MethSM)) <= end(Bin)]
 
   # Summarise methylation status of each read
-  if (length(binCytosines) > 1){
-    binSummarisedMeth = round(rowMeans(MethSM[,binCytosines], na.rm = TRUE))
-  } else if (length(binCytosines) == 1){
-    binSummarisedMeth = MethSM[,binCytosines[1]]
+  if (length(binCytosines) >= 1){
+    binSummarisedMeth = round(rowMeans_drop0(MethSM[,binCytosines,drop=FALSE]) - 1)
+    binSummarisedMeth = binSummarisedMeth[!(is.na(binSummarisedMeth))]
+    return(binSummarisedMeth)
   } else if (length(binCytosines) == 0){
-    stop(paste0("[", start(Bin), ";", end(Bin), "]", " bin overlaps with no covered Cytosines"))
+    message(paste0("!!!     [", start(Bin), ";", end(Bin), "]", " bin overlaps with no covered Cytosines   !!!"))
+    return(NA)
   }
 
-  binSummarisedMeth = binSummarisedMeth[!(is.na(binSummarisedMeth))]
 
-  return(binSummarisedMeth)
 
 }
 
@@ -162,13 +161,28 @@ SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(
 #' Convenience for calculating state frequencies
 #' 
 #' @param SortedReads List of sorted reads (can be multiple samples) as returned by either read sorting function (SortReads, SortReadsBySingleTF, SortReadsByTFCluster)
-#' @param states states reporting the biological interpretation of patterns as return by either OneTFstates or TFpairStates functions.
+#' @param states states reporting the biological interpretation of patterns as return by either OneTFstates or TFpairStates functions. If NULL (default) will return frequencies without biological interpretation.
+#' 
+#' @importFrom tibble tibble
 #' 
 #' @return tibble with state frequency information
 #' 
 #' @export
 #' 
 StateQuantification = function(SortedReads, states){
+  
+  if(all(isEmpty(SortedReads))){
+    
+    return(tibble(Sample = NA, State = NA, Counts = NA, Freqs = NA))
+    
+  }
+  
+  if (is.null(states)){
+    
+    Patterns = unique(unlist(lapply(SortedReads, names)))
+    states = split(Patterns, Patterns)
+    
+  }
   
   OrderedReads = lapply(SortedReads, function(sR){sR[as.character(unlist(states))]})
   

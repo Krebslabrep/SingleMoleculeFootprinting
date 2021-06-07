@@ -42,6 +42,8 @@ HierarchicalClustering = function(MethSM){
 #'
 #' @import GenomicRanges
 #' @import tidyverse
+#' @importFrom plyr .
+#' @importFrom stats na.omit
 #'
 #' @export
 #'
@@ -125,6 +127,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
 #' @import GenomicRanges
 #' @import tidyverse
 #' @importFrom tibble rownames_to_column
+#' @importFrom stats na.omit
 #'
 #' @export
 #'
@@ -249,6 +252,8 @@ PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL){
 #'
 #' @importFrom RColorBrewer brewer.pal
 #' @import dplyr
+#' @importFrom grDevices colorRampPalette
+#' @importFrom stats na.omit
 #'
 SingleTFStateQuantificationPlot = function(SortedReads, states){
  
@@ -294,6 +299,7 @@ SingleTFStateQuantificationPlot = function(SortedReads, states){
 #'
 #' @importFrom RColorBrewer brewer.pal
 #' @import dplyr
+#' @importFrom stats na.omit
 #'
 TFPairStateQuantificationPlot = function(SortedReads, states){
 

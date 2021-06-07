@@ -27,6 +27,6 @@ TFBS_center = start(TFBS) + (end(TFBS)-start(TFBS))/2
 BinsCoordinates = IRanges(start = c(TFBS_center+bins[[1]][1], TFBS_center+bins[[2]][1], TFBS_center+bins[[3]][1]),
                           end = c(TFBS_center+bins[[1]][2], TFBS_center+bins[[2]][2], TFBS_center+bins[[3]][2]))
 
-binMethylationValues = BinMethylation(MethSM = MethSM, Bin = BinsCoordinates[1]))
+binMethylationValues = BinMethylation(MethSM = MethSM, Bin = BinsCoordinates[1])
 
 }
