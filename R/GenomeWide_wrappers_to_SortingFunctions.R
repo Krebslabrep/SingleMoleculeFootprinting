@@ -1,9 +1,15 @@
 #' Convenience function to arrange a list of given TFBSs into clusters
 #' 
+#' For each TFBS, the genomic neighborhood defined by max_cluster_width will be scanned for adjacent TFBSs. 
+#' The hits will be filtered for min_intersite_distance where, in case of overlapping TFBSs, the second TFBS will be arbitrarily dropped.
+#' These TFBSs plus the central "anchoring" one will define a TFBS cluster. 
+#' This approach implies that the same TFBS can be employed to design multiple clusters in a sliding-window fashion.
+#' 
 #' @param TFBSs GRanges object of TFBSs
 #' @param max_intersite_distance maximum allowed distance in base pairs between two TFBS centers for them to be considered part of the same cluster. Defaults to 75.
-#' @param min_intersite_distance minimum allowed distance in base pairs between two TFBS centers for them not to be discarded as overlapping. Defaults to 25.
-#' @param max_cluster_size maximum number of TFBSs to be contained in any given cluster. Defaults to 10
+#' @param min_intersite_distance minimum allowed distance in base pairs between two TFBS centers for them not to be discarded as overlapping. 
+#'                               This parameter should be set according to the width of the bins used for later sorting. Defaults to 15.
+#' @param max_cluster_size maximum number of TFBSs to be contained in any given cluster. Defaults to 6
 #' 
 #' @import GenomicRanges
 #' @importFrom S4Vectors queryHits subjectHits
@@ -11,13 +17,13 @@
 #' 
 #' @return list with two elements: ClusterCoordinates (GRanges object of clusters coordinates) and ClusterComposition (GRangesList of sites for each cluster)
 #'
-Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_intersite_distance = 25, max_cluster_size = 10){
+Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_intersite_distance = 15, max_cluster_size = 6){
   
   collection_window_width = max_intersite_distance*2
   TFBSs_resized_1 = resize(TFBSs,1,fix='center')
   TFBSs_resized_window = resize(TFBSs,collection_window_width,fix='center')
   
-  Overlaps = findOverlaps(TFBSs_resized_1, TFBSs_resized_window, ignore.strand=TRUE)
+  Overlaps = findOverlaps(TFBSs_resized_window, TFBSs_resized_1, ignore.strand=TRUE)
   pair_dist = start(TFBSs_resized_1[subjectHits(Overlaps)]) - start(TFBSs_resized_1[queryHits(Overlaps)])
   
   message("Removing self-overlaps and redundant pairs")
@@ -27,9 +33,9 @@ Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_inters
   message("Constructing GRanges object of clusters coordinates")
   TF_cluster = reduce(GRanges(
     seqnames(TFBSs[queryHits(Overlaps_filtered)]),
-    IRanges(start(TFBSs_resized_1[queryHits(Overlaps_filtered)]), 
-            start(TFBSs_resized_1[subjectHits(Overlaps_filtered)]))
-  ))
+    IRanges(start(TFBSs[queryHits(Overlaps_filtered)]), 
+            end(TFBSs[subjectHits(Overlaps_filtered)]))
+  )) # very rarely these exceed width of 300bp
   TF_cluster = sort(TF_cluster)
   
   message("Computing number of sites per cluster")
@@ -104,9 +110,11 @@ Create_MethylationCallingWindows = function(TFBS_cluster_coordinates,
 #' @param coverage coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.
 #' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.
 # #' @param clObj cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
+#' @param CytosinesToMask THIS IS DUCK-TAPE
 #' @param TFBSs GRanges object of transcription factor binding sites coordinates
 #' @param max_intersite_distance maximum allowed distance in base pairs between two TFBS centers for them to be considered part of the same cluster. Defaults to 75.
-#' @param min_intersite_distance minimum allowed distance in base pairs between two TFBS centers for them not to be discarded as overlapping. Defaults to 25.
+#' @param min_intersite_distance minimum allowed distance in base pairs between two TFBS centers for them not to be discarded as overlapping. 
+#'                               This parameter should be set according to the width of the bins used for later sorting. Defaults to 15.
 #' @param max_cluster_size maximum number of TFBSs to be contained in any given cluster. Defaults to 10
 #' @param max_intercluster_distance maximum distance between two consecutive TFBS clusters for them to be grouped in the same window
 #' @param max_window_width upper limit to window width. This value should be adjusted according to the user's system as it determines the amount of memory used in the later context methylation call
@@ -115,6 +123,7 @@ Create_MethylationCallingWindows = function(TFBS_cluster_coordinates,
 #'             bins[[1]] represents the upstream bin, with coordinates relative to the start of the most upstream TFBS.
 #'             bins[[2]] represents all the TFBS bins, with coordinates relative to the center of each TFBS.
 #'             bins[[3]] represents the downstream bin, with coordinates relative to the end of the most downstream TFBS.
+#' @param sorting_coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30.
 #' @param cores number of cores to use for parallel processing of multiple Methylation Calling Windows (i.e. groupings of adjecent TFBS clusters)
 #' 
 #' @importFrom parallel mclapply
@@ -128,9 +137,10 @@ Create_MethylationCallingWindows = function(TFBS_cluster_coordinates,
 #' @export
 #' 
 SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, coverage = 20, ConvRate.thr = 0.8, # clObj=NULL, ---> parameters passed to CallContextMethylation
-                                                 TFBSs, max_intersite_distance = 75, min_intersite_distance = 25, max_cluster_size = 10,  # ---> parameters passed to Arrange_TFBSs_clusters
+                                                 CytosinesToMask = NULL,
+                                                 TFBSs, max_intersite_distance = 75, min_intersite_distance = 15, max_cluster_size = 10,  # ---> parameters passed to Arrange_TFBSs_clusters
                                                  max_intercluster_distance = 100000, max_window_width = 5000000, min_cluster_width = 600, # ---> parameters passed to Create_MethylationCallingWindows
-                                                 bins = list(c(-35,-25), c(-7,7), c(25,35)), # ---> parameters passed to SortReadsByTFCluster
+                                                 sorting_coverage = 30, bins = list(c(-35,-25), c(-7,7), c(25,35)), # ---> parameters passed to SortReadsByTFCluster
                                                  cores = 1
                                                  ){
   
@@ -161,15 +171,28 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
                            RegionOfInterest = CurrentWindow,
                            coverage = coverage,
                            ConvRate.thr = ConvRate.thr,
-                           returnSM = TRUE) -> Methyation
+                           returnSM = TRUE) -> Methylation
+    
+    if (!is.null(CytosinesToMask)){
+      
+      message("Masking Cytosines")
+      source("/g/krebs/barzaghi/Rscripts/CrappyUtils.R")
+      ExperimentType = suppressMessages(SingleMoleculeFootprinting::DetectExperimentType(Samples = sample))
+      MaskSNPs(Methylation = Methylation, 
+               CytosinesToMaks = CytosinesToMask, 
+               MaskSMmat = TRUE, 
+               Experiment = ExperimentType) -> Methylation
+      
+    }
     
     Overlaps = findOverlaps(TFBS_Clusters$ClusterCoordinates, CurrentWindow)
     Clusters_to_sort = TFBS_Clusters$ClusterComposition[queryHits(Overlaps)]
     
     lapply(seq_along(Clusters_to_sort), function(j){
-      SortReadsByTFCluster(MethSM = Methyation[[2]],
+      SortReadsByTFCluster(MethSM = Methylation[[2]],
                            TFBS_cluster = Clusters_to_sort[[j]],
-                           bins = bins)
+                           bins = bins, 
+                           coverage = sorting_coverage)
     }) -> SortedReads_window
     names(SortedReads_window) = names(Clusters_to_sort)
     SortedReads_window
@@ -181,7 +204,6 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
   Reduce(rbind,
          parallel::mclapply(seq_along(SortedReads), function(i){
            
-           # SortedReads = SortedReads[i]
            StateQuantification_tbl = StateQuantification(SortedReads = SortedReads[[i]], states = NULL)
            StateQuantification_tbl$TFBS_cluster = names(SortedReads[i])
            StateQuantification_tbl

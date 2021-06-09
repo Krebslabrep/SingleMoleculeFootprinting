@@ -149,10 +149,12 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
   
   Reduce(rbind, lapply(seq_along(MethSM), function(i){
     MethSM[[i]] %>%
+      as.matrix() %>%
       as.data.frame() %>%
       rownames_to_column(var = "ReadID") %>%
       mutate(Sample = names(MethSM)[i]) %>%
-      gather(Coordinate, Methylation, -ReadID, -Sample)
+      gather(Coordinate, Methylation, -ReadID, -Sample) %>%
+      mutate(Methylation = ifelse(Methylation == 0, NA, Methylation-1))
   })) %>%
     na.omit() %>%
     mutate(Methylation = as.factor(Methylation), Coordinate = as.numeric(Coordinate)) -> PlottingDF
@@ -231,7 +233,12 @@ PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL){
       })
       names(MethSM) = NAMES
     } else {
-      stop("Unrecognized sorting strategy")
+      message("Unrecognized sorting strategy ... plotting states in the order they appear")
+      NAMES = names(MethSM)
+      MethSM = lapply(seq_along(MethSM), function(i){
+        MethSM[[i]][unlist(SortedReads[[i]]),]
+      })
+      names(MethSM) = NAMES
     }
     
   } else if (SortedReads == "HC"){
@@ -379,7 +386,7 @@ StateQuantificationPlot = function(SortedReads){
 
   } else {
     
-    stop("Unrecognized sorting strategy")
+    message("Unrecognized sorting strategy ... skipping")
     
   }
 

@@ -43,6 +43,7 @@ BinMethylation = function(MethSM, Bin){
 #'
 #' @param MethSM Single molecule matrix
 #' @param BinsCoordinates IRanges object of absolute coordinates for sorting bins
+#' @param coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed
 #'
 #' @import BiocGenerics
 #'
@@ -63,7 +64,7 @@ BinMethylation = function(MethSM, Bin){
 #'
 #' SortedReads = SortReads(MethSM, BinsCoordinates)
 #'
-SortReads = function(MethSM, BinsCoordinates){
+SortReads = function(MethSM, BinsCoordinates, coverage=NULL){
 
   message("Collecting summarized methylation for bins")
   binMethylationList = lapply(seq_along(BinsCoordinates), function(i){
@@ -72,6 +73,10 @@ SortReads = function(MethSM, BinsCoordinates){
 
 	message("Subsetting those reads that cover all bins")
 	ReadsSubset = Reduce(intersect, lapply(binMethylationList, function(x){names(x)}))
+	if (length(ReadsSubset) < coverage){
+	  message(paste0("Less than ", coverage, " reads found to cover all sorting bins...skipping"))
+	  return(list())
+	}
 
 	message("Summarizing reads into patterns")
 	binMethylationList_subset = lapply(binMethylationList, function(x){as.character(x[ReadsSubset])})
@@ -96,6 +101,7 @@ SortReads = function(MethSM, BinsCoordinates){
 #'             bins[[1]] represents the upstream bin, with coordinates relative to the start of the TFBS.
 #'             bins[[2]] represents the TFBS bin, with coordinates relative to the center of the TFBS.
 #'             bins[[3]] represents the downstream bin, with coordinates relative to the end of the TFBS.
+#' @param coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 20
 #'
 #' @return List of reads sorted by single TF
 #'
@@ -109,14 +115,14 @@ SortReads = function(MethSM, BinsCoordinates){
 #'
 #' SortedReads = SortReadsBySingleTF(MethSM = MethSM, TFBS = TFBSs)
 #'
-SortReadsBySingleTF = function(MethSM, TFBS, bins = list(c(-35,-25), c(-15,15), c(25,35))){
+SortReadsBySingleTF = function(MethSM, TFBS, bins = list(c(-35,-25), c(-15,15), c(25,35)), coverage = 20){
 
   message("Designing sorting bins")
   TFBS_center = start(TFBS) + (end(TFBS)-start(TFBS))/2
   BinsCoordinates = IRanges(start = c(TFBS_center+bins[[1]][1], TFBS_center+bins[[2]][1], TFBS_center+bins[[3]][1]),
                             end = c(TFBS_center+bins[[1]][2], TFBS_center+bins[[2]][2], TFBS_center+bins[[3]][2]))
 
-  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates)
+  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates, coverage = coverage)
   
   return(SortedReads)
 
@@ -130,6 +136,7 @@ SortReadsBySingleTF = function(MethSM, TFBS, bins = list(c(-35,-25), c(-15,15), 
 #'             bins[[1]] represents the upstream bin, with coordinates relative to the start of the most upstream TFBS.
 #'             bins[[2]] represents all the TFBS bins, with coordinates relative to the center of each TFBS.
 #'             bins[[3]] represents the downstream bin, with coordinates relative to the end of the most downstream TFBS.
+#' @param coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30
 #'
 #' @return List of reads sorted by TF cluster
 #'
@@ -143,7 +150,7 @@ SortReadsBySingleTF = function(MethSM, TFBS, bins = list(c(-35,-25), c(-15,15), 
 #'
 #' SortedReads = SortReadsByTFCluster(MethSM = MethSM, TFBSs = TFBS_cluster)
 #'
-SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(-7,7), c(25,35))){
+SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(-7,7), c(25,35)), coverage = 30){
 
   message("Sorting TFBSs by genomic coordinates")
   TFBS_cluster = sort(TFBS_cluster, by = ~ seqnames + start + end)
@@ -152,7 +159,7 @@ SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(
   BinsCoordinates = IRanges(start = c(min(TFBS_centers)+bins[[1]][1], TFBS_centers+bins[[2]][1], max(TFBS_centers)+bins[[3]][1]),
                       end = c(min(TFBS_centers)+bins[[1]][2], TFBS_centers+bins[[2]][2], max(TFBS_centers)+bins[[3]][2]))
 
-  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates)
+  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates, coverage = coverage)
   
   return(SortedReads)
 
