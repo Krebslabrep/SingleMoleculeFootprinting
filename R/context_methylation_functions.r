@@ -219,20 +219,20 @@ CollapseStrands = function(MethGR, context){
     return(MethGR)
   }
 
-  # find the + stranded cytosines and make them -
-  MethGR_plus = MethGR[strand(MethGR) == "+"]
-  start(MethGR_plus) = start(MethGR_plus) + ifelse(grepl("CG", context), +1, -1)
-  end(MethGR_plus) = start(MethGR_plus)
-  strand(MethGR_plus) = "-"
-
-  # Extract the - Cs
+  # find the - stranded cytosines and make them +
   MethGR_minus = MethGR[strand(MethGR) == "-"]
+  start(MethGR_minus) = start(MethGR_minus) + ifelse(grepl("CG", context), -1, +1)
+  end(MethGR_minus) = start(MethGR_minus)
+  strand(MethGR_minus) = "+"
+
+  # Extract the + Cs
+  MethGR_plus = MethGR[strand(MethGR) == "+"]
 
   # Sum the counts
-  ov = findOverlaps(MethGR_plus, MethGR_minus)
-  values(MethGR_minus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_minus[subjectHits(ov)])[,-length(values(MethGR_minus))]) + as.matrix(values(MethGR_plus[queryHits(ov)])[,-length(values(MethGR_plus))])
+  ov = findOverlaps(MethGR_minus, MethGR_plus)
+  values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR_plus))]) + as.matrix(values(MethGR_minus[queryHits(ov)])[,-length(values(MethGR_minus))])
 
-  return(MethGR_minus)
+  return(MethGR_plus)
 
 }
 
@@ -266,12 +266,12 @@ CollapseStrandsSM = function(MethSM, context, genome, chr){
   MethSM_minus = MethSM[rowSums(MethSM[,IsMinusStrand, drop=FALSE]) > 0, IsMinusStrand, drop=FALSE]
   # MethSM_plus = MethSM[apply(MethSM[,!IsMinusStrand, drop=FALSE], 1, function(i){sum(is.na(i)) != length(i)}) > 0, !IsMinusStrand, drop=FALSE]
   MethSM_plus = MethSM[rowSums(MethSM[,!IsMinusStrand, drop=FALSE]) > 0, !IsMinusStrand, drop=FALSE]
-  NrPlusReads = dim(MethSM_plus)[1]
-  message(paste0(ifelse(is.null(NrPlusReads), 0, NrPlusReads), " reads found mapping to the + strand, collapsing to -"))
+  NrMinReads = dim(MethSM_minus)[1]
+  message(paste0(ifelse(is.null(NrMinReads), 0, NrMinReads), " reads found mapping to the + strand, collapsing to -"))
 
-  # Turn + into -
-  offset = ifelse(grepl("GC", context), -1, +1) # the opposite if I was to turn - into +
-  colnames(MethSM_plus) = as.character(as.numeric(colnames(MethSM_plus)) + offset)
+  # Turn - into +
+  offset = ifelse(grepl("GC", context), +1, -1) # the opposite if I was to turn + into -
+  colnames(MethSM_minus) = as.character(as.numeric(colnames(MethSM_minus)) + offset)
 
   # Merge matrixes
   StrandCollapsedSM = rbind.fill.matrix.sparse(x = MethSM_minus, y = MethSM_plus)
