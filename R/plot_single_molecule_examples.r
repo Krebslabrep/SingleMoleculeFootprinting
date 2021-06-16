@@ -36,6 +36,7 @@ HierarchicalClustering = function(MethSM){
 #'
 #' @param MethGR Average methylation GRanges obj
 #' @param RegionOfInterest GRanges interval to plot
+#' @param ShowContext TRUE or FALSE (default). Causes the genomic context of the plotted cytosines to be displayed as the dot shape
 #' @param TFBSs GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"
 #' @param SNPs GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
@@ -64,7 +65,7 @@ HierarchicalClustering = function(MethSM){
 #'
 #' PlotAvgSMF(MethGR = Methylation[[1]], Region_of_interest = Region_of_interest, TFBSs = TFBSs)
 #'
-PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL){
+PlotAvgSMF = function(MethGR, RegionOfInterest, ShowContext=FALSE, TFBSs=NULL, SNPs=NULL, SortingBins=NULL){
 
   # Prepare SMF data
   MethGR %>%
@@ -103,7 +104,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
   PlottingDF %>%
     ggplot(aes(x=start, y=1-MethRate, color=sample)) +
     geom_line() +
-    geom_point() +
+    {if(ShowContext){geom_point(aes(shape=GenomicContext))}else{geom_point()}} +
     {if(!is.null(TFBSs)){geom_rect(TFBS_PlottingDF, mapping = aes(xmin=start, xmax=end, ymin=-0.15, ymax=-0.1), inherit.aes = FALSE)}} +
     {if(!is.null(TFBSs)){geom_text(TFBS_PlottingDF, mapping = aes(x=start+((end-start)/2), y=-0.08, label=TF), inherit.aes = FALSE)}} +
     {if(!is.null(SNPs)){geom_text(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord, label=Sequence), size=3, inherit.aes = FALSE)}} +
@@ -396,6 +397,7 @@ StateQuantificationPlot = function(SortedReads){
 #'
 #' @param Methylation Context methylation object as returned by CallContextMethylation function
 #' @param RegionOfInterest GRanges interval to plot
+#' @param ShowContext TRUE or FALSE (default). Causes the genomic context of the plotted cytosines to be displayed as the dot shape
 #' @param TFBSs GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"
 #' @param SNPs GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
@@ -429,11 +431,12 @@ StateQuantificationPlot = function(SortedReads){
 #'                   TFBSs = TFBSs,
 #'                   saveAs = NULL)
 #'
-PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL, SortedReads=NULL){
+PlotSingleSiteSMF = function(Methylation, RegionOfInterest, ShowContext=FALSE, TFBSs=NULL, SNPs=NULL, SortingBins=NULL, SortedReads=NULL){
 
   message("Producing average SMF plot")
   PlotAvgSMF(MethGR = Methylation[[1]],
              RegionOfInterest = RegionOfInterest,
+             ShowContext = ShowContext,
              TFBSs = TFBSs,
              SNPs = SNPs,
              SortingBins = SortingBins) -> Avg_pl

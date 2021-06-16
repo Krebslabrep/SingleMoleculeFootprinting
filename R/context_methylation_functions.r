@@ -221,7 +221,7 @@ CollapseStrands = function(MethGR, context){
 
   # find the - stranded cytosines and make them +
   MethGR_minus = MethGR[strand(MethGR) == "-"]
-  start(MethGR_minus) = start(MethGR_minus) + ifelse(grepl("CG", context), -1, +1)
+  start(MethGR_minus) = start(MethGR_minus) + ifelse(grepl("HCG", context), -1, +1)
   end(MethGR_minus) = start(MethGR_minus)
   strand(MethGR_minus) = "+"
 
@@ -231,8 +231,9 @@ CollapseStrands = function(MethGR, context){
   # Sum the counts
   ov = findOverlaps(MethGR_minus, MethGR_plus)
   values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR_plus))]) + as.matrix(values(MethGR_minus[queryHits(ov)])[,-length(values(MethGR_minus))])
+  CollapsedMethGR = sort(c(MethGR_plus, MethGR_minus[-queryHits(ov)]), by = ~ seqnames + start + end)
 
-  return(MethGR_plus)
+  return(CollapsedMethGR)
 
 }
 
