@@ -372,7 +372,7 @@ MergeMatrixes = function(matrixes){
 #' @param coverage coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.
 #' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.
 #' @param returnSM whether to return the single molecule matrix, defaults to TRUE
-#' @param clObj cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
+#' @param clObj cluster object for parallel processing of multiple samples. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
 #'
 #' @import QuasR
 #' @import GenomicRanges
@@ -402,7 +402,7 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
 
   message("Calling methylation at all Cytosines")
   QuasRprj_sample = QuasRprj[unlist(lapply(unique(sample), function(s){grep(s, QuasRprj@alignments$SampleName)}))]
-  MethGR = QuasR::qMeth(QuasRprj_sample, mode="allC", query = RegionOfInterest, collapseBySample = TRUE, keepZero = TRUE)
+  MethGR = QuasR::qMeth(QuasRprj_sample, mode="allC", query = RegionOfInterest, collapseBySample = TRUE, keepZero = TRUE, clObj = clObj)
 
   message("checking if RegionOfInterest contains information at all")
   CoverageCols = grep("_T$", colnames(elementMetadata(MethGR)))
@@ -412,6 +412,8 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   if (all(!unlist(Samples_covered))){
     message("No bulk methylation info found for the given RegionOfInterest for any of the samples")
     MethGR = MethGR[elementMetadata(MethGR)[,1]!=0]
+    colnames(elementMetadata(MethGR)) = gsub("_T$", "_Coverage", colnames(elementMetadata(MethGR)))
+    colnames(elementMetadata(MethGR)) = gsub("_M$", "_MethRate", colnames(elementMetadata(MethGR)))
     if (returnSM){
       MethSM = list(Matrix::rsparsematrix(nrow=0,ncol=0,density = 0))
       return(list(MethGR, MethSM))
