@@ -178,7 +178,7 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
       message("Masking Cytosines")
       source("/g/krebs/barzaghi/Rscripts/CrappyUtils.R")
       ExperimentType = suppressMessages(SingleMoleculeFootprinting::DetectExperimentType(Samples = sample))
-      MaskSNPs(Methylation = Methylation, 
+      MaskSNPs2(Methylation = Methylation, 
                CytosinesToMaks = CytosinesToMask, 
                MaskSMmat = TRUE, 
                Experiment = ExperimentType) -> Methylation

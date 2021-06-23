@@ -35,7 +35,10 @@ HierarchicalClustering = function(MethSM){
 #' Plot average methylation
 #'
 #' @param MethGR Average methylation GRanges obj
+#' @param MethSM Single molecule matrix(es)
 #' @param RegionOfInterest GRanges interval to plot
+#' @param SortedReads List of sorted reads, needs to be passed along with the parameter MethSM. If both are passed, only counts relevant to sorting will be plotted
+#' @param ShowContext TRUE or FALSE (default). Causes the genomic context of the plotted cytosines to be displayed as the dot shape
 #' @param TFBSs GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"
 #' @param SNPs GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
@@ -64,7 +67,7 @@ HierarchicalClustering = function(MethSM){
 #'
 #' PlotAvgSMF(MethGR = Methylation[[1]], Region_of_interest = Region_of_interest, TFBSs = TFBSs)
 #'
-PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL){
+PlotAvgSMF = function(MethGR, MethSM=NULL, RegionOfInterest, SortedReads=NULL, ShowContext=FALSE, TFBSs=NULL, SNPs=NULL, SortingBins=NULL){
 
   # Prepare SMF data
   MethGR %>%
@@ -72,6 +75,31 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
     select(-grep("_Coverage$", colnames(.)), -end, -width, -strand) %>%
     gather(sample, MethRate, -seqnames, -start, -GenomicContext) %>%
     na.omit() -> PlottingDF
+  
+  if(!is.null(SortedReads) & !is.null(MethSM)){
+    message("Sorted reads passed along with SM matrix...plotting only counts relevant to sorting")
+    if(length(MethSM) != length(SortedReads)){
+      stop("Number of samples in MethSM and SortedReads do not correspond...quitting")
+    }
+    # here I just recalculate MethRate and replace it in the PlottingDF
+    # removing cytosines not covered by relevant reads
+    # No need to take care of coverage again since we only care for counts over sorting bins,
+    # and these reads are by definition covering bins enough
+    Reduce(rbind,
+    lapply(seq_along(SortedReads), function(i){
+      RecalculatedMethRate = colMeans_drop0(MethSM[[i]][as.character(unlist(SortedReads[[i]])),]) - 1
+      PlottingDF %>%
+        filter(sample == paste0(names(SortedReads)[i], "_MethRate")) %>%
+        filter(start %in% names(RecalculatedMethRate)) %>%
+        arrange(start) %>%
+        mutate(MethRate = as.double(RecalculatedMethRate[order(names(RecalculatedMethRate))]))
+    })) -> PlottingDF
+  } else if (!is.null(SortedReads) & is.null(MethSM)){
+    stop("Sorted reads passed without SM matrix...please provide SM matrix")
+  } else if (is.null(SortedReads)){
+    message("No sorted reads passed...plotting counts from all reads")
+  }
+  
   OurFavouriteColors = c("Black", "Red", "Blue", "Green")
   ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$sample))]
 
@@ -103,7 +131,7 @@ PlotAvgSMF = function(MethGR, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBi
   PlottingDF %>%
     ggplot(aes(x=start, y=1-MethRate, color=sample)) +
     geom_line() +
-    geom_point() +
+    {if(ShowContext){geom_point(aes(shape=GenomicContext))}else{geom_point()}} +
     {if(!is.null(TFBSs)){geom_rect(TFBS_PlottingDF, mapping = aes(xmin=start, xmax=end, ymin=-0.15, ymax=-0.1), inherit.aes = FALSE)}} +
     {if(!is.null(TFBSs)){geom_text(TFBS_PlottingDF, mapping = aes(x=start+((end-start)/2), y=-0.08, label=TF), inherit.aes = FALSE)}} +
     {if(!is.null(SNPs)){geom_text(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord, label=Sequence), size=3, inherit.aes = FALSE)}} +
@@ -396,6 +424,7 @@ StateQuantificationPlot = function(SortedReads){
 #'
 #' @param Methylation Context methylation object as returned by CallContextMethylation function
 #' @param RegionOfInterest GRanges interval to plot
+#' @param ShowContext TRUE or FALSE (default). Causes the genomic context of the plotted cytosines to be displayed as the dot shape
 #' @param TFBSs GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"
 #' @param SNPs GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
@@ -429,11 +458,14 @@ StateQuantificationPlot = function(SortedReads){
 #'                   TFBSs = TFBSs,
 #'                   saveAs = NULL)
 #'
-PlotSingleSiteSMF = function(Methylation, RegionOfInterest, TFBSs=NULL, SNPs=NULL, SortingBins=NULL, SortedReads=NULL){
+PlotSingleSiteSMF = function(Methylation, RegionOfInterest, ShowContext=FALSE, TFBSs=NULL, SNPs=NULL, SortingBins=NULL, SortedReads=NULL){
 
   message("Producing average SMF plot")
   PlotAvgSMF(MethGR = Methylation[[1]],
+             MethSM = Methylation[[2]],
              RegionOfInterest = RegionOfInterest,
+             SortedReads = SortedReads,
+             ShowContext = ShowContext,
              TFBSs = TFBSs,
              SNPs = SNPs,
              SortingBins = SortingBins) -> Avg_pl

@@ -208,7 +208,12 @@ rbind.fill.matrix.sparse = function(x,y){
     y = cbind2(y,ybind)
   }
   
-  result = rbind2(x,y[,order(match(colnames(y),colnames(x)))])
+  result = rbind2(x,y[,order(match(colnames(y),colnames(x))),drop=FALSE])
+  if (all(result@Dim > 0)){
+    rownames(result) = c(rownames(x), rownames(y)) # for some reason rbind2 drop rownames
+    # result = result[,order(colnames(result), decreasing = FALSE)] # This shouldn't be necessary for rows
+  }
+  
   return(result)
   
 }
@@ -235,10 +240,10 @@ cbind.fill.matrix.sparse = function(x,y){
   x = rbind2(x,xbind)
   y = rbind2(y,ybind)
   
-  result = cbind2(x,y[order(match(rownames(y),rownames(x))),])
+  result = cbind2(x,y[order(match(rownames(y),rownames(x))),,drop=FALSE])
   if (all(result@Dim > 0)){
     colnames(result) = c(colnames(x), colnames(y)) # for some reason cbind2 drop colnames
-    result = result[,order(colnames(result), decreasing = FALSE)]
+    result = result[,order(colnames(result), decreasing = FALSE),drop=FALSE]
   }
   
   return(result)

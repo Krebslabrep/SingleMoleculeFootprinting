@@ -219,20 +219,21 @@ CollapseStrands = function(MethGR, context){
     return(MethGR)
   }
 
-  # find the + stranded cytosines and make them -
-  MethGR_plus = MethGR[strand(MethGR) == "+"]
-  start(MethGR_plus) = start(MethGR_plus) + ifelse(grepl("CG", context), +1, -1)
-  end(MethGR_plus) = start(MethGR_plus)
-  strand(MethGR_plus) = "-"
-
-  # Extract the - Cs
+  # find the - stranded cytosines and make them +
   MethGR_minus = MethGR[strand(MethGR) == "-"]
+  start(MethGR_minus) = start(MethGR_minus) + ifelse(grepl("HCG", context), -1, +1)
+  end(MethGR_minus) = start(MethGR_minus)
+  strand(MethGR_minus) = "+"
+
+  # Extract the + Cs
+  MethGR_plus = MethGR[strand(MethGR) == "+"]
 
   # Sum the counts
-  ov = findOverlaps(MethGR_plus, MethGR_minus)
-  values(MethGR_minus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_minus[subjectHits(ov)])[,-length(values(MethGR_minus))]) + as.matrix(values(MethGR_plus[queryHits(ov)])[,-length(values(MethGR_plus))])
+  ov = findOverlaps(MethGR_minus, MethGR_plus)
+  values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR_plus))]) + as.matrix(values(MethGR_minus[queryHits(ov)])[,-length(values(MethGR_minus))])
+  CollapsedMethGR = sort(c(MethGR_plus, MethGR_minus[-queryHits(ov)]), by = ~ seqnames + start + end)
 
-  return(MethGR_minus)
+  return(CollapsedMethGR)
 
 }
 
@@ -266,12 +267,12 @@ CollapseStrandsSM = function(MethSM, context, genome, chr){
   MethSM_minus = MethSM[rowSums(MethSM[,IsMinusStrand, drop=FALSE]) > 0, IsMinusStrand, drop=FALSE]
   # MethSM_plus = MethSM[apply(MethSM[,!IsMinusStrand, drop=FALSE], 1, function(i){sum(is.na(i)) != length(i)}) > 0, !IsMinusStrand, drop=FALSE]
   MethSM_plus = MethSM[rowSums(MethSM[,!IsMinusStrand, drop=FALSE]) > 0, !IsMinusStrand, drop=FALSE]
-  NrPlusReads = dim(MethSM_plus)[1]
-  message(paste0(ifelse(is.null(NrPlusReads), 0, NrPlusReads), " reads found mapping to the + strand, collapsing to -"))
+  NrMinReads = dim(MethSM_minus)[1]
+  message(paste0(ifelse(is.null(NrMinReads), 0, NrMinReads), " reads found mapping to the + strand, collapsing to -"))
 
-  # Turn + into -
-  offset = ifelse(grepl("GC", context), -1, +1) # the opposite if I was to turn - into +
-  colnames(MethSM_plus) = as.character(as.numeric(colnames(MethSM_plus)) + offset)
+  # Turn - into +
+  offset = ifelse(grepl("GC", context), +1, -1) # the opposite if I was to turn + into -
+  colnames(MethSM_minus) = as.character(as.numeric(colnames(MethSM_minus)) + offset)
 
   # Merge matrixes
   StrandCollapsedSM = rbind.fill.matrix.sparse(x = MethSM_minus, y = MethSM_plus)
@@ -371,7 +372,7 @@ MergeMatrixes = function(matrixes){
 #' @param coverage coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.
 #' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.
 #' @param returnSM whether to return the single molecule matrix, defaults to TRUE
-#' @param clObj cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
+#' @param clObj cluster object for parallel processing of multiple samples. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
 #'
 #' @import QuasR
 #' @import GenomicRanges
@@ -394,16 +395,6 @@ MergeMatrixes = function(matrixes){
 #'                                      coverage = 20,
 #'                                      ConvRate.thr = 0.2)
 #'
-# sampleSheet = "/g/krebs/barzaghi/HTS/SMF/MM/QuasR_input_files/QuasR_input_AllCanWGpooled_dprm.txt"
-# sample = "SMF_MM_TKO_DE_R_NextSeq"
-# # Tiles = tileGenome(seqlengths(BSgenome.Mmusculus.UCSC.mm10)[19], ntile = 1)
-# # RegionOfInterest = GRanges("chr19", IRanges(61420566, 61433566))
-# BaitRegions = readRDS("/g/krebs/barzaghi/Rscripts/R_package/AWS_data_upload/EnrichmentRegions_mm10.rds")
-# RegionOfInterest = resize(BaitRegions[seqnames(BaitRegions) == "chr19"][1000], width = 2000, fix = 'center')
-# genome = BSgenome.Mmusculus.UCSC.mm10
-# coverage = 20
-# ConvRate.thr = 0.8
-# returnSM = TRUE
 CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest, coverage = 20, ConvRate.thr = 0.8, returnSM = TRUE, clObj=NULL){
 
   message("Setting QuasR project")
@@ -411,7 +402,7 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
 
   message("Calling methylation at all Cytosines")
   QuasRprj_sample = QuasRprj[unlist(lapply(unique(sample), function(s){grep(s, QuasRprj@alignments$SampleName)}))]
-  MethGR = QuasR::qMeth(QuasRprj_sample, mode="allC", query = RegionOfInterest, collapseBySample = TRUE, keepZero = TRUE)
+  MethGR = QuasR::qMeth(QuasRprj_sample, mode="allC", query = RegionOfInterest, collapseBySample = TRUE, keepZero = TRUE, clObj = clObj)
 
   message("checking if RegionOfInterest contains information at all")
   CoverageCols = grep("_T$", colnames(elementMetadata(MethGR)))
@@ -421,6 +412,8 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   if (all(!unlist(Samples_covered))){
     message("No bulk methylation info found for the given RegionOfInterest for any of the samples")
     MethGR = MethGR[elementMetadata(MethGR)[,1]!=0]
+    colnames(elementMetadata(MethGR)) = gsub("_T$", "_Coverage", colnames(elementMetadata(MethGR)))
+    colnames(elementMetadata(MethGR)) = gsub("_M$", "_MethRate", colnames(elementMetadata(MethGR)))
     if (returnSM){
       MethSM = list(Matrix::rsparsematrix(nrow=0,ncol=0,density = 0))
       return(list(MethGR, MethSM))
@@ -481,42 +474,47 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
                                                        })})
   }
   
-  # Determining stric context based on ExpType
+  # Determining strict context based on ExpType
   ExpType = DetectExperimentType(sample)
   if (ExpType == "NO"){
-    ExpType_contexts = c("DGCHN", "NWCGW")
+    ExpType_contexts = c("DGCHN", "-", "NWCGW")
   } else if (ExpType == "SS"){
-    ExpType_contexts = c("", "CG")
+    ExpType_contexts = c("-", "-", "CG")
   } else if (ExpType == "DE"){
-    ExpType_contexts = c("GC", "HCG") # GCGs will go with GCs.
+    ExpType_contexts = c("GCH", "GCG", "HCG")
   }
 
-  message(paste0("Subsetting Cytosines by strict genomic context (", ExpType_contexts[1], ", ", ExpType_contexts[2],") based on the detected experiment type: ", ExpType))
+  message(paste0("Subsetting Cytosines by strict genomic context (", paste(ExpType_contexts, collapse = ", "),") based on the detected experiment type: ", ExpType))
   ContextFilteredMethGR_strict = list(FilterContextCytosines(CoverageFilteredMethGR[[1]], genome, ExpType_contexts[1]),
-                                      FilterContextCytosines(CoverageFilteredMethGR[[2]], genome, ExpType_contexts[2]))
+                                      FilterContextCytosines(CoverageFilteredMethGR[[1]], genome, ExpType_contexts[2]),
+                                      FilterContextCytosines(CoverageFilteredMethGR[[2]], genome, ExpType_contexts[3]))
   names(ContextFilteredMethGR_strict) = ExpType_contexts
   if (returnSM){
-    ContextFilteredMethSM_strict = lapply(seq_along(CoverageFilteredMethSM),
-                                          function(n){lapply(seq_along(ContextFilteredMethGR_strict),
-                                                             function(i){CoverageFilteredMethSM[[n]][[i]][,colnames(CoverageFilteredMethSM[[n]][[i]]) %in% as.character(start(ContextFilteredMethGR_strict[[i]])), drop=FALSE]})})
+    ContextFilteredMethSM_strict = lapply(seq_along(CoverageFilteredMethSM), function(sample){ 
+      list(CoverageFilteredMethSM[[sample]][[1]][,colnames(CoverageFilteredMethSM[[sample]][[1]]) %in% as.character(start(ContextFilteredMethGR_strict[[1]])), drop=FALSE],
+           CoverageFilteredMethSM[[sample]][[1]][,colnames(CoverageFilteredMethSM[[sample]][[1]]) %in% as.character(start(ContextFilteredMethGR_strict[[2]])), drop=FALSE],
+           CoverageFilteredMethSM[[sample]][[2]][,colnames(CoverageFilteredMethSM[[sample]][[2]]) %in% as.character(start(ContextFilteredMethGR_strict[[3]])), drop=FALSE])
+    })
   }
 
   if (ExpType == "DE"){
     message("Merging matrixes")
-    MergedGR = sort(append(ContextFilteredMethGR_strict[[1]], ContextFilteredMethGR_strict[[2]]))
+    MergedGR = sort(Reduce(append, ContextFilteredMethGR_strict), by = ~ seqnames + start + end)
     NAMES = unique(gsub("_Coverage$", "", grep("_Coverage$", colnames(elementMetadata(MergedGR)), value=TRUE)))
     if (returnSM){
-      # MergedSM = lapply(seq_along(ContextFilteredMethSM_strict), function(n){MergeMatrixes(ContextFilteredMethSM_strict[[n]])})
-      MergedSM = lapply(seq_along(ContextFilteredMethSM_strict), function(n){cbind.fill.matrix.sparse(x = ContextFilteredMethSM_strict[[n]][[1]], y = ContextFilteredMethSM_strict[[n]][[2]])})
+      MergedSM = lapply(seq_along(ContextFilteredMethSM_strict), function(n){
+        Reduce(cbind.fill.matrix.sparse, ContextFilteredMethSM_strict[[n]])
+        })
       }
   } else {
     message("Returning non merged matrixes")
-    MergedGR = ContextFilteredMethGR_strict
+    MockContext = names(ContextFilteredMethGR_strict) != "-"
+    MergedGR = ContextFilteredMethGR_strict[MockContext]
     NAMES = unique(gsub("_Coverage$", "", grep("_Coverage$", colnames(elementMetadata(MergedGR$DGCHN)), value=TRUE)))
     if (returnSM){
-      MergedSM = ContextFilteredMethSM_strict
+      MergedSM = lapply(ContextFilteredMethSM_strict, function(x){x[MockContext]})
       for (i in seq_along(MergedSM)){
-        names(MergedSM[[i]]) = ExpType_contexts
+        names(MergedSM[[i]]) = ExpType_contexts[MockContext]
         }
       }
   }
