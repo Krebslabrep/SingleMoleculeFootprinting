@@ -219,6 +219,11 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 #' @param MethSM Single molecule methylation matrix
 #' @param RegionOfInterest GRanges interval to plot
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
+#' @param sorting.strategy One of "classical", "custom" and NULL (default). 
+#' Set to "classical" for classical one TF / TF pair sorting (as described in Sönmezer et al, MolCell, 2021).
+#' If set to "custom", SortedReads should be a nested list where the first level has one item per sample (corresponding to MethSM) and the second level one item per class.
+#' If set to NULL will have the same effect as setting SortedReads to NULL
+#'  
 #'
 #' @export
 #'
@@ -236,9 +241,9 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 #'
 #'  PlotSM(MethSM = Methylation[[2]], RegionOfInterest = Region_of_interest)
 #'
-PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL){
+PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL, sorting.strategy=NULL){
 
-  if (is.null(SortedReads)){
+  if (is.null(SortedReads) & is.null(sorting.strategy)){
     
     message("No sorting passed or specified, will plot unsorted reads")
     
@@ -246,18 +251,25 @@ PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL){
     
     message("Sorting reads according to passed values before plotting")
     PatternLength = unique(unlist(lapply(seq_along(SortedReads), function(i){unique(nchar(names(SortedReads[[i]])))})))
-    if (PatternLength == 3){ # Single TF
+    if (sorting.strategy == "classical" & PatternLength == 3){ # Single TF
       message("Inferring sorting was performed by single TF")
       NAMES = names(MethSM)
       MethSM = lapply(seq_along(MethSM), function(i){
         MethSM[[i]][unlist(SortedReads[[i]][rev(Reduce(c, OneTFstates()))]),]
       })
       names(MethSM) = NAMES
-    } else if (PatternLength == 4){ # TF pair
+    } else if (sorting.strategy == "classical" & PatternLength == 4){ # TF pair
       message("Inferring sorting was performed by TF pair")
       NAMES = names(MethSM)
       MethSM = lapply(seq_along(MethSM), function(i){
         MethSM[[i]][unlist(SortedReads[[i]][as.character(unlist(TFpairStates()))]),]
+      })
+      names(MethSM) = NAMES
+    } else if (sorting.strategy == "custom"){
+      message("Using custom sorting strategy")
+      NAMES = names(MethSM)
+      MethSM = lapply(seq_along(MethSM), function(i){
+        MethSM[[i]][unlist(SortedReads[[i]]),]
       })
       names(MethSM) = NAMES
     } else {
