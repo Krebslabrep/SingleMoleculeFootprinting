@@ -212,6 +212,8 @@ FilterContextCytosines = function(MethGR, genome, context){
 #' @import GenomicRanges
 #'
 #' @return MethGR with collapsed strands (everything turned to - strand)
+#' 
+#' @export
 #'
 CollapseStrands = function(MethGR, context){
 
@@ -251,6 +253,8 @@ CollapseStrands = function(MethGR, context){
 #' @importFrom IRanges IRanges
 #'
 #' @return Strand collapsed MethSM
+#' 
+#' @export
 #'
 CollapseStrandsSM = function(MethSM, context, genome, chr){
 
@@ -292,6 +296,8 @@ CollapseStrandsSM = function(MethSM, context, genome, chr){
 #' @import GenomicRanges
 #'
 #' @return filtered MethGR
+#' 
+#' @export
 #'
 CoverageFilter = function(MethGR, thr){
 
