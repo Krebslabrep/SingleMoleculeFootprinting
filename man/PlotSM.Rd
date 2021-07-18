@@ -4,7 +4,7 @@
 \alias{PlotSM}
 \title{Wrapper for PlotSingleMoleculeStack function}
 \usage{
-PlotSM(MethSM, RegionOfInterest, SortedReads = NULL)
+PlotSM(MethSM, RegionOfInterest, SortedReads = NULL, sorting.strategy = NULL)
 }
 \arguments{
 \item{MethSM}{Single molecule methylation matrix}
@@ -12,6 +12,11 @@ PlotSM(MethSM, RegionOfInterest, SortedReads = NULL)
 \item{RegionOfInterest}{GRanges interval to plot}
 
 \item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
+
+\item{sorting.strategy}{One of "classical", "custom" and NULL (default). 
+Set to "classical" for classical one TF / TF pair sorting (as described in Sönmezer et al, MolCell, 2021).
+If set to "custom", SortedReads should be a nested list where the first level has one item per sample (corresponding to MethSM) and the second level one item per class.
+If set to NULL will have the same effect as setting SortedReads to NULL}
 }
 \description{
 adds the convenience of arranging reads before plotting

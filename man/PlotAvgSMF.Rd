@@ -6,7 +6,10 @@
 \usage{
 PlotAvgSMF(
   MethGR,
+  MethSM = NULL,
   RegionOfInterest,
+  SortedReads = NULL,
+  ShowContext = FALSE,
   TFBSs = NULL,
   SNPs = NULL,
   SortingBins = NULL
@@ -15,7 +18,13 @@ PlotAvgSMF(
 \arguments{
 \item{MethGR}{Average methylation GRanges obj}
 
+\item{MethSM}{Single molecule matrix(es)}
+
 \item{RegionOfInterest}{GRanges interval to plot}
+
+\item{SortedReads}{List of sorted reads, needs to be passed along with the parameter MethSM. If both are passed, only counts relevant to sorting will be plotted}
+
+\item{ShowContext}{TRUE or FALSE (default). Causes the genomic context of the plotted cytosines to be displayed as the dot shape}
 
 \item{TFBSs}{GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"}
 

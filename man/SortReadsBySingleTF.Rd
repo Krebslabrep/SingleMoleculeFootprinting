@@ -7,7 +7,8 @@
 SortReadsBySingleTF(
   MethSM,
   TFBS,
-  bins = list(c(-35, -25), c(-15, 15), c(25, 35))
+  bins = list(c(-35, -25), c(-15, 15), c(25, 35)),
+  coverage = 20
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ SortReadsBySingleTF(
 bins[[1]] represents the upstream bin, with coordinates relative to the start of the TFBS.
 bins[[2]] represents the TFBS bin, with coordinates relative to the center of the TFBS.
 bins[[3]] represents the downstream bin, with coordinates relative to the end of the TFBS.}
+
+\item{coverage}{integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 20}
 }
 \value{
 List of reads sorted by single TF

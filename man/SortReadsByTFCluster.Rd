@@ -7,7 +7,8 @@
 SortReadsByTFCluster(
   MethSM,
   TFBS_cluster,
-  bins = list(c(-35, -25), c(-7, 7), c(25, 35))
+  bins = list(c(-35, -25), c(-7, 7), c(25, 35)),
+  coverage = 30
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ SortReadsByTFCluster(
 bins[[1]] represents the upstream bin, with coordinates relative to the start of the most upstream TFBS.
 bins[[2]] represents all the TFBS bins, with coordinates relative to the center of each TFBS.
 bins[[3]] represents the downstream bin, with coordinates relative to the end of the most downstream TFBS.}
+
+\item{coverage}{integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30}
 }
 \value{
 List of reads sorted by TF cluster

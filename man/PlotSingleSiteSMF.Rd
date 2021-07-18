@@ -7,6 +7,7 @@
 PlotSingleSiteSMF(
   Methylation,
   RegionOfInterest,
+  ShowContext = FALSE,
   TFBSs = NULL,
   SNPs = NULL,
   SortingBins = NULL,
@@ -17,6 +18,8 @@ PlotSingleSiteSMF(
 \item{Methylation}{Context methylation object as returned by CallContextMethylation function}
 
 \item{RegionOfInterest}{GRanges interval to plot}
+
+\item{ShowContext}{TRUE or FALSE (default). Causes the genomic context of the plotted cytosines to be displayed as the dot shape}
 
 \item{TFBSs}{GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"}
 

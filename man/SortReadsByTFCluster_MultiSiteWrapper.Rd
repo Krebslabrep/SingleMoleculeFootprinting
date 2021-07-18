@@ -10,13 +10,15 @@ SortReadsByTFCluster_MultiSiteWrapper(
   genome,
   coverage = 20,
   ConvRate.thr = 0.8,
+  CytosinesToMask = NULL,
   TFBSs,
   max_intersite_distance = 75,
-  min_intersite_distance = 25,
+  min_intersite_distance = 15,
   max_cluster_size = 10,
   max_intercluster_distance = 1e+05,
   max_window_width = 5e+06,
   min_cluster_width = 600,
+  sorting_coverage = 30,
   bins = list(c(-35, -25), c(-7, 7), c(25, 35)),
   cores = 1
 )
@@ -32,11 +34,14 @@ SortReadsByTFCluster_MultiSiteWrapper(
 
 \item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.}
 
+\item{CytosinesToMask}{THIS IS DUCK-TAPE}
+
 \item{TFBSs}{GRanges object of transcription factor binding sites coordinates}
 
 \item{max_intersite_distance}{maximum allowed distance in base pairs between two TFBS centers for them to be considered part of the same cluster. Defaults to 75.}
 
-\item{min_intersite_distance}{minimum allowed distance in base pairs between two TFBS centers for them not to be discarded as overlapping. Defaults to 25.}
+\item{min_intersite_distance}{minimum allowed distance in base pairs between two TFBS centers for them not to be discarded as overlapping. 
+This parameter should be set according to the width of the bins used for later sorting. Defaults to 15.}
 
 \item{max_cluster_size}{maximum number of TFBSs to be contained in any given cluster. Defaults to 10}
 
@@ -45,6 +50,8 @@ SortReadsByTFCluster_MultiSiteWrapper(
 \item{max_window_width}{upper limit to window width. This value should be adjusted according to the user's system as it determines the amount of memory used in the later context methylation call}
 
 \item{min_cluster_width}{lower limit to window width. Corresponds to the scenario when a window contains a single TFBS cluster.}
+
+\item{sorting_coverage}{integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30.}
 
 \item{bins}{list of 3 relative bin coordinates. Defaults to list(c(-35,-25), c(-7,7), c(25,35)).
 bins[[1]] represents the upstream bin, with coordinates relative to the start of the most upstream TFBS.

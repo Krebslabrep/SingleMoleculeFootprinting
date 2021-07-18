@@ -4,12 +4,14 @@
 \alias{SortReads}
 \title{Sort reads by single TF}
 \usage{
-SortReads(MethSM, BinsCoordinates)
+SortReads(MethSM, BinsCoordinates, coverage = NULL)
 }
 \arguments{
 \item{MethSM}{Single molecule matrix}
 
 \item{BinsCoordinates}{IRanges object of absolute coordinates for sorting bins}
+
+\item{coverage}{integer. Minimum number of reads covering all sorting bins for sorting to be performed}
 }
 \value{
 list of sorted reads
