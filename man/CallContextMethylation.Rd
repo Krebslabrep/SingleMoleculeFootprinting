@@ -30,7 +30,7 @@ CallContextMethylation(
 
 \item{returnSM}{whether to return the single molecule matrix, defaults to TRUE}
 
-\item{clObj}{cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call}
+\item{clObj}{cluster object for parallel processing of multiple samples. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call}
 }
 \value{
 List with two Granges objects: average methylation call (GRanges) and single molecule methylation call (matrix)

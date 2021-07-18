@@ -13,7 +13,7 @@ CollectCompositeData(
   coverage = 20,
   ConvRate.thr = 0.8,
   minCytosines = 0,
-  clObj = NULL
+  cores = 1
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ CollectCompositeData(
 
 \item{genome}{BSgenome}
 
-\item{TFBSs}{GRanges object of TF binding sites to collect info for}
+\item{TFBSs}{GRanges object of TF binding sites to collect info for. We reccommend employing 50 to 200 TFBSs.}
 
 \item{window}{window size to collect methylation information for}
 
@@ -33,7 +33,7 @@ CollectCompositeData(
 
 \item{minCytosines}{minimum number of cytosines covered per TFBS}
 
-\item{clObj}{cluster object for parallel processing. Should be the output of a parallel::makeCluster() call}
+\item{cores}{number of cores to use}
 }
 \value{
 data.frame of bulk SMF info ready for plotting
