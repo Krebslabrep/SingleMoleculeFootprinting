@@ -207,7 +207,7 @@ FilterContextCytosines = function(MethGR, genome, context){
 #' Collapse strands
 #'
 #' @param MethGR Granges obj of average methylation
-#' @param context "GC" or "CG". Broad because indicates just the directionality of collapse.
+#' @param context "GC" or "HCG". Broad because indicates just the directionality of collapse.
 #'
 #' @import GenomicRanges
 #'
@@ -219,6 +219,10 @@ CollapseStrands = function(MethGR, context){
 
   if(length(MethGR) == 0){
     return(MethGR)
+  }
+  
+  if(context != "GC" & context != "HCG"){
+    stop("Unrecognized context, please pass one of GC and HCG")
   }
 
   # find the - stranded cytosines and make them +
