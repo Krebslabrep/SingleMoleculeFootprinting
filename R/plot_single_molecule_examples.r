@@ -219,7 +219,7 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 #' @param MethSM Single molecule methylation matrix
 #' @param RegionOfInterest GRanges interval to plot
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
-#' @param sorting.strategy One of "classical", "custom" and NULL (default). 
+#' @param sorting.strategy One of "classical" (default) and "custom". 
 #' Set to "classical" for classical one TF / TF pair sorting (as described in Sönmezer et al, MolCell, 2021).
 #' If set to "custom", SortedReads should be a nested list where the first level has one item per sample (corresponding to MethSM) and the second level one item per class.
 #' If set to NULL will have the same effect as setting SortedReads to NULL
@@ -241,7 +241,7 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 #'
 #'  PlotSM(MethSM = Methylation[[2]], RegionOfInterest = Region_of_interest)
 #'
-PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL, sorting.strategy=NULL){
+PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL, sorting.strategy="classical"){
 
   if (is.null(SortedReads) & is.null(sorting.strategy)){
     
