@@ -173,6 +173,10 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
                            ConvRate.thr = ConvRate.thr,
                            returnSM = TRUE) -> Methylation
     
+    if(length(Methylation[[1]]) == 0){
+      return()
+    }
+    
     if (!is.null(CytosinesToMask)){
       
       message("Masking Cytosines")
