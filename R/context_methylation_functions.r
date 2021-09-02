@@ -236,7 +236,7 @@ CollapseStrands = function(MethGR, context){
 
   # Sum the counts
   ov = findOverlaps(MethGR_minus, MethGR_plus)
-  values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR_plus))]) + as.matrix(values(MethGR_minus[queryHits(ov)])[,-length(values(MethGR_minus))])
+  values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR_plus)),drop=FALSE]) + as.matrix(values(MethGR_minus[queryHits(ov)])[,-length(values(MethGR_minus)),drop=FALSE])
   CollapsedMethGR = sort(c(MethGR_plus, MethGR_minus[-queryHits(ov)]), by = ~ seqnames + start + end)
 
   return(CollapsedMethGR)
