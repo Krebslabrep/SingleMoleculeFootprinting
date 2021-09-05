@@ -502,6 +502,7 @@ StateQuantificationPlot = function(SortedReads){
 #' @param SNPs GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
+#' @param sorting.strategy One of "classical" (default), "custom", "hierarchical.clustering" or "None". Determines how to display reads. For details check documentation from PlotSM function.
 #'
 #' @importFrom grDevices dev.list dev.off pdf
 #' @importFrom patchwork plot_layout
