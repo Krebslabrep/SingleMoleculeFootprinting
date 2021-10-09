@@ -221,7 +221,6 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
 #' @param coverage coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.
 #' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.
 # #' @param clObj cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
-#' @param CytosinesToMask THIS IS DUCK-TAPE
 #' @param TFBSs GRanges object of transcription factor binding sites coordinates
 #' @param max_intersite_distance maximum allowed distance in base pairs between two TFBS centers for them to be considered part of the same cluster. Defaults to 75.
 #' @param min_intersite_distance minimum allowed distance in base pairs between two TFBS centers for them not to be discarded as overlapping. 
@@ -248,7 +247,6 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
 #' @export
 #' 
 SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, coverage = 20, ConvRate.thr = 0.8, # clObj=NULL, ---> parameters passed to CallContextMethylation
-                                                 CytosinesToMask = NULL,
                                                  TFBSs, max_intersite_distance = 75, min_intersite_distance = 15, max_cluster_size = 10,  # ---> parameters passed to Arrange_TFBSs_clusters
                                                  max_intercluster_distance = 100000, max_window_width = 5000000, min_cluster_width = 600, # ---> parameters passed to Create_MethylationCallingWindows
                                                  sorting_coverage = 30, bins = list(c(-35,-25), c(-7,7), c(25,35)), # ---> parameters passed to SortReadsByTFCluster
@@ -283,22 +281,6 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
                            coverage = coverage,
                            ConvRate.thr = ConvRate.thr,
                            returnSM = TRUE) -> Methylation
-    
-    if(length(Methylation[[1]]) == 0){
-      return()
-    }
-    
-    if (!is.null(CytosinesToMask)){
-      
-      message("Masking Cytosines")
-      source("/g/krebs/barzaghi/Rscripts/CrappyUtils.R")
-      ExperimentType = suppressMessages(SingleMoleculeFootprinting::DetectExperimentType(Samples = sample))
-      MaskSNPs2(Methylation = Methylation, 
-               CytosinesToMaks = CytosinesToMask, 
-               MaskSMmat = TRUE, 
-               Experiment = ExperimentType) -> Methylation
-      
-    }
     
     Overlaps = findOverlaps(TFBS_Clusters$ClusterCoordinates, CurrentWindow)
     Clusters_to_sort = TFBS_Clusters$ClusterComposition[queryHits(Overlaps)]
