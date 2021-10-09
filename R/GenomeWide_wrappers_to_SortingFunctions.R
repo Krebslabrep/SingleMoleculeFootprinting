@@ -140,7 +140,7 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
                                                  cores = 1
 ){
   
-  stop("This needs to be optimized for efficiency...the one try I made with 3K TFs and 10 cores was way too slow")
+  # stop("This needs to be optimized for efficiency...the one try I made with 3K TFs and 10 cores was way too slow")
   
   message("(1) DESIGNING COMMON METHYLATION CALLING WINDOWS FOR ADJACENT CLUSTERS")
   MethylationCallingWindows = Create_MethylationCallingWindows(TFBS_cluster_coordinates = TFBSs,

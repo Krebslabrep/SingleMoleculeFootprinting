@@ -212,7 +212,7 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 
 }
 
-.arrange.MethSM.by.SortedReads = function(MethSM, SortedReads, ordered.sorting.patterns){
+.arrange.MethSM.by.SortedReads = function(MethSM, SortedReads, ordered.sorting.patterns=NULL){
   
   NAMES = names(MethSM)
   if(!is.null(ordered.sorting.patterns)){
@@ -277,7 +277,7 @@ PlotSM = function(MethSM, RegionOfInterest, sorting.strategy="classical", Sorted
     } else if (PatternLength == 4){ # TF pair
       message("Inferring sorting was performed by TF pair")
       ordered.sorting.patterns = as.character(unlist(TFpairStates()))
-    }
+    } else {ordered.sorting.patterns=NULL}
     
     MethSM = .arrange.MethSM.by.SortedReads(MethSM, SortedReads, ordered.sorting.patterns)
     
