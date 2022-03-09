@@ -207,7 +207,7 @@ FilterContextCytosines = function(MethGR, genome, context){
 #' Collapse strands
 #'
 #' @param MethGR Granges obj of average methylation
-#' @param context "GC" or "CG". Broad because indicates just the directionality of collapse.
+#' @param context "GC" or "HCG". Broad because indicates just the directionality of collapse.
 #'
 #' @import GenomicRanges
 #'
@@ -220,10 +220,18 @@ CollapseStrands = function(MethGR, context){
   if(length(MethGR) == 0){
     return(MethGR)
   }
+  
+  if(context != "GC" & context != "HCG"){
+    warning("Unrecognized context, please pass one of GC and HCG")
+  }
+  
+  if (length(unique(MethGR$GenomicContext)) > 1){
+    stop("There should be only one value for GenomicContext here...more will cause problems")
+  }
 
   # find the - stranded cytosines and make them +
   MethGR_minus = MethGR[strand(MethGR) == "-"]
-  start(MethGR_minus) = start(MethGR_minus) + ifelse(grepl("HCG", context), -1, +1)
+  start(MethGR_minus) = start(MethGR_minus) + ifelse(grepl("HCG|CG", context), -1, +1)
   end(MethGR_minus) = start(MethGR_minus)
   strand(MethGR_minus) = "+"
 
@@ -232,8 +240,13 @@ CollapseStrands = function(MethGR, context){
 
   # Sum the counts
   ov = findOverlaps(MethGR_minus, MethGR_plus)
-  values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR_plus))]) + as.matrix(values(MethGR_minus[queryHits(ov)])[,-length(values(MethGR_minus))])
-  CollapsedMethGR = sort(c(MethGR_plus, MethGR_minus[-queryHits(ov)]), by = ~ seqnames + start + end)
+  values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR))] = as.matrix(values(MethGR_plus[subjectHits(ov)])[,-length(values(MethGR_plus)),drop=FALSE]) + as.matrix(values(MethGR_minus[queryHits(ov)])[,-length(values(MethGR_minus)),drop=FALSE])
+  if(length(queryHits(ov)) == 0){ # N.b. Negative indexing with integer(0) returns and empty object!!
+    CollapsedMethGR = sort(c(MethGR_plus, MethGR_minus), by = ~ seqnames + start + end)
+  } else {
+    CollapsedMethGR = sort(c(MethGR_plus, MethGR_minus[-queryHits(ov)]), by = ~ seqnames + start + end)
+  }
+  
 
   return(CollapsedMethGR)
 
@@ -272,7 +285,7 @@ CollapseStrandsSM = function(MethSM, context, genome, chr){
   # MethSM_plus = MethSM[apply(MethSM[,!IsMinusStrand, drop=FALSE], 1, function(i){sum(is.na(i)) != length(i)}) > 0, !IsMinusStrand, drop=FALSE]
   MethSM_plus = MethSM[rowSums(MethSM[,!IsMinusStrand, drop=FALSE]) > 0, !IsMinusStrand, drop=FALSE]
   NrMinReads = dim(MethSM_minus)[1]
-  message(paste0(ifelse(is.null(NrMinReads), 0, NrMinReads), " reads found mapping to the + strand, collapsing to -"))
+  message(paste0(ifelse(is.null(NrMinReads), 0, NrMinReads), " reads found mapping to the - strand, collapsing to +"))
 
   # Turn - into +
   offset = ifelse(grepl("GC", context), +1, -1) # the opposite if I was to turn + into -
@@ -476,7 +489,9 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
                                                          if(is.na(SampleCoverageColumn)){SampleCoverageColumn = NULL}
                                                          CsCoveredEnough = as.character(start(CoverageFilteredMethGR[[i]]))[
                                                            !is.na(data.frame(elementMetadata(CoverageFilteredMethGR[[i]])[,SampleCoverageColumn]))]
-                                                         StrandCollapsedMethSM[[n]][[i]][,colnames(StrandCollapsedMethSM[[n]][[i]]) %in% CsCoveredEnough, drop=FALSE]
+                                                         x = StrandCollapsedMethSM[[n]][[i]][,colnames(StrandCollapsedMethSM[[n]][[i]]) %in% CsCoveredEnough, drop=FALSE]
+                                                         if (any(dim(x) == 0)){x = Matrix::rsparsematrix(nrow=0,ncol=0,density = 0)}
+                                                         x
                                                        })})
   }
   

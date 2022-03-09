@@ -46,6 +46,7 @@ HierarchicalClustering = function(MethSM){
 #' @import tidyverse
 #' @importFrom plyr .
 #' @importFrom stats na.omit
+#' @importFrom RColorBrewer brewer.pal
 #'
 #' @export
 #'
@@ -99,7 +100,7 @@ PlotAvgSMF = function(MethGR, MethSM=NULL, RegionOfInterest, SortedReads=NULL, S
     message("No sorted reads passed...plotting counts from all reads")
   }
   
-  OurFavouriteColors = c("Black", "Red", "Blue", "Green")
+  OurFavouriteColors = c("Black", RColorBrewer::brewer.pal(n = 9, name = "Set1"))
   ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$sample))]
 
   # Prepare TFBS
@@ -174,7 +175,7 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
     na.omit() %>%
     mutate(Methylation = as.factor(Methylation), Coordinate = as.numeric(Coordinate)) -> PlottingDF
   PlottingDF$ReadID = factor(PlottingDF$ReadID, levels = Reduce(c, lapply(MethSM, rownames)))
-  OurFavouriteColors = c("Black", "Red", "Blue", "Green")
+  # OurFavouriteColors = c("Black", "Red", "Blue", "Green")
   # ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$Sample))] <------ WHAT DO I DO WITH YOU
   
   PlottingDF %>%
@@ -199,17 +200,38 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 
 }
 
+.arrange.MethSM.by.SortedReads = function(MethSM, SortedReads, ordered.sorting.patterns=NULL){
+  
+  NAMES = names(MethSM)
+  if(!is.null(ordered.sorting.patterns)){
+    MethSM = lapply(seq_along(MethSM), function(i){
+      MethSM[[i]][unlist(SortedReads[[i]][ordered.sorting.patterns]),]
+    })
+  } else { # this because indexing with NULL (when sorting.strategy == "custom") return character(0)
+    MethSM = lapply(seq_along(MethSM), function(i){
+      MethSM[[i]][unlist(SortedReads[[i]]),]
+    })
+  }
+
+  names(MethSM) = NAMES
+  
+  return(MethSM)
+  
+}
+
 #' Wrapper for PlotSingleMoleculeStack function
 #'
 #' adds the convenience of arranging reads before plotting
 #'
 #' @param MethSM Single molecule methylation matrix
 #' @param RegionOfInterest GRanges interval to plot
-#' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
-#' @param sorting.strategy One of "classical", "custom" and NULL (default). 
-#' Set to "classical" for classical one TF / TF pair sorting (as described in Sönmezer et al, MolCell, 2021).
-#' If set to "custom", SortedReads should be a nested list where the first level has one item per sample (corresponding to MethSM) and the second level one item per class.
-#' If set to NULL will have the same effect as setting SortedReads to NULL
+#' @param sorting.strategy One of "classical" (default), "custom", "hierarchical.clustering" or "None".
+#' Set to "classical" for classical one-TF/TF-pair sorting (as described in Sönmezer et al, MolCell, 2021). Should be passed along with argument SortedReads set to the Sorted reads object as returned by SortReads function.
+#' If set to "custom", SortedReads should be a list with one item per sample (corresponding to MethSM).
+#' If set to "hierarchical.clustering", the function will perform hierarchical clustering in place on a subset of reads. Useful to check for duplicated reads in amplicon sequencing experiments.
+#' If set to "None", it will plot unsorted reads.
+#' The argument sorting,strategy will always determine how to display reads with priority over the argument SortedReads
+#' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function 
 #'  
 #'
 #' @export
@@ -228,52 +250,49 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 #'
 #'  PlotSM(MethSM = Methylation[[2]], RegionOfInterest = Region_of_interest)
 #'
-PlotSM = function(MethSM, RegionOfInterest, SortedReads = NULL, sorting.strategy=NULL){
-
-  if (is.null(SortedReads) & is.null(sorting.strategy)){
+PlotSM = function(MethSM, RegionOfInterest, sorting.strategy="classical", SortedReads = NULL){
+  
+  #### 1.
+  if(sorting.strategy == "classical" & all(unlist(lapply(SortedReads, is.list)))){
     
-    message("No sorting passed or specified, will plot unsorted reads")
-    
-  } else if (is.list(SortedReads)){
-    
-    message("Sorting reads according to passed values before plotting")
+    if (length(MethSM) != length(SortedReads)){stop("Number of samples is not consistent between SortedReads and MethSM...quitting")}
+    message("Arranging reads according to classical sorting.strategy")
     PatternLength = unique(unlist(lapply(seq_along(SortedReads), function(i){unique(nchar(names(SortedReads[[i]])))})))
-    if (sorting.strategy == "classical" & PatternLength == 3){ # Single TF
+    
+    if (PatternLength == 3){ # Single TF
       message("Inferring sorting was performed by single TF")
-      NAMES = names(MethSM)
-      MethSM = lapply(seq_along(MethSM), function(i){
-        MethSM[[i]][unlist(SortedReads[[i]][rev(Reduce(c, OneTFstates()))]),]
-      })
-      names(MethSM) = NAMES
-    } else if (sorting.strategy == "classical" & PatternLength == 4){ # TF pair
+      ordered.sorting.patterns = rev(Reduce(c, OneTFstates()))
+    } else if (PatternLength == 4){ # TF pair
       message("Inferring sorting was performed by TF pair")
-      NAMES = names(MethSM)
-      MethSM = lapply(seq_along(MethSM), function(i){
-        MethSM[[i]][unlist(SortedReads[[i]][as.character(unlist(TFpairStates()))]),]
-      })
-      names(MethSM) = NAMES
-    } else if (sorting.strategy == "custom"){
-      message("Using custom sorting strategy")
-      NAMES = names(MethSM)
-      MethSM = lapply(seq_along(MethSM), function(i){
-        MethSM[[i]][unlist(SortedReads[[i]]),]
-      })
-      names(MethSM) = NAMES
+      ordered.sorting.patterns = as.character(unlist(TFpairStates()))
     } else {
-      message("Unrecognized sorting strategy ... plotting states in the order they appear")
-      NAMES = names(MethSM)
-      MethSM = lapply(seq_along(MethSM), function(i){
-        MethSM[[i]][unlist(SortedReads[[i]]),]
-      })
-      names(MethSM) = NAMES
+      ordered.sorting.patterns = NULL
     }
     
-  } else if (SortedReads == "HC"){
+    MethSM = .arrange.MethSM.by.SortedReads(MethSM, SortedReads, ordered.sorting.patterns)
     
+  #### 2.
+  } else if (sorting.strategy == "hierarchical.clustering"){
+    
+    if(!is.null(SortedReads)){warning("Ignoring passed SortedReads and performing hierarchical clustering")}
     message("Perfoming hierarchical clustering on single molecules before plotting")
     MethSM = lapply(MethSM, HierarchicalClustering)
     
-  }
+  #### 3.
+  } else if (sorting.strategy == "custom"){
+    
+    if (length(MethSM) != length(SortedReads)){stop("Number of samples is not consistent between SortedReads and MethSM...quitting")}
+    message("Arranging reads according to custom sorting.strategy")
+    MethSM = .arrange.MethSM.by.SortedReads(MethSM, SortedReads, ordered.sorting.patterns=NULL)
+    
+  #### 4.
+  } else if (sorting.strategy == "None"){
+    
+    if(!is.null(SortedReads)){warning("Ignoring passed SortedReads and plotting unsorted reads")}
+    message("No sorting passed or specified, will plot unsorted reads")
+    
+  #### 5.
+  } else {stop("Invalid value for sorting.strategy")}
   
   PlotSingleMoleculeStack(MethSM, RegionOfInterest)
 
@@ -427,6 +446,7 @@ StateQuantificationPlot = function(SortedReads){
 #' @param TFBSs GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
+#' @param sorting.strategy One of "classical" (default), "custom", "hierarchical.clustering" or "None". Determines how to display reads. For details check documentation from PlotSM function.
 #'
 #' @importFrom grDevices dev.list dev.off pdf
 #' @importFrom patchwork plot_layout
@@ -468,7 +488,7 @@ PlotSingleSiteSMF = function(Methylation, RegionOfInterest, ShowContext=FALSE, T
              SortingBins = SortingBins) -> Avg_pl
 
   message("Producing Single Molecule stacks")
-  PlotSM(MethSM = Methylation[[2]], RegionOfInterest = RegionOfInterest, SortedReads = SortedReads) -> SM_pl
+  PlotSM(MethSM = Methylation[[2]], RegionOfInterest = RegionOfInterest, SortedReads = SortedReads, sorting.strategy = sorting.strategy) -> SM_pl
 
   # State quantification plot
   if(is.list(SortedReads)){

@@ -9,7 +9,6 @@ PlotSingleSiteSMF(
   RegionOfInterest,
   ShowContext = FALSE,
   TFBSs = NULL,
-  SNPs = NULL,
   SortingBins = NULL,
   SortedReads = NULL
 )
@@ -23,11 +22,11 @@ PlotSingleSiteSMF(
 
 \item{TFBSs}{GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"}
 
-\item{SNPs}{GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"}
-
 \item{SortingBins}{GRanges object of sorting bins (absolute) coordinate to visualize}
 
 \item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
+
+\item{sorting.strategy}{One of "classical" (default), "custom", "hierarchical.clustering" or "None". Determines how to display reads. For details check documentation from PlotSM function.}
 }
 \description{
 Plot SMF data at single site
