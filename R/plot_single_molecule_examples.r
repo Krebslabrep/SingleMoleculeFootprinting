@@ -46,6 +46,7 @@ HierarchicalClustering = function(MethSM){
 #' @import tidyverse
 #' @importFrom plyr .
 #' @importFrom stats na.omit
+#' @importFrom RColorBrewer brewer.pal
 #'
 #' @export
 #'
@@ -99,7 +100,7 @@ PlotAvgSMF = function(MethGR, MethSM=NULL, RegionOfInterest, SortedReads=NULL, S
     message("No sorted reads passed...plotting counts from all reads")
   }
   
-  OurFavouriteColors = c("Black", "Red", "Blue", "Green")
+  OurFavouriteColors = c("Black", RColorBrewer::brewer.pal(n = 9, name = "Set1"))
   ColorsToUse = OurFavouriteColors[seq_along(unique(PlottingDF$sample))]
 
   # Prepare TFBS
@@ -264,7 +265,9 @@ PlotSM = function(MethSM, RegionOfInterest, sorting.strategy="classical", Sorted
     } else if (PatternLength == 4){ # TF pair
       message("Inferring sorting was performed by TF pair")
       ordered.sorting.patterns = as.character(unlist(TFpairStates()))
-    } else {ordered.sorting.patterns=NULL}
+    } else {
+      ordered.sorting.patterns = NULL
+    }
     
     MethSM = .arrange.MethSM.by.SortedReads(MethSM, SortedReads, ordered.sorting.patterns)
     
@@ -290,51 +293,6 @@ PlotSM = function(MethSM, RegionOfInterest, sorting.strategy="classical", Sorted
     
   #### 5.
   } else {stop("Invalid value for sorting.strategy")}
-  
-  # if (is.null(SortedReads) & is.null(sorting.strategy)){
-  #   
-  #   message("No sorting passed or specified, will plot unsorted reads")
-  #   
-  # } else if (is.list(SortedReads)){
-  #   
-  #   message("Sorting reads according to passed values before plotting")
-  #   PatternLength = unique(unlist(lapply(seq_along(SortedReads), function(i){unique(nchar(names(SortedReads[[i]])))})))
-  #   if (sorting.strategy == "classical" & PatternLength == 3){ # Single TF
-  #     message("Inferring sorting was performed by single TF")
-  #     NAMES = names(MethSM)
-  #     MethSM = lapply(seq_along(MethSM), function(i){
-  #       MethSM[[i]][unlist(SortedReads[[i]][rev(Reduce(c, OneTFstates()))]),]
-  #     })
-  #     names(MethSM) = NAMES
-  #   } else if (sorting.strategy == "classical" & PatternLength == 4){ # TF pair
-  #     message("Inferring sorting was performed by TF pair")
-  #     NAMES = names(MethSM)
-  #     MethSM = lapply(seq_along(MethSM), function(i){
-  #       MethSM[[i]][unlist(SortedReads[[i]][as.character(unlist(TFpairStates()))]),]
-  #     })
-  #     names(MethSM) = NAMES
-  #   } else if (sorting.strategy == "custom"){
-  #     message("Using custom sorting strategy")
-  #     NAMES = names(MethSM)
-  #     MethSM = lapply(seq_along(MethSM), function(i){
-  #       MethSM[[i]][unlist(SortedReads[[i]]),]
-  #     })
-  #     names(MethSM) = NAMES
-  #   } else {
-  #     message("Unrecognized sorting strategy ... plotting states in the order they appear")
-  #     NAMES = names(MethSM)
-  #     MethSM = lapply(seq_along(MethSM), function(i){
-  #       MethSM[[i]][unlist(SortedReads[[i]]),]
-  #     })
-  #     names(MethSM) = NAMES
-  #   }
-  #   
-  # } else if (SortedReads == "HC"){
-  #   
-  #   message("Perfoming hierarchical clustering on single molecules before plotting")
-  #   MethSM = lapply(MethSM, HierarchicalClustering)
-  #   
-  # }
   
   PlotSingleMoleculeStack(MethSM, RegionOfInterest)
 

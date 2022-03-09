@@ -11,7 +11,6 @@ PlotAvgSMF(
   SortedReads = NULL,
   ShowContext = FALSE,
   TFBSs = NULL,
-  SNPs = NULL,
   SortingBins = NULL
 )
 }
@@ -27,8 +26,6 @@ PlotAvgSMF(
 \item{ShowContext}{TRUE or FALSE (default). Causes the genomic context of the plotted cytosines to be displayed as the dot shape}
 
 \item{TFBSs}{GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"}
-
-\item{SNPs}{GRanges object of SNPs to visualize. Assumed to be already subset. Assumed to have the reference and alternative sequences respectively under the columns "R" and "A"}
 
 \item{SortingBins}{GRanges object of sorting bins (absolute) coordinate to visualize}
 }
