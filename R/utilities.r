@@ -189,23 +189,27 @@ filter_reads_from_MethGR = function(MethGR, MethSM, MethSM_filtered, sampleIndex
 #' 
 #' @details N.b. only possible fill at the moment is 0
 #' 
+#' @importFrom Matrix rsparsematrix
+#' 
 #' @export 
 #' 
 rbind.fill.matrix.sparse = function(x,y){
   
   ymiss = colnames(x)[which(is.na(match(colnames(x),colnames(y))))]
-  ybind = rsparsematrix(nrow=as.double(nrow(y)),ncol=as.double(length(ymiss)),density = 0)
+  ybind = Matrix::rsparsematrix(nrow=as.double(nrow(y)),ncol=as.double(length(ymiss)),density = 0)
   colnames(ybind)<-ymiss
   
   xmiss = colnames(y)[which(is.na(match(colnames(y),colnames(x))))]
-  xbind = rsparsematrix(nrow=as.double(nrow(x)),ncol=as.double(length(xmiss)),density = 0)
+  xbind = Matrix::rsparsematrix(nrow=as.double(nrow(x)),ncol=as.double(length(xmiss)),density = 0)
   colnames(xbind) = xmiss
 
   if (ncol(xbind)>0){
     x = cbind2(x,xbind)
+    x = x[,order(colnames(x)),drop=FALSE]
   }
   if(ncol(ybind)>0){
     y = cbind2(y,ybind)
+    y = y[,order(colnames(y)),drop=FALSE]
   }
   
   result = rbind2(x,y[,order(match(colnames(y),colnames(x))),drop=FALSE])

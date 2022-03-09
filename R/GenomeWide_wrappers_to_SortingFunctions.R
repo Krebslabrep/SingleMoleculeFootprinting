@@ -16,6 +16,8 @@
 #' @importFrom IRanges IRanges reduce
 #' 
 #' @return list with two elements: ClusterCoordinates (GRanges object of clusters coordinates) and ClusterComposition (GRangesList of sites for each cluster)
+#' 
+#' @export
 #'
 Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_intersite_distance = 15, max_cluster_size = 6){
   
@@ -31,7 +33,7 @@ Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_inters
   Overlaps_filtered = Overlaps[pair_dist>min_intersite_distance,]
   
   message("Constructing GRanges object of clusters coordinates")
-  TF_cluster = reduce(GRanges(
+  TF_cluster = IRanges::reduce(GRanges(
     seqnames(TFBSs[queryHits(Overlaps_filtered)]),
     IRanges(start(TFBSs[queryHits(Overlaps_filtered)]), 
             end(TFBSs[subjectHits(Overlaps_filtered)]))
@@ -75,7 +77,7 @@ Create_MethylationCallingWindows = function(TFBS_cluster_coordinates,
                                             min_cluster_width = 600){
   
   message(paste0("Group TFBS_clusters that fall within ", max_intercluster_distance, "bp from each other in broader searching windows"))
-  SearchingWindows = reduce(resize(TFBS_cluster_coordinates, width = max_intercluster_distance, fix = 'center'))
+  SearchingWindows = plyranges::reduce_ranges(resize(TFBS_cluster_coordinates, width = max_intercluster_distance, fix = 'center'))
   message("Trimming searching windows")
   start(SearchingWindows) = start(SearchingWindows) + ((max_intercluster_distance/2) - (min_cluster_width/2))
   end(SearchingWindows) = end(SearchingWindows) - ((max_intercluster_distance/2) - (min_cluster_width/2))
@@ -88,7 +90,7 @@ Create_MethylationCallingWindows = function(TFBS_cluster_coordinates,
     message("Reducing too large searching windows")
     
     Overlaps = findOverlaps(SearchingWindows[TooLarge], TFBS_cluster_coordinates)
-    SmallerWindows = reduce(resize(TFBS_cluster_coordinates[subjectHits(Overlaps)], width = SmallerWindow, fix = "center"))
+    SmallerWindows = plyranges::reduce_ranges(resize(TFBS_cluster_coordinates[subjectHits(Overlaps)], width = SmallerWindow, fix = "center"))
     SearchingWindows = sort(c(SearchingWindows[!TooLarge], SmallerWindows))
     
     max_intercluster_distance = SmallerWindow
@@ -140,7 +142,7 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
                                                  cores = 1
 ){
   
-  stop("This needs to be optimized for efficiency...the one try I made with 3K TFs and 10 cores was way too slow")
+  names(TFBSs) = paste0("TFBS_", seq(TFBSs))
   
   message("(1) DESIGNING COMMON METHYLATION CALLING WINDOWS FOR ADJACENT CLUSTERS")
   MethylationCallingWindows = Create_MethylationCallingWindows(TFBS_cluster_coordinates = TFBSs,
@@ -155,6 +157,7 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
     print(i)
     
     CurrentWindow = MethylationCallingWindows[i]
+    ExperimentType = suppressMessages(SingleMoleculeFootprinting::DetectExperimentType(Samples = sample))
     
     CallContextMethylation(sampleSheet = sampleSheet,
                            sample = sample,
@@ -172,7 +175,6 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
       
       message("Masking Cytosines")
       source("/g/krebs/barzaghi/Rscripts/CrappyUtils.R")
-      ExperimentType = suppressMessages(SingleMoleculeFootprinting::DetectExperimentType(Samples = sample))
       MaskSNPs2(Methylation = Methylation, 
                 CytosinesToMaks = CytosinesToMask, 
                 MaskSMmat = TRUE, 
@@ -184,6 +186,10 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
     TFBSs_to_sort = TFBSs[queryHits(Overlaps)]
     
     lapply(seq_along(TFBSs_to_sort), function(j){
+      if(ExperimentType == "NO"){
+        Methylation[[2]] = lapply(Methylation[[2]], function(x){x$DGCHN})
+      }
+      
       SortReadsBySingleTF(MethSM = Methylation[[2]], 
                           TFBS = TFBSs_to_sort[j], 
                           bins = bins, 
@@ -275,6 +281,7 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
     print(i)
     
     CurrentWindow = MethylationCallingWindows[i]
+    ExperimentType = suppressMessages(SingleMoleculeFootprinting::DetectExperimentType(Samples = sample))
     
     CallContextMethylation(sampleSheet = sampleSheet,
                            sample = sample,
@@ -292,7 +299,6 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
       
       message("Masking Cytosines")
       source("/g/krebs/barzaghi/Rscripts/CrappyUtils.R")
-      ExperimentType = suppressMessages(SingleMoleculeFootprinting::DetectExperimentType(Samples = sample))
       MaskSNPs2(Methylation = Methylation, 
                CytosinesToMaks = CytosinesToMask, 
                MaskSMmat = TRUE, 
@@ -304,6 +310,9 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
     Clusters_to_sort = TFBS_Clusters$ClusterComposition[queryHits(Overlaps)]
     
     lapply(seq_along(Clusters_to_sort), function(j){
+      if(ExperimentType == "NO"){
+        Methylation[[2]] = lapply(Methylation[[2]], function(x){x$DGCHN})
+      }
       SortReadsByTFCluster(MethSM = Methylation[[2]],
                            TFBS_cluster = Clusters_to_sort[[j]],
                            bins = bins, 

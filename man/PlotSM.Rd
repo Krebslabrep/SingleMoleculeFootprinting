@@ -4,19 +4,26 @@
 \alias{PlotSM}
 \title{Wrapper for PlotSingleMoleculeStack function}
 \usage{
-PlotSM(MethSM, RegionOfInterest, SortedReads = NULL, sorting.strategy = NULL)
+PlotSM(
+  MethSM,
+  RegionOfInterest,
+  sorting.strategy = "classical",
+  SortedReads = NULL
+)
 }
 \arguments{
 \item{MethSM}{Single molecule methylation matrix}
 
 \item{RegionOfInterest}{GRanges interval to plot}
 
-\item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
+\item{sorting.strategy}{One of "classical" (default), "custom", "hierarchical.clustering" or "None".
+Set to "classical" for classical one-TF/TF-pair sorting (as described in Sönmezer et al, MolCell, 2021). Should be passed along with argument SortedReads set to the Sorted reads object as returned by SortReads function.
+If set to "custom", SortedReads should be a list with one item per sample (corresponding to MethSM).
+If set to "hierarchical.clustering", the function will perform hierarchical clustering in place on a subset of reads. Useful to check for duplicated reads in amplicon sequencing experiments.
+If set to "None", it will plot unsorted reads.
+The argument sorting,strategy will always determine how to display reads with priority over the argument SortedReads}
 
-\item{sorting.strategy}{One of "classical", "custom" and NULL (default). 
-Set to "classical" for classical one TF / TF pair sorting (as described in Sönmezer et al, MolCell, 2021).
-If set to "custom", SortedReads should be a nested list where the first level has one item per sample (corresponding to MethSM) and the second level one item per class.
-If set to NULL will have the same effect as setting SortedReads to NULL}
+\item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function}
 }
 \description{
 adds the convenience of arranging reads before plotting

@@ -222,7 +222,7 @@ CollapseStrands = function(MethGR, context){
   }
   
   if(context != "GC" & context != "HCG"){
-    stop("Unrecognized context, please pass one of GC and HCG")
+    warning("Unrecognized context, please pass one of GC and HCG")
   }
   
   if (length(unique(MethGR$GenomicContext)) > 1){
@@ -231,7 +231,7 @@ CollapseStrands = function(MethGR, context){
 
   # find the - stranded cytosines and make them +
   MethGR_minus = MethGR[strand(MethGR) == "-"]
-  start(MethGR_minus) = start(MethGR_minus) + ifelse(grepl("HCG", context), -1, +1)
+  start(MethGR_minus) = start(MethGR_minus) + ifelse(grepl("HCG|CG", context), -1, +1)
   end(MethGR_minus) = start(MethGR_minus)
   strand(MethGR_minus) = "+"
 
@@ -489,7 +489,9 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
                                                          if(is.na(SampleCoverageColumn)){SampleCoverageColumn = NULL}
                                                          CsCoveredEnough = as.character(start(CoverageFilteredMethGR[[i]]))[
                                                            !is.na(data.frame(elementMetadata(CoverageFilteredMethGR[[i]])[,SampleCoverageColumn]))]
-                                                         StrandCollapsedMethSM[[n]][[i]][,colnames(StrandCollapsedMethSM[[n]][[i]]) %in% CsCoveredEnough, drop=FALSE]
+                                                         x = StrandCollapsedMethSM[[n]][[i]][,colnames(StrandCollapsedMethSM[[n]][[i]]) %in% CsCoveredEnough, drop=FALSE]
+                                                         if (any(dim(x) == 0)){x = Matrix::rsparsematrix(nrow=0,ncol=0,density = 0)}
+                                                         x
                                                        })})
   }
   
