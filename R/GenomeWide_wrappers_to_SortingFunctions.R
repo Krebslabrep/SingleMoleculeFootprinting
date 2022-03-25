@@ -41,7 +41,7 @@ Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_inters
   TF_cluster = sort(TF_cluster)
   
   message("Computing number of sites per cluster")
-  TF_cluster$numer_of_TF = countOverlaps(TF_cluster,TFBSs)
+  TF_cluster$number_of_TF = countOverlaps(TF_cluster,TFBSs)
   message("Creating TFBS_cluster ID on the fly")
   names(TF_cluster) = paste0('TFBS_cluster_',seq_along(TF_cluster))
   
@@ -49,7 +49,7 @@ Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_inters
   TF_cluster = TF_cluster[TF_cluster$numer_of_TF <= max_cluster_size]
   
   message("Constructing GRangesList of sites per cluster")
-  Overlaps_clusters = findOverlaps(TF_cluster,TFBSs)
+  Overlaps_clusters = findOverlaps(TF_cluster,TFBSs_resized_1)
   TF_list = split(TFBSs[subjectHits(Overlaps_clusters)], queryHits(Overlaps_clusters))
   names(TF_list) = names(TF_cluster)
   

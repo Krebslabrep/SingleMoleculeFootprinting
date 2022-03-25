@@ -77,7 +77,7 @@ PlotAvgSMF = function(MethGR, MethSM=NULL, RegionOfInterest, SortedReads=NULL, S
     gather(sample, MethRate, -seqnames, -start, -GenomicContext) %>%
     na.omit() -> PlottingDF
   
-  if (stringr::str_detect(colnames(values(MethGR)), "^A_|^R_")){
+  if (any(stringr::str_detect(colnames(values(MethGR)), "^A_|^R_"))){
     PlottingDF$sample = factor(PlottingDF$sample, levels = sort(unique(PlottingDF$sample), decreasing = TRUE))
   }
   
