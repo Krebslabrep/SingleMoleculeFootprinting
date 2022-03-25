@@ -476,7 +476,7 @@ StateQuantificationPlot = function(SortedReads){
 #'                   TFBSs = TFBSs,
 #'                   saveAs = NULL)
 #'
-PlotSingleSiteSMF = function(Methylation, RegionOfInterest, ShowContext=FALSE, TFBSs=NULL, SortingBins=NULL, SortedReads=NULL){
+PlotSingleSiteSMF = function(Methylation, RegionOfInterest, ShowContext=FALSE, TFBSs=NULL, SortingBins=NULL, SortedReads=NULL, sorting.strategy="classical"){
 
   message("Producing average SMF plot")
   PlotAvgSMF(MethGR = Methylation[[1]],
