@@ -46,7 +46,7 @@ Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_inters
   names(TF_cluster) = paste0('TFBS_cluster_',seq_along(TF_cluster))
   
   message(paste0("Discaring clusters with more than ", max_cluster_size, "sites"))
-  TF_cluster = TF_cluster[TF_cluster$numer_of_TF <= max_cluster_size]
+  TF_cluster = TF_cluster[TF_cluster$number_of_TF <= max_cluster_size]
   
   message("Constructing GRangesList of sites per cluster")
   Overlaps_clusters = findOverlaps(TF_cluster,TFBSs_resized_1)
