@@ -198,7 +198,7 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
     names(SortedReads_window) = names(TFBSs_to_sort)
     SortedReads_window
     
-  }, mc.cores = cores) -> SortedReads
+  }, mc.cores = cores, mc.preschedule = FALSE) -> SortedReads
   SortedReads = unlist(SortedReads, recursive = FALSE)
   
   message("(3) CALCULATE STATE FREQUENCIES")
@@ -209,7 +209,7 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
            StateQuantification_tbl$TFBS_cluster = names(SortedReads[i])
            StateQuantification_tbl
            
-         }, mc.cores = cores)) -> StateFrequency_tbl
+         }, mc.cores = cores, mc.preschedule = FALSE)) -> StateFrequency_tbl
   
   return(list(TFBSs, SortedReads, StateFrequency_tbl))
   
@@ -321,7 +321,7 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
     names(SortedReads_window) = names(Clusters_to_sort)
     SortedReads_window
     
-  }, mc.cores = cores) -> SortedReads
+  }, mc.cores = cores, mc.preschedule = FALSE) -> SortedReads
   SortedReads = unlist(SortedReads, recursive = FALSE)
   
   message("(4) CALCULATE STATE FREQUENCIES")
@@ -332,7 +332,7 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
            StateQuantification_tbl$TFBS_cluster = names(SortedReads[i])
            StateQuantification_tbl
            
-         }, mc.cores = cores)) -> StateFrequency_tbl
+         }, mc.cores = cores, mc.preschedule = FALSE)) -> StateFrequency_tbl
   
   return(list(TFBS_Clusters, SortedReads, StateFrequency_tbl))
   
