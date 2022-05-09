@@ -181,7 +181,6 @@ FilterContextCytosines = function(MethGR, genome, context){
   CytosineRanges = GRanges(seqnames(MethGR), ranges(MethGR), strand(MethGR)) # performing operation without metadata to make it lighter
   seqinfo(CytosineRanges) = seqinfo(MethGR)
 
-  # CHANGE HERE
   NewWidth = ifelse(nchar(context) %% 2 == 1, nchar(context), nchar(context) + 1) # Make context nchar() odd so we can fix to 'center'
   GenomicContext = Biostrings::getSeq(genome, suppressWarnings(trim(IRanges::resize(CytosineRanges, width = NewWidth, fix = "center"))))# I checked: it is strand-aware | , as.character = FALSE I don't know what was this here for
 
