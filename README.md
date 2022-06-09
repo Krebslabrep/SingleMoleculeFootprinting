@@ -30,7 +30,7 @@ For more details on SMF data preprocessing we refer to the computational steps o
 # Installation
 To install *SingleMoleculeFootprinting*, execute the following
 ```r
-remotes::install_github(repo = "https://github.com/Krebslabrep/SingleMoleculeFootprinting.git", ref = "main", build_vignettes = FALSE)
+remotes::install_github(repo = "https://github.com/Krebslabrep/SingleMoleculeFootprinting.git", ref = "nanopore", build_vignettes = FALSE)
 ```
 
 # SingleMoleculeFootprinting usage
