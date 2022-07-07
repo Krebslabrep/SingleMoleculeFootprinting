@@ -69,12 +69,38 @@ GetSingleMolMethMat = function(QuasRprj,range,sample){
                                          j = as.numeric(Coordinate),
                                          x = Cs[[i]]$meth + 1,
                                          dimnames = list(levels(ReadID), as.character(levels(Coordinate))))
+      meth_matrix@factors = list(strand = unlist(lapply(split(Cs[[i]]$strand, Cs[[i]]$Cid), unique), use.names = FALSE))
       meth_matrix
     }
       
   })
+  
+  names(MethMatrix_list) = sort(sample)
 
   return(MethMatrix_list)
+}
+
+#'
+MethSM.to.MethGR = function(MethSM, RegionOfInterest){
+  
+  lapply(seq_along(MethSM), function(i){
+    
+    MethGR = GRanges(seqnames = seqnames(RegionOfInterest), IRanges(start = as.integer(colnames(MethSM[[i]])), width = 1), strand = MethSM[[i]]@factors$strand)
+    MethGR$coverage = apply(MethSM[[i]], 2, function(x){sum(x>0)})
+    MethGR$methylated = apply(MethSM[[i]], 2, function(x){sum(x == 2)})
+    colnames(elementMetadata(MethGR)) = paste0(names(MethSM)[i], c("_T", "_M"))
+    return(MethGR)
+    
+  }) -> MethGR.list
+  
+  MethGR = Reduce(full.join.granges, MethGR.list)
+  tmp = as.matrix(elementMetadata(MethGR))
+  tmp[is.na(elementMetadata(MethGR))] = 0
+  elementMetadata(MethGR) = tmp
+  MethGR = sort(MethGR)
+  
+  return(MethGR)
+  
 }
 
 #' Calculate reads conversion rate
@@ -421,8 +447,22 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
 
   message("Calling methylation at all Cytosines")
   QuasRprj_sample = QuasRprj[unlist(lapply(unique(sample), function(s){grep(s, QuasRprj@alignments$SampleName)}))]
-  MethGR = QuasR::qMeth(QuasRprj_sample, mode="allC", query = RegionOfInterest, collapseBySample = TRUE, keepZero = TRUE, clObj = clObj)
-
+  if (returnSM){
+    message("Extracting single molecule matrix")
+    MethSM = GetSingleMolMethMat(QuasRprj, RegionOfInterest, sample)
+    if (!is.null(ConvRate.thr)){
+      MethSM_ConvRateFiltered = lapply(seq_along(unique(sample)), function(i){
+        FilterByConversionRate(MethSM[[i]], chr = seqnames(RegionOfInterest), genome = genome, thr = ConvRate.thr)})
+      # for (i in seq_along(MethSM)){
+      #   MethGR = filter_reads_from_MethGR(MethGR, MethSM[[i]], MethSM_ConvRateFiltered[[i]], sampleIndex=i)
+      # }
+      MethSM = MethSM_ConvRateFiltered
+    }
+    MethGR = MethSM.to.MethGR(MethSM = MethSM, RegionOfInterest = RegionOfInterest)
+  } else {
+    MethGR = QuasR::qMeth(QuasRprj_sample, mode="allC", query = RegionOfInterest, collapseBySample = TRUE, keepZero = TRUE, clObj = clObj) %>% sort()
+  }
+  
   message("checking if RegionOfInterest contains information at all")
   CoverageCols = grep("_T$", colnames(elementMetadata(MethGR)))
   lapply(CoverageCols, function(i){
@@ -445,18 +485,18 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   CsToKeep = rowSums(as.matrix(elementMetadata(MethGR)[,CoverageCols])) > 0
   MethGR = MethGR[CsToKeep]
 
-  if (returnSM){
-    message("Extracting single molecule matrix")
-    MethSM = GetSingleMolMethMat(QuasRprj, RegionOfInterest, sample)
-    if (!is.null(ConvRate.thr)){
-      MethSM_ConvRateFiltered = lapply(seq_along(unique(sample)), function(i){
-        FilterByConversionRate(MethSM[[i]], chr = seqnames(RegionOfInterest), genome = genome, thr = ConvRate.thr)})
-      for (i in seq_along(MethSM)){
-        MethGR = filter_reads_from_MethGR(MethGR, MethSM[[i]], MethSM_ConvRateFiltered[[i]], sampleIndex=i)
-      }
-      MethSM = MethSM_ConvRateFiltered
-    }
-  }
+  # if (returnSM){
+  #   message("Extracting single molecule matrix")
+  #   MethSM = GetSingleMolMethMat(QuasRprj, RegionOfInterest, sample)
+  #   if (!is.null(ConvRate.thr)){
+  #     MethSM_ConvRateFiltered = lapply(seq_along(unique(sample)), function(i){
+  #       FilterByConversionRate(MethSM[[i]], chr = seqnames(RegionOfInterest), genome = genome, thr = ConvRate.thr)})
+  #     for (i in seq_along(MethSM)){
+  #       MethGR = filter_reads_from_MethGR(MethGR, MethSM[[i]], MethSM_ConvRateFiltered[[i]], sampleIndex=i)
+  #     }
+  #     MethSM = MethSM_ConvRateFiltered
+  #   }
+  # }
   
   message("Subsetting Cytosines by permissive genomic context (GC, HCG)") # Here we use a permissive context: needed for the strand collapsing
   ContextFilteredMethGR = list(GC = FilterContextCytosines(MethGR, genome, "GC"),

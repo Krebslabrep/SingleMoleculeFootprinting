@@ -253,3 +253,10 @@ cbind.fill.matrix.sparse = function(x,y){
   return(result)
   
 }
+
+#'
+full.join.granges = function(MethGR1, MethGR2){
+  
+  GRanges(dplyr::full_join(as.data.frame(MethGR1), as.data.frame(MethGR2), by = c("seqnames", "start", "end", "width", "strand")))
+  
+}
