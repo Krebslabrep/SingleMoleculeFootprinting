@@ -70,6 +70,7 @@ Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_inters
 #' 
 #' @return GRanges object of window coordinates to be used for more efficient calls of CallContextMethylation 
 #' 
+#' @export
 #' 
 Create_MethylationCallingWindows = function(TFBS_cluster_coordinates, 
                                             max_intercluster_distance = 100000, 
