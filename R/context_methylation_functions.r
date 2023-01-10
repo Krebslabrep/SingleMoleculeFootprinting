@@ -85,10 +85,19 @@ MethSM.to.MethGR = function(MethSM, RegionOfInterest){
   
   lapply(seq_along(MethSM), function(i){
     
-    MethGR = GRanges(seqnames = seqnames(RegionOfInterest), IRanges(start = as.integer(colnames(MethSM[[i]])), width = 1), strand = MethSM[[i]]@factors$strand)
-    MethGR$coverage = apply(MethSM[[i]], 2, function(x){sum(x>0)})
-    MethGR$methylated = apply(MethSM[[i]], 2, function(x){sum(x == 2)})
-    colnames(elementMetadata(MethGR)) = paste0(names(MethSM)[i], c("_T", "_M"))
+    if(any(dim(MethSM[[i]])) > 0){
+      MethGR = GRanges(seqnames = seqnames(RegionOfInterest), IRanges(start = as.integer(colnames(MethSM[[i]])), width = 1), strand = MethSM[[i]]@factors$strand)
+      MethGR$coverage = Matrix::colSums(MethSM[[i]]>0)
+      MethGR$methylated = Matrix::colSums(MethSM[[i]]==2)
+      colnames(elementMetadata(MethGR)) = paste0(names(MethSM)[i], c("_T", "_M"))
+    } else {
+      MethGR = GRanges("mock", IRanges(1,2))
+      MethGR$coverage = NA
+      MethGR$methylated = NA
+      colnames(elementMetadata(MethGR)) = paste0(names(MethSM)[i], c("_T", "_M"))
+      MethGR = MethGR[0]
+    }
+    
     return(MethGR)
     
   }) -> MethGR.list

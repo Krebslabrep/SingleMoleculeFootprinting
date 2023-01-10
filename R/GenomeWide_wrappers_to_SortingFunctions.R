@@ -10,16 +10,87 @@
 #' @param min_intersite_distance minimum allowed distance in base pairs between two TFBS centers for them not to be discarded as overlapping. 
 #'                               This parameter should be set according to the width of the bins used for later sorting. Defaults to 15.
 #' @param max_cluster_size maximum number of TFBSs to be contained in any given cluster. Defaults to 6
+#' @param max_cluster_width maximum width of TFBS clusters in bps. Defaults to 300
+#' @param add.single.TFs Whether to add the TFs not used to create TFBS.clusters to the list for sorting. Defaults to TRUE
 #' 
 #' @import GenomicRanges
 #' @importFrom S4Vectors queryHits subjectHits
 #' @importFrom IRanges IRanges reduce
+#' @importFrom plyranges filter_by_non_overlaps
 #' 
 #' @return list with two elements: ClusterCoordinates (GRanges object of clusters coordinates) and ClusterComposition (GRangesList of sites for each cluster)
 #' 
 #' @export
 #'
-Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_intersite_distance = 15, max_cluster_size = 6){
+Arrange_TFBSs_clusters = function(
+    TFBSs, 
+    max_intersite_distance = 75, min_intersite_distance = 15, 
+    max_cluster_size = 6, max_cluster_width = 300, 
+    add.single.TFs = TRUE){
+  
+  # collection_window_width = max_intersite_distance*2
+  # TFBSs_resized_1 = resize(TFBSs,1,fix='center')
+  # TFBSs_resized_window = resize(TFBSs,collection_window_width,fix='center')
+  # 
+  # Overlaps = findOverlaps(TFBSs_resized_window, TFBSs_resized_1, ignore.strand=TRUE)
+  # 
+  # message("Removing self-overlaps")
+  # Overlaps = Overlaps[!queryHits(Overlaps) == subjectHits(Overlaps),]
+  # message("Removing redundant unordered pairs")
+  # Overlaps %>%
+  #   as_tibble() %>%
+  #   mutate(grp = paste(pmax(queryHits, subjectHits), pmin(queryHits, subjectHits), sep = "_")) -> tmp.tbl
+  # duplicated.idx = duplicated(tmp.tbl$grp)
+  # Overlaps = Overlaps[!duplicated.idx,]
+  # message("Removing pairs containing overlapping factors")
+  # pair_dist = start(TFBSs_resized_1[subjectHits(Overlaps)]) - start(TFBSs_resized_1[queryHits(Overlaps)])
+  # Overlaps_filtered = Overlaps[pair_dist>=min_intersite_distance,]
+  # 
+  # message("Constructing GRanges object of clusters coordinates")
+  # TF_cluster = IRanges::reduce(GRanges(
+  #   seqnames(TFBSs[queryHits(Overlaps_filtered)]),
+  #   IRanges(start(TFBSs[queryHits(Overlaps_filtered)]),
+  #           end(TFBSs[subjectHits(Overlaps_filtered)]))
+  # ))
+  # message(paste0("Breaking clusters wider than ", max_cluster_width, " bps into tiles overlapping by ", max_cluster_width/2, " bps"))
+  # TF_cluster_to_break = TF_cluster[width(TF_cluster) > 300]
+  # TF_cluster = TF_cluster[width(TF_cluster) <= 300]
+  # TF_cluster_to_break = unlist(GenomicRanges::tile(TF_cluster_to_break, width = max_cluster_width)) # tile produces tiles of equivalent width, slidingWindow doesn't
+  # TF_cluster = sort(c(TF_cluster, TF_cluster_to_break))
+  # 
+  # message("Computing number of sites per cluster")
+  # TF_cluster$number_of_TF = countOverlaps(TF_cluster,TFBSs_resized_1)
+  # 
+  # if (add.single.TFs){
+  #   message("Adding single TFs")
+  #   TFs.outside.clusters = plyranges::filter_by_non_overlaps(TFBSs, TF_cluster)
+  #   single.TFs = GRanges(seqnames(TFs.outside.clusters), ranges(TFs.outside.clusters))
+  #   single.TFs$number_of_TF = 1
+  #   TF_cluster = sort(c(TF_cluster, single.TFs))
+  # }
+  # 
+  # seqlevels = paste0("chr", c(1:19, "X", "Y"))
+  # seqlevels(TF_cluster) = seqlevels
+  # TF_cluster = sort(TF_cluster)
+  # 
+  # message(paste0("Discaring clusters with more than ", max_cluster_size, "sites"))
+  # TF_cluster = TF_cluster[TF_cluster$number_of_TF <= max_cluster_size]
+  # 
+  # message("Creating TFBS_cluster ID on the fly")
+  # names(TF_cluster) = paste0('TFBS_cluster_',seq_along(TF_cluster))
+  # 
+  # message("Constructing GRangesList of sites per cluster")
+  # # PROBLEM: when add.single.TFs is TRUE, the declared number_of_TF will be 1 for these added ClusterCoordinates. However when I collect the TFs for the ClusterComposition by findOverlaps
+  # #          I also collect all the overlapping TFBSs (often even perfectly overlapping) which I discarded above by min_intersite_distance. This needs to be addressed somehow
+  # #          either by changing the declared number_of_TF (but that gives for misleading/uninterpretable TF cluster sorting results)
+  # #          or by filtering the TFBSs object for the sites that don't overlap (but I have no good measure to prioritise sites)
+  # Overlaps_clusters = findOverlaps(TF_cluster,TFBSs_resized_1)
+  # TF_list = split(TFBSs[subjectHits(Overlaps_clusters)], queryHits(Overlaps_clusters))
+  # names(TF_list) = names(TF_cluster)
+  # 
+  # return.object = list(ClusterCoordinates = TF_cluster, ClusterComposition = TF_list)
+  # 
+  # return(return.object)
   
   collection_window_width = max_intersite_distance*2
   TFBSs_resized_1 = resize(TFBSs,1,fix='center')
@@ -42,11 +113,12 @@ Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_inters
   
   message("Computing number of sites per cluster")
   TF_cluster$number_of_TF = countOverlaps(TF_cluster,TFBSs)
-  message("Creating TFBS_cluster ID on the fly")
-  names(TF_cluster) = paste0('TFBS_cluster_',seq_along(TF_cluster))
   
   message(paste0("Discaring clusters with more than ", max_cluster_size, "sites"))
   TF_cluster = TF_cluster[TF_cluster$number_of_TF <= max_cluster_size]
+  
+  message("Creating TFBS_cluster ID on the fly")
+  names(TF_cluster) = paste0('TFBS_cluster_',seq_along(TF_cluster))
   
   message("Constructing GRangesList of sites per cluster")
   Overlaps_clusters = findOverlaps(TF_cluster,TFBSs_resized_1)
@@ -65,37 +137,67 @@ Arrange_TFBSs_clusters = function(TFBSs, max_intersite_distance = 75, min_inters
 #' @param max_intercluster_distance maximum distance between two consecutive TFBS clusters for them to be grouped in the same window
 #' @param max_window_width upper limit to window width. This value should be adjusted according to the user's system as it determines the amount of memory used in the later context methylation call
 #' @param min_cluster_width lower limit to window width. Corresponds to the scenario when a window contains a single TFBS cluster.
+#' @param genomic.seqlenghts used to fix the windows spanning over chromosome edges. To be fetched by GenomeInfoDb::seqlengths() or equivalent.
+#' @param fix.window.size Defaults to FALSE. When TRUE, overrides arguments max_intercluster_distance and max_window_width and produces windows containing a fixed number of TFBS_clusters.
+#' @param max.window.size Max number of TFBS_clusters per window. Used only when fix.window.size is TRUE
 #' 
 #' @import GenomicRanges
+#' @import plyranges
 #' 
 #' @return GRanges object of window coordinates to be used for more efficient calls of CallContextMethylation 
 #' 
+#' @export
 #' 
 Create_MethylationCallingWindows = function(TFBS_cluster_coordinates, 
                                             max_intercluster_distance = 100000, 
                                             max_window_width = 5000000, 
-                                            min_cluster_width = 600){
+                                            min_cluster_width = 600, 
+                                            genomic.seqlenghts, 
+                                            fix.window.size = FALSE, 
+                                            max.window.size = 500){
   
-  message(paste0("Group TFBS_clusters that fall within ", max_intercluster_distance, "bp from each other in broader searching windows"))
-  SearchingWindows = plyranges::reduce_ranges(resize(TFBS_cluster_coordinates, width = max_intercluster_distance, fix = 'center'))
-  message("Trimming searching windows")
-  start(SearchingWindows) = start(SearchingWindows) + ((max_intercluster_distance/2) - (min_cluster_width/2))
-  end(SearchingWindows) = end(SearchingWindows) - ((max_intercluster_distance/2) - (min_cluster_width/2))
-  
-  TooLarge = width(SearchingWindows) > max_window_width
-  
-  while(sum(TooLarge) > 0){
+  if(isFALSE(fix.window.size)){
     
-    SmallerWindow = max_intercluster_distance*0.9
-    message("Reducing too large searching windows")
+    message(paste0("Group TFBS_clusters that fall within ", max_intercluster_distance, "bp from each other in broader searching windows"))
+    SearchingWindows = plyranges::reduce_ranges(resize(TFBS_cluster_coordinates, width = max_intercluster_distance, fix = 'center'))
+    message("Trimming searching windows")
+    start(SearchingWindows) = start(SearchingWindows) + ((max_intercluster_distance/2) - (min_cluster_width/2))
+    end(SearchingWindows) = end(SearchingWindows) - ((max_intercluster_distance/2) - (min_cluster_width/2))
     
-    Overlaps = findOverlaps(SearchingWindows[TooLarge], TFBS_cluster_coordinates)
-    SmallerWindows = plyranges::reduce_ranges(resize(TFBS_cluster_coordinates[subjectHits(Overlaps)], width = SmallerWindow, fix = "center"))
-    SearchingWindows = sort(c(SearchingWindows[!TooLarge], SmallerWindows))
-    
-    max_intercluster_distance = SmallerWindow
     TooLarge = width(SearchingWindows) > max_window_width
     
+    while(sum(TooLarge) > 0){
+      
+      SmallerWindow = max_intercluster_distance*0.9
+      message("Reducing too large searching windows")
+      
+      Overlaps = findOverlaps(SearchingWindows[TooLarge], TFBS_cluster_coordinates)
+      SmallerWindows = plyranges::reduce_ranges(resize(TFBS_cluster_coordinates[subjectHits(Overlaps)], width = SmallerWindow, fix = "center"))
+      SearchingWindows = sort(c(SearchingWindows[!TooLarge], SmallerWindows))
+      
+      max_intercluster_distance = SmallerWindow
+      TooLarge = width(SearchingWindows) > max_window_width
+      
+      message("fix windows spanning over chromosome edges")
+      start(SearchingWindows)[which(start(SearchingWindows) < 0)] = 1
+      for(chr in as.character(sort(unique(seqnames(SearchingWindows))))){
+        end(SearchingWindows[seqnames(SearchingWindows) == chr & end(SearchingWindows) > sort(genomic.seqlenghts)[chr]]) = sort(genomic.seqlenghts)[chr]
+      }
+      
+    }
+    
+  } else {
+    
+    TFBS_cluster_coordinates %>%
+      plyranges::mutate(idx = rep(seq(ceiling(length(.)/max.window.size)), each = max.window.size)[seq_along(.)]) %>%
+      plyranges::group_by(seqnames, idx) %>%
+      plyranges::summarise(start = min(start)-1, end = max(end)+1) %>% # padding for strand collapsing 
+      #       N.b. when working with overlapping GenomicTiles, 
+      #            the resulting windows will be precise from the start of the first tile to the end of the last, 
+      #            but will inherit the same overlap as the GenomicTiles
+      GRanges() %>%
+      plyranges::select(-idx) -> SearchingWindows
+   
   }
   
   return(sort(SearchingWindows))
@@ -127,6 +229,7 @@ Create_MethylationCallingWindows = function(TFBS_cluster_coordinates,
 #' @importFrom parallel mclapply
 #' @importFrom IRanges findOverlaps
 #' @importFrom S4Vectors queryHits
+#' @importFrom GenomeInfoDb seqlengths
 #' 
 #' @return list where [[1]] is the TFBSs GRanges object describing coordinates TFBSs used to sort single molecules
 #'                    [[2]] is a list of SortedReads nested per TFBS_cluster and sample
@@ -148,7 +251,8 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
   MethylationCallingWindows = Create_MethylationCallingWindows(TFBS_cluster_coordinates = TFBSs,
                                                                max_intercluster_distance = max_interTF_distance,
                                                                max_window_width = max_window_width,
-                                                               min_cluster_width = min_cluster_width)
+                                                               min_cluster_width = min_cluster_width,
+                                                               genomic.seqlenghts = GenomeInfoDb::seqlengths(genome))
   message(paste0(length(MethylationCallingWindows), " METHYLATION CALLING WINDOWS DESIGNED"))
   
   message("(2) CALLING METHYLATION AND SORTING")
@@ -246,6 +350,7 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
 #' @importFrom parallel mclapply
 #' @importFrom IRanges findOverlaps
 #' @importFrom S4Vectors queryHits
+#' @importFrom GenomeInfoDb seqlengths
 #' 
 #' @return list where [[1]] is the TFBS_Clusters object describing coordinates and composition of the TFBS clusters used to sort single molecules
 #'                    [[2]] is a list of SortedReads nested per TFBS_cluster and sample
@@ -255,8 +360,8 @@ SortReadsBySingleTF_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
 #' 
 SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, coverage = 20, ConvRate.thr = 0.8, # clObj=NULL, ---> parameters passed to CallContextMethylation
                                                  CytosinesToMask = NULL,
-                                                 TFBSs, max_intersite_distance = 75, min_intersite_distance = 15, max_cluster_size = 10,  # ---> parameters passed to Arrange_TFBSs_clusters
-                                                 max_intercluster_distance = 100000, max_window_width = 5000000, min_cluster_width = 600, # ---> parameters passed to Create_MethylationCallingWindows
+                                                 TFBSs, max_intersite_distance = 75, min_intersite_distance = 15, max_cluster_size = 10, max_cluster_width = 300, add.single.TFs = TRUE,  # ---> parameters passed to Arrange_TFBSs_clusters
+                                                 max_intercluster_distance = 1e5, max_window_width = 5e6, min_cluster_width = 600, # ---> parameters passed to Create_MethylationCallingWindows
                                                  sorting_coverage = 30, bins = list(c(-35,-25), c(-7,7), c(25,35)), # ---> parameters passed to SortReadsByTFCluster
                                                  cores = 1
                                                  ){
@@ -265,14 +370,17 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
   TFBS_Clusters = Arrange_TFBSs_clusters(TFBSs, 
                                          max_intersite_distance = max_intersite_distance,
                                          min_intersite_distance = min_intersite_distance, 
-                                         max_cluster_size = max_cluster_size)
+                                         max_cluster_size = max_cluster_size, 
+                                         max_cluster_width = max_cluster_width, 
+                                         add.single.TFs = add.single.TFs)
   message(paste0(length(TFBS_Clusters$ClusterCoordinates), " CLUSTERS FOUND"))
   
   message("(2) DESIGNING COMMON METHYLATION CALLING WINDOWS FOR ADJACENT CLUSTERS")
   MethylationCallingWindows = Create_MethylationCallingWindows(TFBS_cluster_coordinates = TFBS_Clusters$ClusterCoordinates,
                                                                max_intercluster_distance = max_intercluster_distance,
                                                                max_window_width = max_window_width,
-                                                               min_cluster_width = min_cluster_width)
+                                                               min_cluster_width = min_cluster_width,
+                                                               genomic.seqlenghts = GenomeInfoDb::seqlengths(genome))
   message(paste0(length(MethylationCallingWindows), " METHYLATION CALLING WINDOWS DESIGNED"))
   
   message("(3) CALLING METHYLATION AND SORTING")

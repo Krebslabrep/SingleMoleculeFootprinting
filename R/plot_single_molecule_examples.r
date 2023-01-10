@@ -119,11 +119,13 @@ PlotAvgSMF = function(MethGR, MethSM=NULL, RegionOfInterest, SortedReads=NULL, S
   if(!is.null(SNPs)){
     SNPs %>%
       as_tibble() %>%
-      select(start, R, A) %>%
-      gather(Genotype, Sequence, -start) %>%
-      mutate(y_coord = rep(c(-0.10,-0.13), each=length(SNPs))) %>%
-      add_row(start=min(start(SNPs))-40, Genotype = c("R", "A"),
-              Sequence =  c("Genotype:R", "Genotype:A"), y_coord = c(-0.10, -0.13)) -> SNPs_PlottingDF
+      select(start) %>%
+      mutate(y_coord = -0.13) -> SNPs_PlottingDF
+      # select(start, R, A) %>%
+      # gather(Genotype, Sequence, -start) %>%
+      # mutate(y_coord = rep(c(-0.10,-0.13), each=length(SNPs))) %>%
+      # add_row(start=min(start(SNPs))-40, Genotype = c("R", "A"),
+      #         Sequence =  c("Genotype:R", "Genotype:A"), y_coord = c(-0.10, -0.13)) -> SNPs_PlottingDF
   }
 
   # Prepare SortingBins
@@ -137,9 +139,10 @@ PlotAvgSMF = function(MethGR, MethSM=NULL, RegionOfInterest, SortedReads=NULL, S
     ggplot(aes(x=start, y=1-MethRate, color=sample)) +
     geom_line() +
     {if(ShowContext){geom_point(aes(shape=GenomicContext))}else{geom_point()}} +
-    {if(!is.null(TFBSs)){geom_text(TFBS_PlottingDF, mapping = aes(x=start+((end-start)/2), y=-0.02, label=TF), inherit.aes = FALSE)}} + #, size=4.5
     {if(!is.null(TFBSs)){geom_rect(TFBS_PlottingDF, mapping = aes(xmin=start, xmax=end, ymin=-0.09, ymax=-0.04), inherit.aes = FALSE)}} +
-    {if(!is.null(SNPs)){geom_text(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord, label=Sequence), size=3, inherit.aes = FALSE)}} +
+    {if(!is.null(TFBSs)){ggrepel::geom_text_repel(TFBS_PlottingDF, mapping = aes(x=start+((end-start)/2), y=-0.02, label=TF), min.segment.length = .1, max.overlaps = 1e+05, inherit.aes = FALSE)}} + #, size=4.5
+    # {if(!is.null(SNPs)){geom_text(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord, label=Sequence), size=3, inherit.aes = FALSE)}} +
+    {if(!is.null(SNPs)){geom_tile(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord), color = ColorsToUse[2], height = 0.05, width = 3, inherit.aes = FALSE)}} +
     {if(!is.null(SortingBins)){geom_rect(Bins_PlottingDF, mapping = aes(xmin=start, xmax=end, ymin=-0.02, ymax=0), color="black", fill="white", inherit.aes = FALSE)}} +
     geom_hline(aes(yintercept=0)) +
     ylab("SMF") +
