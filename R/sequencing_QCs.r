@@ -3,6 +3,7 @@
 #' calculate sequencing library conversion rate on a chromosome of choice
 #' @param sampleSheet QuasR sample sheet
 #' @param genome BS genome
+#' @param paired paired type of paired end library. Defaults to "fr". Refer to QuasR::qAlign documentation for more details
 #' @param chr chromosome to calculate conversion rate on (default: 19)
 #' @param cores number of cores for parallel processing. Defaults to 1
 #'
@@ -22,9 +23,9 @@
 #'
 #' ConversionRatePrecision = ConversionRate(sampleSheet = Qinput, genome = BSgenome.Mmusculus.UCSC.mm10, chr = 19, cores = 1)
 #'
-ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
+ConversionRate = function(sampleSheet, genome, paired="fr", chr=19, cores=1){
 
-  QuasRprj = GetQuasRprj(sampleSheet, genome)
+  QuasRprj = GetQuasRprj(sampleSheet, genome, paired)
 
   # check convertion rate:
   # how many of the non CG/GC cytosines are methylated?
@@ -59,6 +60,7 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #' check bait capture efficiency. Expected to be ~70% for mouse genome
 #' @param sampleSheet QuasR sample sheet
 #' @param genome BS genome
+#' @param paired paired type of paired end library. Defaults to "fr". Refer to QuasR::qAlign documentation for more details
 #' @param baits GRanges obj of bait coordinates. We provide and example through SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()
 #' @param clObj cluster object to emply for parallel processing created using the parallel::makeCluster function. Defaults to NULL
 #'
@@ -82,9 +84,9 @@ ConversionRate = function(sampleSheet, genome, chr=19, cores=1){
 #'     # parallel::stopCluster(clObj)
 #' }
 #'
-BaitCapture = function(sampleSheet, genome, baits, clObj=NULL){
+BaitCapture = function(sampleSheet, genome, paired = "fr", baits, clObj=NULL){
 
-  QuasRprj = GetQuasRprj(sampleSheet, genome)
+  QuasRprj = GetQuasRprj(sampleSheet, genome, paired)
 
   InBaits=QuasR::qCount(QuasRprj, baits, clObj = clObj)
 

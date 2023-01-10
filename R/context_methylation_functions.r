@@ -2,6 +2,7 @@
 #'
 #' @param sampleSheet QuasR pointer file
 #' @param genome BSgenome
+#' @param paired type of paired end library. Defaults to "fr". Refer to QuasR::qAlign documentation for more details
 #'
 #' @import QuasR
 #'
@@ -12,12 +13,12 @@
 #' Qinput = system.file("extdata", "QuasR_input_pairs.txt", package = "SingleMoleculeFootprinting", mustWork = T)
 #' QuasRprj = GetQuasRprj(Qinput, BSgenome.Mmusculus.UCSC.mm10)
 #'
-GetQuasRprj = function(sampleSheet, genome){
+GetQuasRprj = function(sampleSheet, genome, paired="fr"){
 
   QuasRprj=QuasR::qAlign(sampleFile=sampleSheet,
                         genome=genome@pkgname,
                         projectName = "prj",
-                        paired="fr",
+                        paired=paired,
                         aligner = "Rbowtie",
                         bisulfite="undir")
   QuasRprj@aligner = "Rbowtie"
@@ -387,6 +388,7 @@ MergeMatrixes = function(matrixes){
 #' @param sampleSheet QuasR pointer file
 #' @param sample for now this works for sure on one sample at the time only
 #' @param genome BSgenome
+#' @param paired paired type of paired end library. Defaults to "fr". Refer to QuasR::qAlign documentation for more details
 #' @param RegionOfInterest GenimocRange representing the genomic region of interest
 #' @param coverage coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.
 #' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.
@@ -414,10 +416,10 @@ MergeMatrixes = function(matrixes){
 #'                                      coverage = 20,
 #'                                      ConvRate.thr = 0.2)
 #'
-CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest, coverage = 20, ConvRate.thr = 0.8, returnSM = TRUE, clObj=NULL){
+CallContextMethylation = function(sampleSheet, sample, genome, paired = "fr", RegionOfInterest, coverage = 20, ConvRate.thr = 0.8, returnSM = TRUE, clObj=NULL){
 
   message("Setting QuasR project")
-  QuasRprj = GetQuasRprj(sampleSheet, genome)
+  QuasRprj = GetQuasRprj(sampleSheet, genome, paired)
 
   message("Calling methylation at all Cytosines")
   QuasRprj_sample = QuasRprj[unlist(lapply(unique(sample), function(s){grep(s, QuasRprj@alignments$SampleName)}))]
