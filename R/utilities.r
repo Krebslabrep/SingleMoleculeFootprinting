@@ -66,6 +66,28 @@ TFpairStates = function(){
   return(grouped_states)
 }
 
+#' Design states for promoters
+#'
+#' @return list of states
+#'
+Promoterstates = function(){
+  
+  allPos=expand.grid(c(0,1),c(0,1),c(0,1),c(0,1))
+  patternStrings=names(table(apply(allPos,1,function(x){(paste(as.character((x)),collapse=''))})))
+  #using only 'pure' states
+  states=list(
+    unassigned=patternStrings[!seq_along(patternStrings) %in% c(1:5,8,9,10,12,13,14:16)],
+    nucleosome=patternStrings[c(1:5,9,13)],
+    unbound=patternStrings[c(8,15,16)],
+    PIC=patternStrings[12],
+    PIC.polII=patternStrings[10],
+    polII=patternStrings[14]
+  )
+  
+  return(states)
+}
+
+
 SortReads_internal = function(SortedReads, SM_mat, isClusters){ # this orders readIDs based on arbotrary states order
 
   read_sort=SortedReads#[[1]]
