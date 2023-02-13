@@ -8,6 +8,7 @@ CallContextMethylation(
   sampleSheet,
   sample,
   genome,
+  paired = "fr",
   RegionOfInterest,
   coverage = 20,
   ConvRate.thr = 0.8,
@@ -21,6 +22,8 @@ CallContextMethylation(
 \item{sample}{for now this works for sure on one sample at the time only}
 
 \item{genome}{BSgenome}
+
+\item{paired}{paired type of paired end library. Defaults to "fr". Refer to QuasR::qAlign documentation for more details}
 
 \item{RegionOfInterest}{GenimocRange representing the genomic region of interest}
 

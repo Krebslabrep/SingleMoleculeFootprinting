@@ -4,12 +4,14 @@
 \alias{GetQuasRprj}
 \title{Get QuasRprj}
 \usage{
-GetQuasRprj(sampleSheet, genome)
+GetQuasRprj(sampleSheet, genome, paired = "fr")
 }
 \arguments{
 \item{sampleSheet}{QuasR pointer file}
 
 \item{genome}{BSgenome}
+
+\item{paired}{type of paired end library. Defaults to "fr". Refer to QuasR::qAlign documentation for more details}
 }
 \description{
 Get QuasRprj

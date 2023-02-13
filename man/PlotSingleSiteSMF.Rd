@@ -10,7 +10,8 @@ PlotSingleSiteSMF(
   ShowContext = FALSE,
   TFBSs = NULL,
   SortingBins = NULL,
-  SortedReads = NULL
+  SortedReads = NULL,
+  sorting.strategy = "classical"
 )
 }
 \arguments{

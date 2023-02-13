@@ -4,12 +4,14 @@
 \alias{ConversionRate}
 \title{Conversion rate}
 \usage{
-ConversionRate(sampleSheet, genome, chr = 19, cores = 1)
+ConversionRate(sampleSheet, genome, paired = "fr", chr = 19, cores = 1)
 }
 \arguments{
 \item{sampleSheet}{QuasR sample sheet}
 
 \item{genome}{BS genome}
+
+\item{paired}{paired type of paired end library. Defaults to "fr". Refer to QuasR::qAlign documentation for more details}
 
 \item{chr}{chromosome to calculate conversion rate on (default: 19)}
 

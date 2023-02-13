@@ -4,12 +4,14 @@
 \alias{BaitCapture}
 \title{Bait capture efficiency}
 \usage{
-BaitCapture(sampleSheet, genome, baits, clObj = NULL)
+BaitCapture(sampleSheet, genome, paired = "fr", baits, clObj = NULL)
 }
 \arguments{
 \item{sampleSheet}{QuasR sample sheet}
 
 \item{genome}{BS genome}
+
+\item{paired}{paired type of paired end library. Defaults to "fr". Refer to QuasR::qAlign documentation for more details}
 
 \item{baits}{GRanges obj of bait coordinates. We provide and example through SingleMoleculeFootprintingData::EnrichmentRegions_mm10.rds()}
 

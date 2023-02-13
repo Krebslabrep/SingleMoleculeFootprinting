@@ -1,3 +1,118 @@
+#' Generic function to design bins based on different user case
+#' 
+#' @param RegionsOfInterest GRanges of length == 1 (for single TFs and promoters) or >= 1 for TF clusters containing the biological loci to sort around
+#' @param BinType one of "singleTF", "TFcluster", "PromoterDM", "PromoterMM". Defaults to "singleTF"
+#' @param userBin custom user-passed bins in the format list(bin1 = c(start, end), bin2 = c(start, end), ...). Defaults to NULL. If used the arg BinType is ignored
+#' @param StrandAware TRUE or FALSE (default)
+#' 
+#' @import GenomicRanges
+#' 
+#' @export
+#' 
+MakeBins <- function(RegionsOfInterest, BinType = "singleTF", userBin = NULL, StrandAware = FALSE){
+    
+  ### Select type of bin and bin coordinates
+  ### Select viewpoint (start coordinate of the region of interest)
+  message("Designing sorting bins")
+  
+  if(!is.null(userBin)){
+    # user-defined bin
+    bins <- userBin
+  } else if(BinType == "singleTF"){
+    viewPoint = start(RegionsOfInterest) + (end(RegionsOfInterest)-start(RegionsOfInterest))/2
+    bins <- list(up = c(-35,-25), TFBS = c(-15,15), down = c(25,35))
+  } else if(BinType == "TFcluster"){
+    TFBS_cluster = sort(RegionsOfInterest, by = ~ seqnames + start + end)
+    viewPoint = start(TFBS_cluster) + (end(TFBS_cluster)-start(TFBS_cluster))/2
+    bins = list(up = c(-35,-25), TFBS = c(-7,7), down = c(25,35))
+  } else if(BinType == "PromoterDM"){
+    viewPoint <- as.numeric(start(RegionsOfInterest))
+    bins <- list(up = c(-58, -43), TATA = c(-36, -22), INR = c(-6, 14), DPE = c(28, 47))
+  } else if(BinType == "PromoterMM"){
+    viewPoint <- as.numeric(start(RegionsOfInterest))
+    bins <- list(up = c(-58, -43), TATA = c(-36, -22), PolII = c(28, 47), down=c(54, 69))
+  }
+  
+  ### bin coordinates
+  binList <- lapply(1:length(bins), function(i){
+    
+    # select bin
+    binAbsPos <- bins[[i]]
+    binName <- names(bins[i])
+    
+    if(BinType %in% c("singleTF", "TFcluster") & i == 1){
+      
+      if(StrandAware == TRUE){
+        BinsCoordinates <- GRanges(seqnames = seqnames(RegionsOfInterest),
+                                   ranges = IRanges(
+                                     start = ifelse(as.logical(strand(RegionsOfInterest) == '+'), min(viewPoint) + binAbsPos[1], max(viewPoint) - binAbsPos[2]),
+                                     end = ifelse(as.logical(strand(RegionsOfInterest) == '+'), min(viewPoint) + binAbsPos[2], max(viewPoint) - binAbsPos[1])),
+                                   strand = strand(RegionsOfInterest),
+                                   seqinfo = seqinfo(RegionsOfInterest))
+      } else if(StrandAware == FALSE){
+        BinsCoordinates <- GRanges(seqnames = seqnames(RegionsOfInterest),
+                                   ranges = IRanges(
+                                     start =  min(viewPoint) + binAbsPos[1],
+                                     end = min(viewPoint) + binAbsPos[2]),
+                                   seqinfo = seqinfo(RegionsOfInterest))
+        
+      }
+      
+    } else if(BinType %in% c("singleTF", "TFcluster") & i == 3){
+      
+      if(StrandAware == TRUE){
+        BinsCoordinates <- GRanges(seqnames = seqnames(RegionsOfInterest),
+                                   ranges = IRanges(
+                                     start = ifelse(as.logical(strand(RegionsOfInterest) == '+'), max(viewPoint) + binAbsPos[1], min(viewPoint) - binAbsPos[2]),
+                                     end = ifelse(as.logical(strand(RegionsOfInterest) == '+'), max(viewPoint) + binAbsPos[2], min(viewPoint) - binAbsPos[1])),
+                                   strand = strand(RegionsOfInterest),
+                                   seqinfo = seqinfo(RegionsOfInterest))
+      } else if(StrandAware == FALSE){
+        BinsCoordinates <- GRanges(seqnames = seqnames(RegionsOfInterest),
+                                   ranges = IRanges(
+                                     start =  max(viewPoint) + binAbsPos[1],
+                                     end = max(viewPoint) + binAbsPos[2]),
+                                   seqinfo = seqinfo(RegionsOfInterest))
+      } 
+      
+    } else {
+      
+      # get bin according to StrandAware status
+      if(StrandAware == TRUE){
+        BinsCoordinates <- GRanges(seqnames = seqnames(RegionsOfInterest),
+                                   ranges = IRanges(
+                                     start = ifelse(as.logical(strand(RegionsOfInterest) == '+'), viewPoint + binAbsPos[1], viewPoint - binAbsPos[2]),
+                                     end = ifelse(as.logical(strand(RegionsOfInterest) == '+'), viewPoint + binAbsPos[2], viewPoint - binAbsPos[1])),
+                                   strand = strand(RegionsOfInterest),
+                                   seqinfo = seqinfo(RegionsOfInterest))
+      } else if(StrandAware == FALSE){
+        BinsCoordinates <- GRanges(seqnames = seqnames(RegionsOfInterest),
+                                   ranges = IRanges(
+                                     start =  viewPoint + binAbsPos[1],
+                                     end = viewPoint + binAbsPos[2]),
+                                   seqinfo = seqinfo(RegionsOfInterest))
+        
+      }
+    
+  }
+    
+    # bin name (eg. upstream, TFBS, etc.)
+    BinsCoordinates$name <- binName
+    
+    # feature name
+    names(BinsCoordinates) <- names(RegionsOfInterest)
+    
+    return(BinsCoordinates)
+  })
+  
+  binList <- unique(sort(unlist(GRangesList(binList))))
+  
+  # group by target promoters or TFs
+  # binList <- split(binList, names(binList))
+  
+  return(binList)
+}
+
 #' Summarize methylation inside sorting bins
 #'
 #' @param MethSM Single molecule matrix
@@ -44,6 +159,7 @@ BinMethylation = function(MethSM, Bin){
 #' @param MethSM Single molecule matrix
 #' @param BinsCoordinates IRanges object of absolute coordinates for sorting bins
 #' @param coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed
+#' @param strand add strand awareness to single molecule sorting. Defaults "+"
 #'
 #' @import BiocGenerics
 #'
@@ -64,7 +180,7 @@ BinMethylation = function(MethSM, Bin){
 #'
 #' SortedReads = SortReads(MethSM, BinsCoordinates)
 #'
-SortReads = function(MethSM, BinsCoordinates, coverage=NULL){
+SortReads = function(MethSM, BinsCoordinates, coverage=NULL, strand = "+"){
 
   message("Collecting summarized methylation for bins")
   binMethylationList = lapply(seq_along(BinsCoordinates), function(i){
@@ -81,6 +197,11 @@ SortReads = function(MethSM, BinsCoordinates, coverage=NULL){
 	message("Summarizing reads into patterns")
 	binMethylationList_subset = lapply(binMethylationList, function(x){as.character(x[ReadsSubset])})
 	MethPattern = Reduce(paste0, binMethylationList_subset)
+	
+	# reverse pattern if strand == "-"
+	if(strand == "-"){
+	  MethPattern <- unlist(lapply(MethPattern, stri_reverse))
+	}
 
 	message("Splitting reads by pattern")
 	if(length(ReadsSubset)>0){
@@ -163,6 +284,43 @@ SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(
   
   return(SortedReads)
 
+}
+
+#' Wrapper to SortReads for Promoter case
+#'
+#' @param MethSM Single molecule matrix list as returned by CallContextMethylation
+#' @param TSSs Transcription Start Sites to use for sorting, passed as a GRanges object of length >= 1
+#' @param bins list of 3 relative bin coordinates. Defaults to list(c(-35,-25), c(-7,7), c(25,35)).
+#'             bins[[1]] represents the upstream bin, with coordinates relative to the start of the most upstream TFBS.
+#'             bins[[2]] represents all the TFBS bins, with coordinates relative to the center of each TFBS.
+#'             bins[[3]] represents the downstream bin, with coordinates relative to the end of the most downstream TFBS.
+#' @param coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30
+#'
+#' @return List of reads sorted by TF cluster
+#'
+#' @export
+#'
+#' @examples
+#'
+#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106216, 88106253), c(88106226, 88106263)), strand = "-")
+#' elementMetadata(TFBSs)$name = c("NRF1", "NRF1")
+#' names(TFBSs) = c(paste0("TFBS_", c(4305215, 4305216)))
+#'
+#' SortedReads = SortReadsByTFCluster(MethSM = MethSM, TFBSs = TFBS_cluster)
+#'
+SortReadsByPromoter = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(-7,7), c(25,35)), coverage = 30){
+  
+  message("Sorting TFBSs by genomic coordinates")
+  TFBS_cluster = sort(TFBS_cluster, by = ~ seqnames + start + end)
+  message("Designing sorting bins")
+  TFBS_centers = start(TFBS_cluster) + (end(TFBS_cluster)-start(TFBS_cluster))/2
+  BinsCoordinates = IRanges(start = c(min(TFBS_centers)+bins[[1]][1], TFBS_centers+bins[[2]][1], max(TFBS_centers)+bins[[3]][1]),
+                            end = c(min(TFBS_centers)+bins[[1]][2], TFBS_centers+bins[[2]][2], max(TFBS_centers)+bins[[3]][2]))
+  
+  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates, coverage = coverage)
+  
+  return(SortedReads)
+  
 }
 
 #' Convenience for calculating state frequencies
