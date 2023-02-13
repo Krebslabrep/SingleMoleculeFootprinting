@@ -142,7 +142,7 @@ PlotAvgSMF = function(MethGR, MethSM=NULL, RegionOfInterest, SortedReads=NULL, S
     {if(!is.null(TFBSs)){geom_rect(TFBS_PlottingDF, mapping = aes(xmin=start, xmax=end, ymin=-0.09, ymax=-0.04), inherit.aes = FALSE)}} +
     {if(!is.null(TFBSs)){ggrepel::geom_text_repel(TFBS_PlottingDF, mapping = aes(x=start+((end-start)/2), y=-0.02, label=TF), min.segment.length = .1, max.overlaps = 1e+05, inherit.aes = FALSE)}} + #, size=4.5
     # {if(!is.null(SNPs)){geom_text(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord, label=Sequence), size=3, inherit.aes = FALSE)}} +
-    {if(!is.null(SNPs)){geom_tile(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord), color = ColorsToUse[2], height = 0.05, width = 3, inherit.aes = FALSE)}} +
+    {if(!is.null(SNPs)){geom_tile(SNPs_PlottingDF, mapping = aes(x=start, y=y_coord), color = ColorsToUse[2], fill = ColorsToUse[2], height = 0.05, width = 3, inherit.aes = FALSE)}} +
     {if(!is.null(SortingBins)){geom_rect(Bins_PlottingDF, mapping = aes(xmin=start, xmax=end, ymin=-0.02, ymax=0), color="black", fill="white", inherit.aes = FALSE)}} +
     geom_hline(aes(yintercept=0)) +
     ylab("SMF") +
