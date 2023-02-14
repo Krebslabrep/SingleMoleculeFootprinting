@@ -259,39 +259,42 @@ SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(
 #' Wrapper to SortReads for Promoter case
 #'
 #' @param MethSM Single molecule matrix list as returned by CallContextMethylation
-#' @param TSSs Transcription Start Sites to use for sorting, passed as a GRanges object of length >= 1
-#' @param bins list of 3 relative bin coordinates. Defaults to list(c(-35,-25), c(-7,7), c(25,35)).
-#'             bins[[1]] represents the upstream bin, with coordinates relative to the start of the most upstream TFBS.
-#'             bins[[2]] represents all the TFBS bins, with coordinates relative to the center of each TFBS.
-#'             bins[[3]] represents the downstream bin, with coordinates relative to the end of the most downstream TFBS.
+#' @param TSS Transcription Start Site to use for sorting, passed as a GRanges object of length >= 1
+#' @param species species for promoter sorting (either "MM" for mouse or "DM" for Drosophila)
 #' @param coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30
 #'
-#' @return List of reads sorted by TF cluster
+#' @return List of reads sorted by promoter
 #'
 #' @export
 #'
 #' @examples
 #'
-#' TFBSs = GenomicRanges::GRanges("chr6", IRanges(c(88106216, 88106253), c(88106226, 88106263)), strand = "-")
-#' elementMetadata(TFBSs)$name = c("NRF1", "NRF1")
-#' names(TFBSs) = c(paste0("TFBS_", c(4305215, 4305216)))
+#' TSS = GenomicRanges::GRanges("chr1", IRanges(4785709), strand = "-")
+#' elementMetadata(TSS)$gene_id = "NM_001177658.1"
+#' names(TSS) = "NM_001177658.1"
 #'
-#' SortedReads = SortReadsByTFCluster(MethSM = MethSM, TFBSs = TFBS_cluster)
+#' SortedReads = SortReadsBySinglePromoter(MethSM = MethSM, TSS = TSS, species = "MM", coverage = 30)
 #'
-SortReadsByPromoter = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(-7,7), c(25,35)), coverage = 30){
+SortReadsBySinglePromoter = function(MethSM, TSS, species = species, coverage = 30){
   
-  message("Sorting TFBSs by genomic coordinates")
-  TFBS_cluster = sort(TFBS_cluster, by = ~ seqnames + start + end)
   message("Designing sorting bins")
-  TFBS_centers = start(TFBS_cluster) + (end(TFBS_cluster)-start(TFBS_cluster))/2
-  BinsCoordinates = IRanges(start = c(min(TFBS_centers)+bins[[1]][1], TFBS_centers+bins[[2]][1], max(TFBS_centers)+bins[[3]][1]),
-                            end = c(min(TFBS_centers)+bins[[1]][2], TFBS_centers+bins[[2]][2], max(TFBS_centers)+bins[[3]][2]))
+  if (species == "MM"){
+    BinType = "PromoterMM"
+  } else if (species == "DM"){
+    BinType = "PromoterDM"
+  } else {
+    stop("Please provide either MM for mouse or DM for Drosophila!!!")
+  }
   
-  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates, coverage = coverage)
+  BinsCoordinates = MakeBins(RegionsOfInterest = TSS, BinType = BinType, userBin = NULL, StrandAware = TRUE)
+  strand = unique(as.character(strand(BinsCoordinates)))
+  SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates, coverage = coverage, strand = strand)
   
   return(SortedReads)
   
 }
+
+
 
 #' Convenience for calculating state frequencies
 #' 

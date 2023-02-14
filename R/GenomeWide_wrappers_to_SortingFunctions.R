@@ -312,3 +312,102 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
   
 }
 
+
+
+#' Convenience wrapper to sort single molecule according to promoters at multiple TSSs in the genome
+#' 
+#' The function starts from a list of single TFBSs, arranges them into clusters, calls methylation at the interested sites and outputs sorted reads
+#' 
+#' @param sampleSheet QuasR pointer file
+#' @param sample samples to use, from the SampleName field of the sampleSheet
+#' @param genome BSgenome
+#' @param coverage coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.
+#' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.
+# #' @param clObj cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
+#' @param TSSsc GRanges object of transcription factor binding sites coordinates
+#' @param species species for promoter sorting (either "MM" for mouse or "DM" for Drosophila)
+#' @param max_interTF_distance maximum distance between two consecutive TFBSs for them to be grouped in the same window
+#' @param max_window_width upper limit to window width. This value should be adjusted according to the user's system as it determines the amount of memory used in the later context methylation call
+#' @param min_cluster_width lower limit to window width. Corresponds to the scenario when a window contains a single TFBS.
+#' @param binList list of promoter bins for each TSS, these were generated from the 'MakeBins' function
+#' @param sorting_coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30.
+#' @param cores number of cores to use for parallel processing of multiple Methylation Calling Windows (i.e. groupings of adjecent TFBS clusters)
+#' 
+#' @importFrom parallel mclapply
+#' @importFrom IRanges findOverlaps
+#' @importFrom S4Vectors queryHits
+#' 
+#' @return list where [[1]] is the TSS GRanges object describing coordinates TSSs used to sort single molecules
+#'                    [[2]] is a list of SortedReads nested per TSS and sample
+#'                    [[3]] is a tibble reporting the count (and frequency) of reads per state, sample and TSS
+#' 
+#' @export
+#' 
+SortReadsByPromoter_MultiSiteWrapper = function(sampleSheet, sample, genome, coverage = 20, ConvRate.thr = 0.8, # clObj=NULL, ---> parameters passed to CallContextMethylation
+                                                TSSsc,
+                                                species = "MM",
+                                                max_interTF_distance = 100000, max_window_width = 5000000, min_cluster_width = 600, # ---> parameters passed to Create_MethylationCallingWindows
+                                                sorting_coverage = 30, # ---> parameters passed to SortReadsBySinglePromoter
+                                                cores = 1
+){
+  
+  message("(1) DESIGNING COMMON METHYLATION CALLING WINDOWS ACROSS TSSs")
+  MethylationCallingWindows = Create_MethylationCallingWindows(TFBS_cluster_coordinates = TSSsc,
+                                                               max_intercluster_distance = max_interTF_distance,
+                                                               max_window_width = max_window_width,
+                                                               min_cluster_width = min_cluster_width)
+  message(paste0(length(MethylationCallingWindows), " METHYLATION CALLING WINDOWS DESIGNED"))
+  
+  message("(2) CALLING METHYLATION AND SORTING")
+  parallel::mclapply(seq_along(MethylationCallingWindows), function(i){
+    
+    print(i)
+    
+    CurrentWindow = MethylationCallingWindows[i]
+    ExperimentType = suppressMessages(SingleMoleculeFootprinting::DetectExperimentType(Samples = sample))
+    
+    CallContextMethylation(sampleSheet = sampleSheet,
+                           sample = sample,
+                           genome = genome,
+                           RegionOfInterest = CurrentWindow,
+                           coverage = coverage,
+                           ConvRate.thr = ConvRate.thr,
+                           returnSM = TRUE) -> Methylation
+    
+    if(length(Methylation[[1]]) == 0){
+      return()
+    }
+    
+    Overlaps = findOverlaps(TSSsc, CurrentWindow)
+    TSSsc_to_sort = TSSsc[queryHits(Overlaps)]
+    
+    lapply(seq_along(TSSsc_to_sort), function(j){
+      if(ExperimentType == "NO"){
+        Methylation[[2]] = lapply(Methylation[[2]], function(x){x$DGCHN})
+      }
+      
+      SortReadsBySinglePromoter(MethSM = Methylation[[2]],
+                                TSS = TSSsc_to_sort[j],
+                                species = species,
+                                coverage = sorting_coverage)
+    }) -> SortedReads_window
+    names(SortedReads_window) = names(TSSsc_to_sort)
+    SortedReads_window
+     
+  }, mc.cores = cores) -> SortedReads
+  SortedReads = unlist(SortedReads, recursive = FALSE)
+  
+  message("(3) CALCULATE STATE FREQUENCIES")
+  Reduce(rbind,
+         parallel::mclapply(seq_along(SortedReads), function(i){
+           
+           StateQuantification_tbl = StateQuantification(SortedReads = SortedReads[[i]], states = NULL)
+           StateQuantification_tbl$TSS = names(SortedReads[i])
+           StateQuantification_tbl
+           
+         }, mc.cores = cores)) -> StateFrequency_tbl
+  
+  return(list(TSSsc, SortedReads, StateFrequency_tbl))
+  
+}
+
