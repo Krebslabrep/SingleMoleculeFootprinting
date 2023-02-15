@@ -316,7 +316,7 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
 
 #' Convenience wrapper to sort single molecule according to promoters at multiple TSSs in the genome
 #' 
-#' The function starts from a list of single TFBSs, arranges them into clusters, calls methylation at the interested sites and outputs sorted reads
+#' The function starts from a list of single TSSs, arranges them into chuncks of nearby TSSs, calls methylation at the interested sites and outputs sorted reads
 #' 
 #' @param sampleSheet QuasR pointer file
 #' @param sample samples to use, from the SampleName field of the sampleSheet
@@ -326,10 +326,9 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
 # #' @param clObj cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
 #' @param TSSsc GRanges object of transcription factor binding sites coordinates
 #' @param species species for promoter sorting (either "MM" for mouse or "DM" for Drosophila)
-#' @param max_interTF_distance maximum distance between two consecutive TFBSs for them to be grouped in the same window
+#' @param max_interTF_distance maximum distance between two consecutive TSSs for them to be grouped in the same window
 #' @param max_window_width upper limit to window width. This value should be adjusted according to the user's system as it determines the amount of memory used in the later context methylation call
-#' @param min_cluster_width lower limit to window width. Corresponds to the scenario when a window contains a single TFBS.
-#' @param binList list of promoter bins for each TSS, these were generated from the 'MakeBins' function
+#' @param min_cluster_width lower limit to window width. Corresponds to the scenario when a window contains a single TSS
 #' @param sorting_coverage integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30.
 #' @param cores number of cores to use for parallel processing of multiple Methylation Calling Windows (i.e. groupings of adjecent TFBS clusters)
 #' 
