@@ -66,25 +66,48 @@ TFpairStates = function(){
   return(grouped_states)
 }
 
-#' Design states for promoters
+#' Design states for promoters (mouse)
 #'
 #' @return list of states
+#' @export
 #'
-Promoterstates = function(){
+PromoterstatesMM = function(){
   
-  allPos=expand.grid(c(0,1),c(0,1),c(0,1),c(0,1))
-  patternStrings=names(table(apply(allPos,1,function(x){(paste(as.character((x)),collapse=''))})))
-  #using only 'pure' states
-  states=list(
-    unassigned=patternStrings[!seq_along(patternStrings) %in% c(1:5,8,9,10,12,13,14:16)],
-    nucleosome=patternStrings[c(1:5,9,13)],
-    unbound=patternStrings[c(8,15,16)],
-    PIC=patternStrings[12],
-    PIC.polII=patternStrings[10],
-    polII=patternStrings[14]
+  allPos = expand.grid(c(0,1),c(0,1),c(0,1),c(0,1))
+  patternStrings = names(table(apply(allPos,1,function(x){(paste(as.character((x)),collapse=''))})))
+
+  states = list(
+    unassigned = patternStrings[!seq_along(patternStrings) %in% c(1:5,8,9,10,12,13,14:16)],
+    nucleosome = patternStrings[c(1:5,9,13)],
+    unbound = patternStrings[c(8,15,16)],
+    PIC = patternStrings[12],
+    PIC.polII = patternStrings[10],
+    polII = patternStrings[14]
   )
   
   return(states)
+}
+
+#' Design states for promoters (Drosophila)
+#'
+#' @return list of states
+#' @export
+#'
+PromoterstatesDM = function(){
+  allPos = expand.grid(c(0,1),c(0,1),c(0,1),c(0,1))
+  patternStrings = names(table(apply(allPos,1,function(x){(paste(as.character((x)),collapse=''))})))
+  
+  states = list(
+    unassigned = patternStrings[c(4,6,7,10,13,14)],
+    nucleosome = patternStrings[c(1,2,3,5,9)],
+    unbound = patternStrings[c(8,16)],
+    PIC = patternStrings[12],
+    PIC.polII = patternStrings[11],
+    polII = patternStrings[15]
+  )
+  
+  return(states)
+
 }
 
 
