@@ -34,17 +34,15 @@ SortReadsByPromoter_MultiSiteWrapper(
 
 \item{species}{species for promoter sorting (either "MM" for mouse or "DM" for Drosophila)}
 
-\item{max_interTF_distance}{maximum distance between two consecutive TFBSs for them to be grouped in the same window}
+\item{max_interTF_distance}{maximum distance between two consecutive TSSs for them to be grouped in the same window}
 
 \item{max_window_width}{upper limit to window width. This value should be adjusted according to the user's system as it determines the amount of memory used in the later context methylation call}
 
-\item{min_cluster_width}{lower limit to window width. Corresponds to the scenario when a window contains a single TFBS.}
+\item{min_cluster_width}{lower limit to window width. Corresponds to the scenario when a window contains a single TSS}
 
 \item{sorting_coverage}{integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30.}
 
 \item{cores}{number of cores to use for parallel processing of multiple Methylation Calling Windows (i.e. groupings of adjecent TFBS clusters)}
-
-\item{binList}{list of promoter bins for each TSS, these were generated from the 'MakeBins' function}
 }
 \value{
 list where [[1]] is the TSS GRanges object describing coordinates TSSs used to sort single molecules
@@ -52,5 +50,5 @@ list where [[1]] is the TSS GRanges object describing coordinates TSSs used to s
                    [[3]] is a tibble reporting the count (and frequency) of reads per state, sample and TSS
 }
 \description{
-The function starts from a list of single TFBSs, arranges them into clusters, calls methylation at the interested sites and outputs sorted reads
+The function starts from a list of single TSSs, arranges them into chuncks of nearby TSSs, calls methylation at the interested sites and outputs sorted reads
 }
