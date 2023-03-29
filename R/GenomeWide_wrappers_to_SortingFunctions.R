@@ -351,18 +351,10 @@ SortReadsByPromoter_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
 ){
   
   message("(1) DESIGNING COMMON METHYLATION CALLING WINDOWS ACROSS TSSs")
-  if (species == "DM"){
-    message("WORKING ON DROSOPHILA GENOME: METHYLATION CALLING WINDOWS ARE AUTOSOMES")
-    MethylationCallingWindows = GRanges(seqnames = seqnames(Dmelanogaster)[1:5],
-                                        ranges = IRanges(start = rep(1, 5), end = seqlengths(Dmelanogaster)[1:5]),
-                                        strand = rep("*", 5))
-  } else if (species == "MM"){
-    message("WORKING ON MOUSE GENOME")
-    MethylationCallingWindows = Create_MethylationCallingWindows(TFBS_cluster_coordinates = TSSsc,
-                                                                 max_intercluster_distance = max_interTF_distance,
-                                                                 max_window_width = max_window_width,
-                                                                 min_cluster_width = min_cluster_width)
-  }
+  MethylationCallingWindows = Create_MethylationCallingWindows(TFBS_cluster_coordinates = TSSsc,
+                                                               max_intercluster_distance = max_interTF_distance,
+                                                               max_window_width = max_window_width,
+                                                               min_cluster_width = min_cluster_width)
   
   message(paste0(length(MethylationCallingWindows), " METHYLATION CALLING WINDOWS DESIGNED"))
   
