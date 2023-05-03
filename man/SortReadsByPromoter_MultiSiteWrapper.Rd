@@ -11,7 +11,6 @@ SortReadsByPromoter_MultiSiteWrapper(
   coverage = 20,
   ConvRate.thr = 0.8,
   TSSsc,
-  species = "MM",
   max_interTF_distance = 1e+05,
   max_window_width = 5e+06,
   min_cluster_width = 600,
@@ -31,8 +30,6 @@ SortReadsByPromoter_MultiSiteWrapper(
 \item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.}
 
 \item{TSSsc}{GRanges object of transcription factor binding sites coordinates}
-
-\item{species}{species for promoter sorting (either "MM" for mouse or "DM" for Drosophila)}
 
 \item{max_interTF_distance}{maximum distance between two consecutive TSSs for them to be grouped in the same window}
 

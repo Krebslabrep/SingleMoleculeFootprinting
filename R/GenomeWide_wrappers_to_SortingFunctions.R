@@ -325,7 +325,6 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
 #' @param ConvRate.thr Convesion rate threshold. Double between 0 and 1, defaults to 0.8. To skip this filtering step, set to NULL. For more information, check out the details section.
 # #' @param clObj cluster object for parallel processing of multiple samples/RegionsOfInterest. For now only used by qMeth call for bulk methylation. Should be the output of a parallel::makeCluster() call
 #' @param TSSsc GRanges object of transcription factor binding sites coordinates
-#' @param species species for promoter sorting (either "MM" for mouse or "DM" for Drosophila)
 #' @param max_interTF_distance maximum distance between two consecutive TSSs for them to be grouped in the same window
 #' @param max_window_width upper limit to window width. This value should be adjusted according to the user's system as it determines the amount of memory used in the later context methylation call
 #' @param min_cluster_width lower limit to window width. Corresponds to the scenario when a window contains a single TSS
@@ -344,7 +343,6 @@ SortReadsByTFCluster_MultiSiteWrapper = function(sampleSheet, sample, genome, co
 #' 
 SortReadsByPromoter_MultiSiteWrapper = function(sampleSheet, sample, genome, coverage = 20, ConvRate.thr = 0.8, # clObj=NULL, ---> parameters passed to CallContextMethylation
                                                 TSSsc,
-                                                species = "MM",
                                                 max_interTF_distance = 100000, max_window_width = 5000000, min_cluster_width = 600, # ---> parameters passed to Create_MethylationCallingWindows
                                                 sorting_coverage = 30, # ---> parameters passed to SortReadsBySinglePromoter
                                                 cores = 1
@@ -388,7 +386,6 @@ SortReadsByPromoter_MultiSiteWrapper = function(sampleSheet, sample, genome, cov
       
       SortReadsBySinglePromoter(MethSM = Methylation[[2]],
                                 TSS = TSSsc_to_sort[j],
-                                species = species,
                                 coverage = sorting_coverage)
     }) -> SortedReads_window
     names(SortedReads_window) = names(TSSsc_to_sort)

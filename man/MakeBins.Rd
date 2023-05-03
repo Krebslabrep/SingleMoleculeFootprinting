@@ -14,7 +14,7 @@ MakeBins(
 \arguments{
 \item{RegionsOfInterest}{GRanges of length == 1 (for single TFs and promoters) or >= 1 for TF clusters containing the biological loci to sort around}
 
-\item{BinType}{one of "singleTF", "TFcluster", "PromoterDM", "PromoterMM". Defaults to "singleTF"}
+\item{BinType}{one of "singleTF", "TFcluster", "Promoter". Defaults to "singleTF"}
 
 \item{userBin}{custom user-passed bins in the format list(bin1 = c(start, end), bin2 = c(start, end), ...). Defaults to NULL. If used the arg BinType is ignored}
 

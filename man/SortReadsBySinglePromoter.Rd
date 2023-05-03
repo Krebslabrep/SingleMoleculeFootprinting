@@ -4,16 +4,16 @@
 \alias{SortReadsBySinglePromoter}
 \title{Wrapper to SortReads for Promoter case}
 \usage{
-SortReadsBySinglePromoter(MethSM, TSS, species = species, coverage = 30)
+SortReadsBySinglePromoter(MethSM, TSS, coverage = 30)
 }
 \arguments{
 \item{MethSM}{Single molecule matrix list as returned by CallContextMethylation}
 
 \item{TSS}{Transcription Start Site to use for sorting, passed as a GRanges object of length >= 1}
 
-\item{species}{species for promoter sorting (either "MM" for mouse or "DM" for Drosophila)}
-
 \item{coverage}{integer. Minimum number of reads covering all sorting bins for sorting to be performed. Defaults to 30}
+
+\item{species}{species for promoter sorting (either "MM" for mouse or "DM" for Drosophila)}
 }
 \value{
 List of reads sorted by promoter

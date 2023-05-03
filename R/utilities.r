@@ -71,7 +71,7 @@ TFpairStates = function(){
 #' @return list of states
 #' @export
 #'
-PromoterstatesMM = function(){
+Promoterstates = function(){
   
   allPos = expand.grid(c(0,1),c(0,1),c(0,1),c(0,1))
   patternStrings = names(table(apply(allPos,1,function(x){(paste(as.character((x)),collapse=''))})))
@@ -86,28 +86,6 @@ PromoterstatesMM = function(){
   )
   
   return(states)
-}
-
-#' Design states for promoters (Drosophila)
-#'
-#' @return list of states
-#' @export
-#'
-PromoterstatesDM = function(){
-  allPos = expand.grid(c(0,1),c(0,1),c(0,1),c(0,1))
-  patternStrings = names(table(apply(allPos,1,function(x){(paste(as.character((x)),collapse=''))})))
-  
-  states = list(
-    unassigned = patternStrings[c(4,6,7,10,13,14)],
-    nucleosome = patternStrings[c(1,2,3,5,9)],
-    unbound = patternStrings[c(8,16)],
-    PIC = patternStrings[12],
-    PIC.polII = patternStrings[11],
-    polII = patternStrings[15]
-  )
-  
-  return(states)
-
 }
 
 

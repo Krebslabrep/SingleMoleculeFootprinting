@@ -1,7 +1,7 @@
 #' Generic function to design bins based on different user case
 #' 
 #' @param RegionsOfInterest GRanges of length == 1 (for single TFs and promoters) or >= 1 for TF clusters containing the biological loci to sort around
-#' @param BinType one of "singleTF", "TFcluster", "PromoterDM", "PromoterMM". Defaults to "singleTF"
+#' @param BinType one of "singleTF", "TFcluster", "Promoter". Defaults to "singleTF"
 #' @param userBin custom user-passed bins in the format list(bin1 = c(start, end), bin2 = c(start, end), ...). Defaults to NULL. If used the arg BinType is ignored
 #' @param StrandAware TRUE or FALSE (default). If BinType is "singleTF" or "TFcluster", StrandAware argument is ignored
 #' 
@@ -25,10 +25,7 @@ MakeBins <- function(RegionsOfInterest, BinType = "singleTF", userBin = NULL, St
     RegionsOfInterest = sort(RegionsOfInterest, by = ~ seqnames + start + end)
     viewPoint = start(RegionsOfInterest) + (end(RegionsOfInterest)-start(RegionsOfInterest))/2
     bins = list(up = c(-35,-25), TFBS = c(-7,7), down = c(25,35))
-  } else if(BinType == "PromoterDM"){
-    viewPoint <- as.numeric(start(RegionsOfInterest))
-    bins <- list(up = c(-58, -43), TATA = c(-36, -22), INR = c(-6, 14), DPE = c(28, 47))
-  } else if(BinType == "PromoterMM"){
+  } else if(BinType == "Promoter"){
     viewPoint <- as.numeric(start(RegionsOfInterest))
     bins <- list(up = c(-58, -43), TATA = c(-36, -22), PolII = c(28, 47), down=c(54, 69))
   }
@@ -275,17 +272,10 @@ SortReadsByTFCluster = function(MethSM, TFBS_cluster, bins = list(c(-35,-25), c(
 #'
 #' SortedReads = SortReadsBySinglePromoter(MethSM = MethSM, TSS = TSS, species = "MM", coverage = 30)
 #'
-SortReadsBySinglePromoter = function(MethSM, TSS, species = species, coverage = 30){
+SortReadsBySinglePromoter = function(MethSM, TSS, coverage = 30){
   
   message("Designing sorting bins")
-  if (species == "MM"){
-    BinType = "PromoterMM"
-  } else if (species == "DM"){
-    BinType = "PromoterDM"
-  } else {
-    stop("Please provide either MM for mouse or DM for Drosophila!!!")
-  }
-  
+  BinType = "Promoter"
   BinsCoordinates = MakeBins(RegionsOfInterest = TSS, BinType = BinType, userBin = NULL, StrandAware = TRUE)
   strand = unique(as.character(strand(BinsCoordinates)))
   SortedReads = lapply(MethSM, SortReads, BinsCoordinates = BinsCoordinates, coverage = coverage, strand = strand)
