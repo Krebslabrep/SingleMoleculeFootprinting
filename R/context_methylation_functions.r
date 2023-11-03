@@ -80,21 +80,27 @@ GetSingleMolMethMat = function(QuasRprj,range,sample){
   return(MethMatrix_list)
 }
 
+#' Compute MethGR from MethSM
 #'
-MethSM.to.MethGR = function(MethSM, RegionOfInterest){
+#' @param MethSM
+#' @param chromosome 
+#'
+#' @export
+#' 
+MethSM.to.MethGR = function(MethSM, chromosome){
   
   lapply(seq_along(MethSM), function(i){
     
     if(any(dim(MethSM[[i]])) > 0){
-      MethGR = GRanges(seqnames = seqnames(RegionOfInterest), IRanges(start = as.integer(colnames(MethSM[[i]])), width = 1), strand = MethSM[[i]]@factors$strand)
-      MethGR$coverage = Matrix::colSums(MethSM[[i]]>0)
-      MethGR$methylated = Matrix::colSums(MethSM[[i]]==2)
-      colnames(elementMetadata(MethGR)) = paste0(names(MethSM)[i], c("_T", "_M"))
+      MethGR = GRanges(seqnames = chromosome, IRanges(start = as.integer(colnames(MethSM[[i]])), width = 1), strand = MethSM[[i]]@factors$strand)
+      MethGR$`_T` = Matrix::colSums(MethSM[[i]]>0)
+      MethGR$`_M` = Matrix::colSums(MethSM[[i]]==2)
+      colnames(elementMetadata(MethGR)) = paste0(names(MethSM)[i], colnames(elementMetadata(MethGR)))
     } else {
       MethGR = GRanges("mock", IRanges(1,2))
-      MethGR$coverage = NA
-      MethGR$methylated = NA
-      colnames(elementMetadata(MethGR)) = paste0(names(MethSM)[i], c("_T", "_M"))
+      MethGR$`_T` = NA
+      MethGR$`_M` = NA
+      colnames(elementMetadata(MethGR)) = paste0(names(MethSM)[i], colnames(elementMetadata(MethGR)))
       MethGR = MethGR[0]
     }
     
@@ -104,7 +110,7 @@ MethSM.to.MethGR = function(MethSM, RegionOfInterest){
   
   MethGR = Reduce(full.join.granges, MethGR.list)
   tmp = as.matrix(elementMetadata(MethGR))
-  tmp[is.na(elementMetadata(MethGR))] = 0
+  tmp[is.na(tmp)] = 0 
   elementMetadata(MethGR) = tmp
   MethGR = sort(MethGR)
   
@@ -462,12 +468,9 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
     if (!is.null(ConvRate.thr)){
       MethSM_ConvRateFiltered = lapply(seq_along(unique(sample)), function(i){
         FilterByConversionRate(MethSM[[i]], chr = seqnames(RegionOfInterest), genome = genome, thr = ConvRate.thr)})
-      # for (i in seq_along(MethSM)){
-      #   MethGR = filter_reads_from_MethGR(MethGR, MethSM[[i]], MethSM_ConvRateFiltered[[i]], sampleIndex=i)
-      # }
       MethSM = MethSM_ConvRateFiltered
     }
-    MethGR = MethSM.to.MethGR(MethSM = MethSM, RegionOfInterest = RegionOfInterest)
+    MethGR = MethSM.to.MethGR(MethSM = MethSM, chromosome = unique(seqnames(RegionOfInterest)))
   } else {
     MethGR = QuasR::qMeth(QuasRprj_sample, mode="allC", query = RegionOfInterest, collapseBySample = TRUE, keepZero = TRUE, clObj = clObj) %>% sort()
   }
@@ -494,19 +497,6 @@ CallContextMethylation = function(sampleSheet, sample, genome, RegionOfInterest,
   CsToKeep = rowSums(as.matrix(elementMetadata(MethGR)[,CoverageCols])) > 0
   MethGR = MethGR[CsToKeep]
 
-  # if (returnSM){
-  #   message("Extracting single molecule matrix")
-  #   MethSM = GetSingleMolMethMat(QuasRprj, RegionOfInterest, sample)
-  #   if (!is.null(ConvRate.thr)){
-  #     MethSM_ConvRateFiltered = lapply(seq_along(unique(sample)), function(i){
-  #       FilterByConversionRate(MethSM[[i]], chr = seqnames(RegionOfInterest), genome = genome, thr = ConvRate.thr)})
-  #     for (i in seq_along(MethSM)){
-  #       MethGR = filter_reads_from_MethGR(MethGR, MethSM[[i]], MethSM_ConvRateFiltered[[i]], sampleIndex=i)
-  #     }
-  #     MethSM = MethSM_ConvRateFiltered
-  #   }
-  # }
-  
   message("Subsetting Cytosines by permissive genomic context (GC, HCG)") # Here we use a permissive context: needed for the strand collapsing
   ContextFilteredMethGR = list(GC = FilterContextCytosines(MethGR, genome, "GC"),
                                CG = FilterContextCytosines(MethGR, genome, "HCG"))

@@ -11,8 +11,10 @@ CollectCompositeData(
   TFBSs,
   window,
   coverage = 20,
-  ConvRate.thr = 0.8,
-  minCytosines = 0,
+  ConvRate.thr = NULL,
+  minCytosines = 1,
+  max_window_width = 5e+06,
+  max_intercluster_distance = 1e+06,
   cores = 1
 )
 }
@@ -29,9 +31,13 @@ CollectCompositeData(
 
 \item{coverage}{coverage threshold as integer for least number of reads to cover a cytosine for it to be carried over in the analysis. Defaults to 20.}
 
-\item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to 0.8. For more information, check out the details section}
+\item{ConvRate.thr}{Convesion rate threshold. Double between 0 and 1, defaults to NULL For more information, check out the details section}
 
 \item{minCytosines}{minimum number of cytosines covered per TFBS}
+
+\item{max_window_width}{Defautls to 5e+06. Check Create_MethylationCallingWindows documentation for details}
+
+\item{max_intercluster_distance}{Defautls to 1e+06. Check Create_MethylationCallingWindows documentation for details}
 
 \item{cores}{number of cores to use}
 }

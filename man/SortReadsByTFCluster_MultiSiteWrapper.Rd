@@ -15,6 +15,8 @@ SortReadsByTFCluster_MultiSiteWrapper(
   max_intersite_distance = 75,
   min_intersite_distance = 15,
   max_cluster_size = 10,
+  max_cluster_width = 300,
+  add.single.TFs = TRUE,
   max_intercluster_distance = 1e+05,
   max_window_width = 5e+06,
   min_cluster_width = 600,

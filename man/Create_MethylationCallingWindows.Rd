@@ -8,7 +8,10 @@ Create_MethylationCallingWindows(
   TFBS_cluster_coordinates,
   max_intercluster_distance = 1e+05,
   max_window_width = 5e+06,
-  min_cluster_width = 600
+  min_cluster_width = 600,
+  genomic.seqlenghts,
+  fix.window.size = FALSE,
+  max.window.size = 500
 )
 }
 \arguments{
@@ -19,6 +22,12 @@ Create_MethylationCallingWindows(
 \item{max_window_width}{upper limit to window width. This value should be adjusted according to the user's system as it determines the amount of memory used in the later context methylation call}
 
 \item{min_cluster_width}{lower limit to window width. Corresponds to the scenario when a window contains a single TFBS cluster.}
+
+\item{genomic.seqlenghts}{used to fix the windows spanning over chromosome edges. To be fetched by GenomeInfoDb::seqlengths() or equivalent.}
+
+\item{fix.window.size}{Defaults to FALSE. When TRUE, overrides arguments max_intercluster_distance and max_window_width and produces windows containing a fixed number of TFBS_clusters.}
+
+\item{max.window.size}{Max number of TFBS_clusters per window. Used only when fix.window.size is TRUE}
 }
 \value{
 GRanges object of window coordinates to be used for more efficient calls of CallContextMethylation

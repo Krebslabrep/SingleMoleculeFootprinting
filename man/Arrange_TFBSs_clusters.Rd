@@ -8,7 +8,9 @@ Arrange_TFBSs_clusters(
   TFBSs,
   max_intersite_distance = 75,
   min_intersite_distance = 15,
-  max_cluster_size = 6
+  max_cluster_size = 6,
+  max_cluster_width = 300,
+  add.single.TFs = TRUE
 )
 }
 \arguments{
@@ -20,6 +22,10 @@ Arrange_TFBSs_clusters(
 This parameter should be set according to the width of the bins used for later sorting. Defaults to 15.}
 
 \item{max_cluster_size}{maximum number of TFBSs to be contained in any given cluster. Defaults to 6}
+
+\item{max_cluster_width}{maximum width of TFBS clusters in bps. Defaults to 300}
+
+\item{add.single.TFs}{Whether to add the TFs not used to create TFBS.clusters to the list for sorting. Defaults to TRUE}
 }
 \value{
 list with two elements: ClusterCoordinates (GRanges object of clusters coordinates) and ClusterComposition (GRangesList of sites for each cluster)
