@@ -229,6 +229,7 @@ PlotSingleMoleculeStack = function(MethSM, RegionOfInterest){
 #' Set to "classical" for classical one-TF/TF-pair sorting (as described in Sönmezer et al, MolCell, 2021). Should be passed along with argument SortedReads set to the Sorted reads object as returned by SortReads function.
 #' If set to "custom", SortedReads should be a list with one item per sample (corresponding to MethSM).
 #' If set to "hierarchical.clustering", the function will perform hierarchical clustering in place on a subset of reads. Useful to check for duplicated reads in amplicon sequencing experiments.
+#' If set to "promoter", plots reads by promoter sorting
 #' If set to "None", it will plot unsorted reads.
 #' The argument sorting,strategy will always determine how to display reads with priority over the argument SortedReads
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function 
@@ -285,13 +286,19 @@ PlotSM = function(MethSM, RegionOfInterest, sorting.strategy="classical", Sorted
     message("Arranging reads according to custom sorting.strategy")
     MethSM = .arrange.MethSM.by.SortedReads(MethSM, SortedReads, ordered.sorting.patterns=NULL)
     
+    
   #### 4.
+  } else if(sorting.strategy == "promoter" & all(unlist(lapply(SortedReads, is.list)))){
+    ordered.sorting.patterns = as.character(unlist(Promoterstates()))
+    MethSM = .arrange.MethSM.by.SortedReads(MethSM, SortedReads, ordered.sorting.patterns)
+    
+  #### 5.
   } else if (sorting.strategy == "None"){
     
     if(!is.null(SortedReads)){warning("Ignoring passed SortedReads and plotting unsorted reads")}
     message("No sorting passed or specified, will plot unsorted reads")
     
-  #### 5.
+  #### 6.
   } else {stop("Invalid value for sorting.strategy")}
   
   PlotSingleMoleculeStack(MethSM, RegionOfInterest)
@@ -391,6 +398,12 @@ TFPairStateQuantificationPlot = function(SortedReads, states){
 #' Plot states quantification bar
 #'
 #' @param SortedReads Sorted reads object as returned by SortReads function
+#' @param sorting.strategy One of "classical" (default), "custom", "hierarchical.clustering" or "None".
+#' Set to "classical" for classical one-TF/TF-pair sorting (as described in Sönmezer et al, MolCell, 2021). Should be passed along with argument SortedReads set to the Sorted reads object as returned by SortReads function.
+#' If set to "custom", SortedReads should be a list with one item per sample (corresponding to MethSM).
+#' If set to "hierarchical.clustering", the function will perform hierarchical clustering in place on a subset of reads. Useful to check for duplicated reads in amplicon sequencing experiments.
+#' If set to "promoter", plots reads by promoter sorting
+#' If set to "None", it will plot unsorted reads.
 #'
 #' @return Bar plot quantifying states
 #'
@@ -414,7 +427,7 @@ TFPairStateQuantificationPlot = function(SortedReads, states){
 #'
 #' StateQuantificationPlot(SortedReads = SortedReads)
 #'
-StateQuantificationPlot = function(SortedReads){
+StateQuantificationPlot = function(SortedReads, sorting.strategy="classical"){
 
   PatternLength = unique(unlist(lapply(seq_along(SortedReads), function(i){unique(nchar(names(SortedReads[[i]])))})))
   
@@ -424,12 +437,18 @@ StateQuantificationPlot = function(SortedReads){
     states = OneTFstates()
     SingleTFStateQuantificationPlot(SortedReads, states)
 
-  } else if (PatternLength == 4){ # TF pair
+  } else if (PatternLength == 4 & sorting.strategy == "classical"){ # TF pair
 
     message("Inferring sorting was performed by TF pair")
     states = TFpairStates()
     TFPairStateQuantificationPlot(SortedReads, states)
 
+  } else if (PatternLength == 4 & sorting.strategy == "promoter"){
+    
+    message("Inferring sorting was performed by promoter states")
+    states = Promoterstates()
+    TFPairStateQuantificationPlot(SortedReads, states)
+    
   } else {
     
     message("Unrecognized sorting strategy ... skipping")
@@ -446,7 +465,7 @@ StateQuantificationPlot = function(SortedReads){
 #' @param TFBSs GRanges object of transcription factor binding sites to include in the plot. Assumed to be already subset. Also assumed that the tf names are under the column "TF"
 #' @param SortingBins GRanges object of sorting bins (absolute) coordinate to visualize
 #' @param SortedReads Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering
-#' @param sorting.strategy One of "classical" (default), "custom", "hierarchical.clustering" or "None". Determines how to display reads. For details check documentation from PlotSM function.
+#' @param sorting.strategy One of "classical" (default), "promoter", "custom", "hierarchical.clustering" or "None". Determines how to display reads. For details check documentation from PlotSM function.
 #'
 #' @importFrom grDevices dev.list dev.off pdf
 #' @importFrom patchwork plot_layout
