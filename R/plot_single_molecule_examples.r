@@ -395,6 +395,61 @@ TFPairStateQuantificationPlot = function(SortedReads, states){
   
 }
 
+
+#' promoter state quantification bar
+#'
+#' @param SortedReads List of sorted reads (can be multiple samples) as returned by SortReadsByTFCluster (or SortReads run with analogous parameters)
+#' @param states as returned by TFpairStates function
+#' @param Strand Set to either "+" or "-" when performing the promoter sorting, so that it will generate the plot with the correct strand
+#'
+#' @importFrom RColorBrewer brewer.pal
+#' @import dplyr
+#' @importFrom stats na.omit
+#'
+PromoterStateQuantificationPlot = function(SortedReads, states, Strand = "+"){
+  
+  OrderedReads = lapply(SortedReads, function(sR){sR[as.character(unlist(states))]})
+  
+  Reduce(rbind,
+         lapply(seq_along(OrderedReads), function(i){
+           Reduce(rbind,
+                  lapply(seq_along(OrderedReads[[i]]), function(j){
+                    if(!is.null(OrderedReads[[i]][[j]])){
+                      tibble(ReadID = OrderedReads[[i]][[j]], 
+                             Pattern = names(OrderedReads[[i]])[j], 
+                             Sample = names(OrderedReads)[i])
+                    }
+                  }))
+         })) -> OrderedReads_tbl
+  
+  if (Strand == "-") {
+    reversed_Pattern <- unlist(lapply(OrderedReads_tbl$Pattern, function(x){
+      paste(rev(strsplit(x, "")[[1]]), collapse = "")
+    }))
+    OrderedReads_tbl$Pattern <- reversed_Pattern
+  }
+  
+  full_join(OrderedReads_tbl, rownames_to_column(data.frame(Pattern = unlist(states)), "State"), "Pattern") %>% 
+    na.omit() %>% 
+    separate(Pattern, into = c(paste0("Bin", seq(unique(nchar(unlist(states)))))), sep = "(?<=.)", extra = 'drop') %>%
+    gather(Bin, Methylation, -ReadID, -Sample, -State) -> PlottingDF
+  PlottingDF$ReadID = factor(PlottingDF$ReadID, levels = unlist(OrderedReads))
+  
+  PlottingDF %>%
+    ggplot(aes(x=Bin, y=ReadID)) + 
+    geom_tile(aes(fill=Methylation), height=1, width=1) +
+    facet_wrap(~Sample, scales = "free_y", dir = 'v') +
+    ylab("") +
+    xlab("") +
+    scale_discrete_manual(aesthetics = "fill", values = c("black", "grey")) +
+    theme_classic() +
+    theme(axis.text=element_blank(), axis.ticks=element_blank(), axis.line = element_blank())
+  
+}
+
+
+
+
 #' Plot states quantification bar
 #'
 #' @param SortedReads Sorted reads object as returned by SortReads function
@@ -404,6 +459,8 @@ TFPairStateQuantificationPlot = function(SortedReads, states){
 #' If set to "hierarchical.clustering", the function will perform hierarchical clustering in place on a subset of reads. Useful to check for duplicated reads in amplicon sequencing experiments.
 #' If set to "promoter", plots reads by promoter sorting
 #' If set to "None", it will plot unsorted reads.
+#' @param Strand Typically it is set to "+", but it has nothing to do though.
+#' Set to either "+" or "-" when performing the promoter sorting, so that it will generate the plot with the correct strand
 #'
 #' @return Bar plot quantifying states
 #'
@@ -427,7 +484,7 @@ TFPairStateQuantificationPlot = function(SortedReads, states){
 #'
 #' StateQuantificationPlot(SortedReads = SortedReads)
 #'
-StateQuantificationPlot = function(SortedReads, sorting.strategy="classical"){
+StateQuantificationPlot = function(SortedReads, sorting.strategy="classical", Strand = "+"){
 
   PatternLength = unique(unlist(lapply(seq_along(SortedReads), function(i){unique(nchar(names(SortedReads[[i]])))})))
   
@@ -447,7 +504,12 @@ StateQuantificationPlot = function(SortedReads, sorting.strategy="classical"){
     
     message("Inferring sorting was performed by promoter states")
     states = Promoterstates()
-    TFPairStateQuantificationPlot(SortedReads, states)
+    
+    if (Strand == "+"){
+      PromoterStateQuantificationPlot(SortedReads, states, Strand = "+")
+    } else if (Strand == "-"){
+      PromoterStateQuantificationPlot(SortedReads, states, Strand = "-")
+    }
     
   } else {
     
@@ -512,7 +574,19 @@ PlotSingleSiteSMF = function(Methylation, RegionOfInterest, ShowContext=FALSE, T
   # State quantification plot
   if(is.list(SortedReads)){
     message("Producing state quantification plots")
-    StateQuantificationPlot(SortedReads = SortedReads) -> StateQuant_pl
+    
+    # add strand information if use promoter sorting
+    if(sorting.strategy == "promoter"){
+      Strand = as.character(strand(RegionOfInterest))
+      if(!(Strand %in% c("+", "-"))){
+        stop("Please provide strand information in your RegioOfInterest object when use promoter sorting")
+      }
+      message(paste0("Promoter state quantification with Strand: ", Strand))
+      StateQuantificationPlot(SortedReads = SortedReads, sorting.strategy="promoter", Strand = Strand) -> StateQuant_pl
+    } else {
+      StateQuantificationPlot(SortedReads = SortedReads) -> StateQuant_pl 
+    }
+    
   } else {
     StateQuant_pl = NULL
   }
