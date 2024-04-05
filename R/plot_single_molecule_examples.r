@@ -567,6 +567,11 @@ PlotSingleSiteSMF = function(Methylation, RegionOfInterest, ShowContext=FALSE, T
              ShowContext = ShowContext,
              TFBSs = TFBSs,
              SortingBins = SortingBins) -> Avg_pl
+  
+  if(sorting.strategy == "promoter"){
+    Avg_pl <- Avg_pl + geom_vline(xintercept = start(RegionOfInterest) + width(RegionOfInterest)/2,
+                                  linetype = "dashed", color = "#737373")
+  }
 
   message("Producing Single Molecule stacks")
   PlotSM(MethSM = Methylation[[2]], RegionOfInterest = RegionOfInterest, SortedReads = SortedReads, sorting.strategy = sorting.strategy) -> SM_pl
@@ -579,7 +584,7 @@ PlotSingleSiteSMF = function(Methylation, RegionOfInterest, ShowContext=FALSE, T
     if(sorting.strategy == "promoter"){
       Strand = as.character(strand(RegionOfInterest))
       if(!(Strand %in% c("+", "-"))){
-        stop("Please provide strand information in your RegioOfInterest object when use promoter sorting")
+        stop("Please provide strand information in your RegionOfInterest object when use promoter sorting")
       }
       message(paste0("Promoter state quantification with Strand: ", Strand))
       StateQuantificationPlot(SortedReads = SortedReads, sorting.strategy="promoter", Strand = Strand) -> StateQuant_pl
