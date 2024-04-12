@@ -27,7 +27,7 @@ PlotSingleSiteSMF(
 
 \item{SortedReads}{Defaults to NULL, in which case will plot unsorted reads. Sorted reads object as returned by SortReads function or "HC" to perform hierarchical clustering}
 
-\item{sorting.strategy}{One of "classical" (default), "custom", "hierarchical.clustering" or "None". Determines how to display reads. For details check documentation from PlotSM function.}
+\item{sorting.strategy}{One of "classical" (default), "promoter", "custom", "hierarchical.clustering" or "None". Determines how to display reads. For details check documentation from PlotSM function.}
 }
 \description{
 Plot SMF data at single site

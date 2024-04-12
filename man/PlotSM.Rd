@@ -20,6 +20,7 @@ PlotSM(
 Set to "classical" for classical one-TF/TF-pair sorting (as described in Sönmezer et al, MolCell, 2021). Should be passed along with argument SortedReads set to the Sorted reads object as returned by SortReads function.
 If set to "custom", SortedReads should be a list with one item per sample (corresponding to MethSM).
 If set to "hierarchical.clustering", the function will perform hierarchical clustering in place on a subset of reads. Useful to check for duplicated reads in amplicon sequencing experiments.
+If set to "promoter", plots reads by promoter sorting
 If set to "None", it will plot unsorted reads.
 The argument sorting,strategy will always determine how to display reads with priority over the argument SortedReads}
 

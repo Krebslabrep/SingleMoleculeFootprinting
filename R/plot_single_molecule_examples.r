@@ -422,18 +422,24 @@ PromoterStateQuantificationPlot = function(SortedReads, states, Strand = "+"){
                   }))
          })) -> OrderedReads_tbl
   
-  if (Strand == "-") {
-    reversed_Pattern <- unlist(lapply(OrderedReads_tbl$Pattern, function(x){
-      paste(rev(strsplit(x, "")[[1]]), collapse = "")
-    }))
-    OrderedReads_tbl$Pattern <- reversed_Pattern
-  }
-  
   full_join(OrderedReads_tbl, rownames_to_column(data.frame(Pattern = unlist(states)), "State"), "Pattern") %>% 
     na.omit() %>% 
     separate(Pattern, into = c(paste0("Bin", seq(unique(nchar(unlist(states)))))), sep = "(?<=.)", extra = 'drop') %>%
     gather(Bin, Methylation, -ReadID, -Sample, -State) -> PlottingDF
   PlottingDF$ReadID = factor(PlottingDF$ReadID, levels = unlist(OrderedReads))
+  
+  # reverse order of bins if the promoter is on reversed strand
+  if(Strand == "-"){
+    PlottingDF[PlottingDF$Bin == "Bin1",]$Bin <- "tmp1"
+    PlottingDF[PlottingDF$Bin == "Bin2",]$Bin <- "tmp2"
+    PlottingDF[PlottingDF$Bin == "Bin3",]$Bin <- "tmp3"
+    PlottingDF[PlottingDF$Bin == "Bin4",]$Bin <- "tmp4"
+    
+    PlottingDF[PlottingDF$Bin == "tmp1",]$Bin <- "Bin4"
+    PlottingDF[PlottingDF$Bin == "tmp2",]$Bin <- "Bin3"
+    PlottingDF[PlottingDF$Bin == "tmp3",]$Bin <- "Bin2"
+    PlottingDF[PlottingDF$Bin == "tmp4",]$Bin <- "Bin1"
+  }
   
   PlottingDF %>%
     ggplot(aes(x=Bin, y=ReadID)) + 
